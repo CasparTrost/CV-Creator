@@ -54,6 +54,10 @@ cd CV-Creator
 python3 tools/serve.py          # http://localhost:8000
 ```
 
+On Windows the command is `py`, not `python3`, so either run
+`py tools\serve.py` or double-click `tools\serve.cmd`, which finds whichever
+Python is installed and says what to install if there is none.
+
 `tools/serve.py` also serves `404.html` for a missing path and sends
 `Cache-Control: no-store`, so a reload after `tools/build.py` shows the new
 page rather than the old one. `python3 -m http.server` works too and does
@@ -189,6 +193,10 @@ advertisers pay for.
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
 | `python3 tools/serve.py [port]` | Serves the site locally with 404 handling and no caching |
+| `tools\serve.cmd [port]` | The same, for Windows |
+
+Python 3.8 or newer is the only requirement, and only for the tools — the
+site itself is plain HTML and needs nothing.
 
 Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 `EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
