@@ -1,57 +1,142 @@
 # PlainSheet
 
-A resume builder that runs entirely in the browser. No server, no database,
-no build step. Every file in this repository is served as-is.
+A resume builder and a small publication around it. Everything is static HTML
+served exactly as it sits in this repository — no framework, no server, no
+database. The editor runs entirely in the visitor's browser; the pages around
+it carry the advertising that pays for the hosting.
 
-## Contents
+```
+index.html          Landing page
+templates.html      Gallery of all sixteen layouts
+templates/*.html    One page per layout
+guides/*.html       Twelve guides, plus the guides index
+editor.html         The editor, accepts ?t=t1 … ?t=t16
+about.html          Who runs it and how it is paid for
+privacy.html        Privacy notice, contains two placeholders
+imprint.html        Imprint and contact, contains placeholders
+404.html            Not-found page
+assets/             Stylesheet, scripts, self-hosted fonts, icons
+tools/              Generators. Not served, not needed to run the site.
+```
 
-| Path | What it is |
+## Going live
+
+### 1. Fill in `assets/site-config.js`
+
+It is the only file that needs editing. Domain, operator name, contact address,
+AdSense publisher ID, ad unit IDs and the analytics choice all live there.
+
+### 2. Run the build
+
+```sh
+python3 tools/build.py
+```
+
+This renders every page from `tools/build.py` and `tools/content.py`, stamps the
+domain into every canonical URL, every `og:` tag and the editor, and regenerates
+`sitemap.xml`, `robots.txt`, `site.webmanifest` and `ads.txt`.
+
+The site is *served* without a build step; the generator exists so that thirty-six
+pages can share one header, one footer and one set of meta tags. Commit whatever
+it writes.
+
+### 3. Publish
+
+GitHub Pages: Settings → Pages → Deploy from a branch, `main`, folder `/ (root)`.
+Cloudflare Pages and Netlify: connect the repository, leave the build command
+empty, output directory `/`.
+
+### 4. Finish the legal pages
+
+- `imprint.html` — name, postal address, telephone. In Germany, Austria and
+  Switzerland this is required even for a hobby site, and carrying ads makes it
+  unambiguous. The bracketed placeholders mark what is missing.
+- `privacy.html` — replace `[hosting provider]` with your host, twice.
+
+### 5. Apply to AdSense
+
+The site is built to meet the usual approval conditions: original written
+content, an about page, a contact page, a privacy notice that names the ad
+partner, working navigation and no dead ends. Approval still takes days to
+weeks. Until the publisher ID is filled in, no ad code is requested and each
+page shows one house promo in the first slot instead — the layout is already
+final, so nothing shifts when real ads arrive.
+
+## How the advertising works
+
+Three files, in this order in every `<head>`:
+
+| File | What it does |
 | --- | --- |
-| `index.html` | Landing page |
-| `templates.html` | Gallery of all sixteen layouts |
-| `templates/*.html` | One page per layout, sixteen in total |
-| `editor.html` | The editor itself; accepts `?t=t1` … `?t=t16` |
-| `privacy.html` | Privacy notice, **contains placeholders** |
-| `assets/site.css` | Stylesheet for the site pages |
-| `ads.txt` | Ad network authorisation, **contains a placeholder** |
-| `robots.txt`, `sitemap.xml` | **Contain a placeholder domain** |
+| `assets/site-config.js` | The configuration above. No logic. |
+| `assets/consent.js` | Declares every Google consent signal as denied, shows the notice, remembers the answer for 180 days, re-opens from any `data-consent-settings` element. |
+| `assets/ads.js` | Fills `<div class="ad" data-slot="…">` once the slot approaches the viewport, and only if advertising was accepted. Loads analytics if configured. |
 
-## Publishing with GitHub Pages
+Nothing advertising-related is requested before a visitor answers. Rejecting
+means no ad script is loaded at all, which is the conservative reading of the
+GDPR and ePrivacy rules: AdSense sets cookies even for non-personalised ads.
+`serveAfterReject` in the config exists if you take a different view of that
+after taking advice.
 
-1. Push this repository to GitHub.
-2. Settings → Pages → Source: *Deploy from a branch*, branch `main`, folder `/ (root)`.
-3. Wait a minute, then open `https://<user>.github.io/<repo>/`.
+Consent Mode v2 signals (`ad_storage`, `ad_user_data`, `ad_personalization`,
+`analytics_storage`) are set to denied before any tag runs and updated on the
+visitor's answer.
 
-Cloudflare Pages and Netlify work the same way: connect the repository,
-leave the build command empty, set the output directory to `/`.
+**One caveat worth knowing:** for traffic from the EEA and the UK, Google
+requires publishers to use a CMP from its certified list. The notice here does
+the technical job correctly — it gates the script and speaks Consent Mode — but
+it is not itself on that list. Either register a certified CMP (Google's own
+"Privacy & messaging" tool is free and appears in the AdSense interface) and
+drop its snippet in place of `consent.js`, or check the current requirement for
+your situation. `ads.js` works with either: it only ever asks
+`window.Consent.allowsAds()`, so pointing that at another CMP is a few lines.
 
-## Before going live
-
-1. Replace `https://YOUR-DOMAIN.example` in `sitemap.xml`, `robots.txt` and the
-   `<link rel="canonical">` of every page with the real domain.
-2. Fill in the bracketed placeholders in `privacy.html` and the imprint line in
-   every footer.
-3. Put the line your ad network gives you into `ads.txt`.
-4. Install a Google-certified consent tool in the `<head>` of every page,
-   before any ad code. Ads must not load until consent is given.
-5. Paste ad units inside the `<div class="ad">` wrappers. Keep the wrapper so
-   the slot reserves its height and the page does not jump on load.
-
-## Ad slots
+### Ad slots
 
 | Page | `data-slot` |
 | --- | --- |
 | `index.html` | `home-mid` |
 | `templates.html` | `templates-foot` |
 | `templates/*.html` | `template-mid` |
+| `guides/index.html` | `guides-mid` |
+| `guides/*.html` | `guide-top`, `guide-mid`, `guide-foot` |
 | `editor.html` | none, deliberately |
 
 The editor carries no advertising. A visitor spends twenty minutes there and
-produces a single page view, so ads earn almost nothing while making the tool
-worse. The content pages are what earn.
+produces a single page view, so ads would earn almost nothing while making the
+tool worse. The guides are what earn: several page views per visit, search
+traffic that arrives with intent, and the subject matter advertisers pay for.
 
-## Not done yet
+## Privacy decisions baked in
 
-Guides and profession-specific examples. Those generate several page views per
-visit where the editor generates one, and ad networks frequently reject sites
-that are a tool with no written content.
+- **Fonts are self-hosted.** `tools/fetch-fonts.py` downloads the latin and
+  latin-ext subsets into `assets/fonts/`. No visitor request reaches
+  `fonts.gstatic.com`, which settles the Google Fonts question for EU operators
+  and removes a render-blocking third-party connection.
+- **The editor stores its draft locally.** `localStorage['ps.draft']` holds the
+  current sheet so a closed tab does not cost an hour. It never leaves the
+  device; "Start over" in the sidebar clears it.
+- **A file saved with "Sichern" is self-contained.** It carries
+  `data-gesichert` so that opening it later shows its own content rather than
+  the browser's draft.
+
+## Tools
+
+| Command | What it does |
+| --- | --- |
+| `python3 tools/build.py` | Renders every page, the sitemap, robots.txt, the manifest and ads.txt |
+| `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
+| `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
+
+Page copy lives in `tools/content.py` (guides) and in the `page_*` functions of
+`tools/build.py` (everything else). Template descriptions are in
+`tools/data/templates.json`.
+
+## Still worth doing
+
+- Profession-specific example resumes (`/examples/nurse`, `/examples/developer`
+  and so on). They rank well and add page views per visit.
+- German translations of the guides. The editor already speaks German, Spanish
+  and English; the written content does not.
+- Once AdSense is approved, compare the fixed slots against Auto ads on a
+  fraction of traffic before deciding which earns more.

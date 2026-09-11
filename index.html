@@ -3,39 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PlainSheet — free resume builder with a real PDF export</title>
+<title>Free resume builder with a real PDF export — PlainSheet</title>
 <meta name="description" content="Build a resume in your browser and download the PDF for free. Sixteen layouts, no account, no watermark, nothing uploaded to a server.">
 <link rel="canonical" href="https://YOUR-DOMAIN.example/index.html">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#1F5F5B">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PlainSheet">
+<meta property="og:title" content="Free resume builder with a real PDF export — PlainSheet">
+<meta property="og:description" content="Build a resume in your browser and download the PDF for free. Sixteen layouts, no account, no watermark, nothing uploaded to a server.">
+<meta property="og:url" content="https://YOUR-DOMAIN.example/index.html">
+<meta property="og:image" content="https://YOUR-DOMAIN.example/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="assets/favicon.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/newsreader-400600-latin.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="assets/fonts/ibmplexsans-400600-latin.woff2">
+<link rel="stylesheet" href="assets/fonts-site.css">
 <link rel="stylesheet" href="assets/site.css">
-<!-- Consent tool and ad code go in the head. See README.txt. -->
+
+<script src="assets/site-config.js"></script>
+<script src="assets/consent.js"></script>
+<script src="assets/ads.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PlainSheet","url":"https://YOUR-DOMAIN.example/","description":"A free resume builder that runs entirely in the browser."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PlainSheet","applicationCategory":"BusinessApplication","operatingSystem":"Any browser","url":"https://YOUR-DOMAIN.example/editor.html","description":"A resume builder that runs entirely in the browser, with sixteen A4 layouts and a free PDF export.","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is the download really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. The export is a browser print to PDF, so there is nothing for us to charge for and no watermark to remove. The site is paid for by advertising on the pages around the editor, not by the editor."}},{"@type":"Question","name":"Do I need an account?","acceptedAnswer":{"@type":"Answer","text":"No. There is no sign-up because there is no server storing anything. Use Save file to keep a copy on your own machine, and open that file again to carry on."}},{"@type":"Question","name":"Will it pass an applicant tracking system?","acceptedAnswer":{"@type":"Answer","text":"Single-column layouts such as Linden and Plainfield parse most reliably. Sidebar layouts look better to a human but can confuse parsers that read across columns. The guide on applicant tracking systems explains what actually breaks."}},{"@type":"Question","name":"Where is my data stored?","acceptedAnswer":{"@type":"Answer","text":"In your browser, on your device. The editor keeps a working draft locally so a closed tab does not lose your work, and that draft never leaves the machine. Clearing your browser data removes it."}},{"@type":"Question","name":"Can I get it as a Word document?","acceptedAnswer":{"@type":"Answer","text":"Yes, though Word receives a simplified table version. Diagonals and round photos are beyond what Word can draw reliably."}}]}</script>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
   <div class="wrap">
     <a class="wordmark" href="index.html">Plain<b>Sheet</b></a>
-    <nav class="topnav">
+    <button class="navtoggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menu" onclick="var n=document.getElementById('nav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">
+      <svg viewBox="0 0 18 14" aria-hidden="true"><path d="M0 1h18M0 7h18M0 13h18" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+    <nav class="topnav" id="nav">
       <a href="templates.html">Templates</a>
-      <a class="hide-s" href="privacy.html">Privacy</a>
+      <a href="guides/index.html">Guides</a>
+      <a href="about.html">About</a>
       <a class="btn" href="editor.html">Open the editor</a>
     </nav>
   </div>
 </header>
 
+<main id="main">
 <section class="hero">
   <div class="wrap">
     <div>
+      <p class="eyebrow">Free, no account, nothing uploaded</p>
       <h1>Write it, see it, download it.</h1>
-      <p class="lead">A resume editor with a live A4 page in front of you. What you see is exactly
-      what comes out of the PDF, down to the millimetre.</p>
+      <p class="lead">A resume editor with a live A4 page in front of you. What you see is exactly what comes out of the PDF, down to the millimetre.</p>
       <div class="actions">
         <a class="btn" href="editor.html">Open the editor</a>
         <a class="btn ghost" href="templates.html">Browse sixteen layouts</a>
       </div>
-      <p class="aside-note">Everything runs inside your browser. Your resume is never sent
-      anywhere, which also means there is no account to create and nothing to delete afterwards.</p>
+      <p class="aside-note">Everything runs inside your browser. Your resume is never sent anywhere, which also means there is no account to create and nothing to delete afterwards.</p>
     </div>
     <div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,77 77,77" style="fill:var(--accent)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div>
   </div>
@@ -43,12 +71,9 @@
 
 <section class="claims">
   <div class="wrap">
-    <div><strong>The PDF is free</strong><p>No trial, no card, no watermark stamped across
-    the page you worked on.</p></div>
-    <div><strong>Nothing leaves your machine</strong><p>The editor is a single page of code.
-    There is no server holding your employment history.</p></div>
-    <div><strong>Sixteen layouts, one text</strong><p>Switch the design whenever you like.
-    Your content stays where it is.</p></div>
+    <div><strong>The PDF is free</strong><p>No trial, no card, no watermark stamped across the page you worked on.</p></div>
+    <div><strong>Nothing leaves your machine</strong><p>The editor is a single page of code. There is no server holding your employment history.</p></div>
+    <div><strong>Sixteen layouts, one text</strong><p>Switch the design whenever you like. Your content stays where it is.</p></div>
   </div>
 </section>
 
@@ -56,77 +81,77 @@
   <div class="wrap">
     <div class="band-head">
       <h2>Start from a layout</h2>
-      <p>Each one is a finished A4 document, not a mood board. Pick the structure that fits how
-      much you have to say.</p>
+      <p>Each one is a finished A4 document, not a mood board. Pick the structure that fits how much you have to say.</p>
     </div>
     <div class="grid"><a class="tile" href="templates/aster-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,77 77,77" style="fill:var(--accent)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Aster</h3><span>Sidebar with a diagonal header</span></a><a class="tile" href="templates/verso-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="139" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 133,77 0,77" style="fill:var(--accent)"/><rect x="151" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="20" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="151" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="151" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="151" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="151" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="20" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="20" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Verso</h3><span>Sidebar on the right</span></a><a class="tile" href="templates/halden-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--accent)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Halden</h3><span>Solid banner, no diagonal</span></a><a class="tile" href="templates/quill-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="15" y="16" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="20" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="88" y="33" width="104" height="2" style="fill:#DDE3E8"/><rect x="88" y="41" width="104" height="2" style="fill:#DDE3E8"/><rect x="88" y="49" width="104" height="2" style="fill:#DDE3E8"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Quill</h3><span>Quiet header on white</span></a><a class="tile" href="templates/onyx-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,77 77,77" style="fill:var(--dark)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Onyx</h3><span>Dark header, diagonal cut</span></a><a class="tile" href="templates/cobalt-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--accent)"/><rect x="15" y="16" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="20" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="88" y="33" width="104" height="2" style="fill:#DDE3E8"/><rect x="88" y="41" width="104" height="2" style="fill:#DDE3E8"/><rect x="88" y="49" width="104" height="2" style="fill:#DDE3E8"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="116" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="125" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="134" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="175" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="184" width="45" height="2" style="fill:#DDE3E8"/><rect x="14" y="193" width="45" height="2" style="fill:#DDE3E8"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="116" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="125" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="134" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="143" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="152" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="193" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="202" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="211" width="108" height="2" style="fill:#DDE3E8"/><rect x="88" y="220" width="108" height="2" style="fill:#DDE3E8"/></svg></div><h3>Cobalt</h3><span>Sidebar in the accent colour</span></a><a class="tile" href="templates/linden-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="210" height="72" style="fill:var(--accent)"/><rect x="151" y="14" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="20" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="33" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="41" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="49" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="90" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="101" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="110" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="119" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="128" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="137" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="146" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="167" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="178" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="187" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="196" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="205" width="170" height="2" style="fill:#DDE3E8"/><rect x="20" y="214" width="170" height="2" style="fill:#DDE3E8"/></svg></div><h3>Linden</h3><span>Single column, colour band</span></a><a class="tile" href="templates/ledger-resume-template.html"><div class="sheet"><svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="20" y="64" width="170" height="1.6" style="fill:var(--accent)"/><rect x="151" y="12" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="18" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="20" y="31" width="104" height="2" style="fill:#DDE3E8"/><rect x="20" y="39" width="104" height="2" style="fill:#DDE3E8"/><rect x="20" y="47" width="104" height="2" style="fill:#DDE3E8"/><rect x="56" y="84" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="56" y="95" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="104" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="113" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="122" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="131" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="140" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="161" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="56" y="172" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="181" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="190" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="199" width="134" height="2" style="fill:#DDE3E8"/><rect x="56" y="208" width="134" height="2" style="fill:#DDE3E8"/><rect x="20" y="118" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="160" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="202" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="244" width="26" height="2.6" style="fill:var(--accent)" rx="1"/></svg></div><h3>Ledger</h3><span>Date column on the left</span></a></div>
     <p style="margin-top:30px"><a href="templates.html">See all sixteen layouts</a></p>
   </div>
 </section>
 
-  <div class="wrap">
-    <div class="ad" data-slot="home-mid">
-      <small>advertisement</small>
-      <!-- Paste your ad unit here. Keep the wrapper so the slot reserves space
-           and the page does not jump when the ad loads. -->
-    </div>
+<div class="wrap">
+  <div class="ad" data-slot="home-mid">
+    <!-- Filled by assets/ads.js. The wrapper reserves its height so the
+         page does not jump when an ad arrives. -->
   </div>
-
+</div>
 
 <section class="band tight">
   <div class="wrap">
     <div class="band-head"><h2>How it works</h2></div>
     <ol class="steps">
-      <li><h3>Replace the sample text</h3><p>The editor opens with a filled-in example. Click into
-      any line and type over it.</p></li>
-      <li><h3>Move sections where you want them</h3><p>Drag a section by its handle into the other
-      column or onto the second page.</p></li>
-      <li><h3>Save the PDF</h3><p>Print to PDF with margins set to none and background graphics
-      switched on.</p></li>
+      <li><h3>Replace the sample text</h3><p>The editor opens with a filled-in example. Click into any line and type over it.</p></li>
+      <li><h3>Move sections where you want them</h3><p>Drag a section by its handle into the other column or onto the second page.</p></li>
+      <li><h3>Save the PDF</h3><p>Print to PDF with margins set to none and background graphics switched on.</p></li>
     </ol>
   </div>
 </section>
 
 <section class="band tight">
   <div class="wrap">
-    <div class="band-head"><h2>Questions people ask</h2></div>
-    <div class="faq">
-      <div><h3>Is the download really free?</h3><p>Yes. The export is a browser print to PDF, so
-      there is nothing for us to charge for and no watermark to remove.</p></div>
-      <div><h3>Do I need an account?</h3><p>No. There is no sign-up because there is no server
-      storing anything. Use the Save file button to keep a copy on your own machine.</p></div>
-      <div><h3>Will it pass an applicant tracking system?</h3><p>Single-column layouts such as
-      Linden and Plainfield parse most reliably. Sidebar layouts look better but can confuse
-      parsers that read across columns.</p></div>
-      <div><h3>Can I edit it again later?</h3><p>Save file downloads your current state as an HTML
-      file. Open that file again and carry on where you stopped.</p></div>
-      <div><h3>Can I get it as a Word document?</h3><p>Yes, though Word receives a simplified
-      table version. Diagonals and round photos are beyond what Word can draw.</p></div>
+    <div class="band-head">
+      <h2>Read this before you start</h2>
+      <p>The editor handles the layout. These handle the words, which is the part that decides whether anyone calls you.</p>
     </div>
+    <div class="cards"><a class="card" href="guides/how-to-write-a-resume.html"><span class="tag">Starting out</span><h3>How to write a resume</h3><p>Most resume advice is either a list of adjectives or a sales page.</p><span class="mins">12 min read</span></a><a class="card" href="guides/ats-friendly-resume.html"><span class="tag">Getting read</span><h3>How applicant tracking systems actually read your resume</h3><p>Applicant tracking software is blamed for a lot of rejections it had nothing to do with.</p><span class="mins">9 min read</span></a><a class="card" href="guides/resume-bullet-points.html"><span class="tag">Writing it</span><h3>Writing work experience bullet points</h3><p>The bullet points under your current job are the only part of a resume that most readers read properly.</p><span class="mins">8 min read</span></a></div>
+    <p style="margin-top:26px"><a href="guides/index.html">All twelve guides</a></p>
   </div>
 </section>
+
+<section class="band tight">
+  <div class="wrap">
+    <div class="band-head"><h2>Questions people ask</h2></div>
+    <div class="faq"><div><h3>Is the download really free?</h3><p>Yes. The export is a browser print to PDF, so there is nothing for us to charge for and no watermark to remove. The site is paid for by advertising on the pages around the editor, not by the editor.</p></div><div><h3>Do I need an account?</h3><p>No. There is no sign-up because there is no server storing anything. Use Save file to keep a copy on your own machine, and open that file again to carry on.</p></div><div><h3>Will it pass an applicant tracking system?</h3><p>Single-column layouts such as Linden and Plainfield parse most reliably. Sidebar layouts look better to a human but can confuse parsers that read across columns. The guide on applicant tracking systems explains what actually breaks.</p></div><div><h3>Where is my data stored?</h3><p>In your browser, on your device. The editor keeps a working draft locally so a closed tab does not lose your work, and that draft never leaves the machine. Clearing your browser data removes it.</p></div><div><h3>Can I get it as a Word document?</h3><p>Yes, though Word receives a simplified table version. Diagonals and round photos are beyond what Word can draw reliably.</p></div></div>
+  </div>
+</section>
+</main>
 <footer>
   <div class="wrap">
     <div class="cols">
       <div>
         <a class="wordmark" href="index.html">Plain<b>Sheet</b></a>
-        <p class="fine">A resume editor that runs entirely in your browser. Nothing you type is
-        uploaded, stored or sold. The PDF export is free and always will be.</p>
+        <p class="fine">A resume editor that runs entirely in your browser. Nothing you
+        type is uploaded, stored or sold. The PDF export is free and always will be.</p>
       </div>
       <div>
         <h3>Templates</h3>
         <ul><li><a href="templates/aster-resume-template.html">Aster</a></li><li><a href="templates/verso-resume-template.html">Verso</a></li><li><a href="templates/halden-resume-template.html">Halden</a></li><li><a href="templates/quill-resume-template.html">Quill</a></li><li><a href="templates/onyx-resume-template.html">Onyx</a></li><li><a href="templates/cobalt-resume-template.html">Cobalt</a></li><li><a href="templates.html">All sixteen</a></li></ul>
       </div>
       <div>
+        <h3>Guides</h3>
+        <ul><li><a href="guides/how-to-write-a-resume.html">How to write a resume</a></li><li><a href="guides/ats-friendly-resume.html">Getting past the ATS</a></li><li><a href="guides/resume-bullet-points.html">Writing bullet points</a></li><li><a href="guides/resume-summary.html">The summary at the top</a></li><li><a href="guides/resume-skills-section.html">The skills section</a></li><li><a href="guides/resume-length.html">One page or two</a></li><li><a href="guides/index.html">Every guide</a></li></ul>
+      </div>
+      <div>
         <h3>Site</h3>
         <ul>
           <li><a href="editor.html">Editor</a></li>
+          <li><a href="about.html">About</a></li>
           <li><a href="privacy.html">Privacy and cookies</a></li>
+          <li><a href="imprint.html">Imprint and contact</a></li>
+          <li><button type="button" class="lnk" data-consent-settings>Cookie settings</button></li>
         </ul>
       </div>
     </div>
-    <p class="fine">© 2026 PlainSheet. Replace this line with your own imprint details before
-    going live.</p>
+    <p class="fine">© 2026 PlainSheet. Operated by [Your name or company]. This site is paid for by advertising; the editor itself carries none.</p>
   </div>
 </footer>
 </body>
