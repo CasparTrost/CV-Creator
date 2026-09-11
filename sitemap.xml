@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://YOUR-DOMAIN.example/index.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/editor.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/privacy.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/aster-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/verso-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/halden-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/quill-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/onyx-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/cobalt-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/linden-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/ledger-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/milestone-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/slate-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/vesper-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/hairline-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/plainfield-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/frame-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/broadsheet-resume-template.html</loc></url>
+  <url><loc>https://YOUR-DOMAIN.example/templates/margin-resume-template.html</loc></url>
+</urlset>

@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Resume editor — PlainSheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Blinker:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&family=Inter:wght@400;600;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Raleway:wght@400;600;700&family=Work+Sans:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Source+Serif+4:wght@400;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:wght@400;600;700&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==================================================================
+   Grundwerte – werden über das Design-Panel verändert
+   ================================================================== */
+:root{
+  --accent:#B3988D;      /* Kopfbereich, Firmennamen, Aufzählungspunkte */
+  --sidebar:#EEE4E3;     /* Seitenleiste */
+  --dark:#3B3B3B;        /* Text */
+  --grey:#6E6E6E;        /* Zeiträume */
+  --onaccent:#FFFFFF;    /* Schrift auf Akzentfarbe, wird automatisch gesetzt */
+  --font:"Blinker", Arial, Helvetica, sans-serif;
+  --fs:9pt;              /* Grundschriftgröße */
+  --band:82mm;           /* Höhe des Kopfbereichs */
+  --sidew:66.5mm;        /* Breite der Seitenleiste */
+  --diag:60.1mm;         /* Position der Diagonale (band / √2) */
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#8f8f92;font:14px/1.5 Arial,sans-serif;color:#222}
+
+/* ==================================================================
+   Bedienoberfläche – linke Spalte, wird nie gedruckt
+   ================================================================== */
+.ui{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{display:flex;align-items:flex-start;background:#eceae8}
+
+#seitenleiste{width:318px;flex:0 0 318px;background:#fff;border-right:1px solid #e4dedb;
+  height:100vh;position:sticky;top:0;display:flex;flex-direction:column;z-index:60;
+  box-shadow:1px 0 4px rgba(40,30,25,.05)}
+#seitenleiste .kopf{padding:15px 18px 13px;border-bottom:1px solid #eee7e4}
+#seitenleiste .kopf b{display:block;font-size:14px;color:#2b2523;letter-spacing:.2px}
+#seitenleiste .kopf span{display:block;font-size:11.5px;color:#8b807b;margin-top:2px}
+#seitenleiste .rollbar{flex:1 1 auto;overflow-y:auto;padding:16px 18px 22px}
+#seitenleiste .fuss{padding:13px 18px;border-top:1px solid #eee7e4;display:grid;
+  grid-template-columns:1fr 1fr;gap:8px;background:#fff}
+#seitenleiste .fuss .prim{grid-column:1 / -1}
+
+.gruppe{margin-bottom:22px}
+.gruppe:last-child{margin-bottom:0}
+.gruppe h4{margin:0 0 9px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:#8b807b;font-weight:700}
+.reihe{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.feld{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:12.5px;color:#4a4340;margin-bottom:9px}
+.feld:last-child{margin-bottom:0}
+.feld > span:first-child{flex:0 0 auto}
+
+#seitenleiste button{font:600 12.5px/1 inherit;cursor:pointer;height:32px;padding:0 11px;
+  border:1px solid #ded7d3;border-radius:7px;background:#fff;color:#3b3532;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .12s,border-color .12s}
+#seitenleiste button:hover{background:#f6f2f0;border-color:#cdc4bf}
+#seitenleiste button.icon{width:32px;padding:0}
+#seitenleiste button.breit{flex:1 1 100%}
+#seitenleiste button.prim{background:var(--accent);color:var(--onaccent);border-color:transparent;height:38px}
+#seitenleiste button.prim:hover{filter:brightness(.94);background:var(--accent)}
+#seitenleiste input[type=color]{width:32px;height:32px;padding:2px;border:1px solid #ded7d3;
+  border-radius:7px;background:#fff;cursor:pointer;flex:0 0 auto}
+#seitenleiste select{background:#fff;color:#3b3532;border:1px solid #ded7d3;border-radius:7px;
+  padding:7px 8px;font:12.5px inherit;width:100%}
+#seitenleiste input[type=range]{width:118px;flex:0 0 auto}
+#seitenleiste input[type=file]{font-size:11.5px;color:#6b615c;max-width:100%}
+.wert{font-variant-numeric:tabular-nums;color:#8b807b;font-size:11.5px;min-width:42px;text-align:right}
+#seitenleiste button.sw{width:26px;height:26px;min-height:0;border-radius:6px;
+  border:1px solid #ded7d3;cursor:pointer;padding:0;flex:0 0 auto}
+#seitenleiste button.sw:hover{transform:scale(1.08)}
+
+/* Layout-Auswahl mit Miniaturen.
+   Achtung: die Grundregel #seitenleiste button ist spezifischer als .vars button,
+   deshalb müssen diese Regeln ebenfalls mit #seitenleiste beginnen. */
+.vars{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+#seitenleiste .vars button{display:flex;flex-direction:column;align-items:stretch;
+  justify-content:flex-start;gap:7px;height:auto;min-height:0;padding:7px;
+  text-align:left;width:100%;border-radius:10px;background:#fff;overflow:visible;
+  transition:transform .14s,box-shadow .14s,border-color .14s}
+#seitenleiste .vars button:hover{transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(40,30,25,.1);background:#fff}
+#seitenleiste .vars button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.vars .nm{font-size:11.5px;font-weight:700;color:#3b3532;line-height:1.25}
+.vars .bs{font-size:10px;font-weight:400;color:#8b807b;line-height:1.3;margin-top:-4px}
+
+.vars .mini{display:block;position:relative;width:100%;height:170px;
+  overflow:hidden;background:#fff;border:1px solid #e7e1de;border-radius:6px;flex:0 0 auto}
+.vars .mini svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+#seitenleiste .vars button.sel .mini{border-color:var(--accent)}
+
+/* Bühne mit den Blättern */
+#buehne{flex:1 1 auto;min-width:0;padding:0 0 44px}
+#blaetter{zoom:var(--zoom,1)}
+#hint{position:sticky;top:0;z-index:50;background:#8c3a34;color:#fff;padding:11px 20px;
+  font-size:13px;line-height:1.5;display:none}
+
+#help{max-width:210mm;margin:14px auto 0;background:#fff;padding:22px 26px;border-radius:10px;
+  font-size:13px;line-height:1.7;color:#4a4340;box-shadow:0 2px 10px rgba(40,30,25,.08)}
+#help h3{margin:0 0 12px;font-size:14.5px;color:#2b2523}
+#help ul{margin:0;padding-left:19px}
+#help li{margin-bottom:9px}
+#help b{color:#2b2523}
+#help code{background:#f3efed;padding:1px 6px;border-radius:4px;font-size:12.5px}
+
+/* ==================================================================
+   Das Blatt – feste A4-Seiten mit exakten Positionen
+   ================================================================== */
+.page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;
+      margin:16px auto;box-shadow:0 3px 18px rgba(0,0,0,.35);
+      font-family:var(--font);font-size:var(--fs);line-height:1.45;color:var(--dark)}
+.sidebg{position:absolute;left:0;top:0;bottom:0;width:var(--sidew);background:var(--sidebar)}
+.bandbg{position:absolute;left:0;right:0;top:0;height:var(--band);background:var(--sidebar)}
+.band{position:absolute;left:0;right:0;top:0;height:var(--band);
+      background:linear-gradient(45deg,var(--sidebar) 0,var(--sidebar) var(--diag),
+                                       var(--accent) var(--diag),var(--accent) 100%)}
+.photo{position:absolute;left:12.5mm;top:22mm;width:58.5mm;height:60mm;object-fit:cover;
+       background:#fff;border:2.5mm solid #fff}
+.photo.rund{width:56mm;height:56mm;left:13.75mm;top:22mm;border-radius:50%}
+.bandtext{position:absolute;left:86mm;top:13mm;right:12mm;color:var(--onaccent)}
+.bandtext h1{margin:0 0 3.5mm;padding:0 0 3.5mm;font-size:2.9em;font-weight:700;letter-spacing:.4mm;
+             line-height:1.15;border-bottom:1mm solid currentColor}
+.bandtext .role{font-size:1.15em;font-weight:600;margin-bottom:2.5mm}
+.bandtext p{margin:0;line-height:1.5}
+.page .side{position:absolute;left:0;top:calc(var(--band) + 4mm);width:var(--sidew);
+      padding:0 7mm 0 8mm;overflow-wrap:anywhere;hyphens:auto}
+.page .main{position:absolute;left:74mm;top:calc(var(--band) + 4mm);right:11mm}
+.page.p2 .side,.page.p2 .main{top:14mm}
+
+h2.sec{margin:0 0 2.5mm;padding-bottom:1.2mm;font-size:1.4em;font-weight:700;letter-spacing:.35mm;
+       text-transform:uppercase;border-bottom:.5mm solid var(--dark)}
+.page .side > .blk:first-child h2.sec,.page .main > .blk:first-child h2.sec{margin-top:0}
+.inhalt > *:first-child{margin-top:0}
+.contact{display:flex;align-items:flex-start;gap:2.5mm;margin-bottom:1.8mm}
+.contact .ic{flex:0 0 auto;width:3.4mm;height:3.4mm;margin-top:.9mm;border-radius:.6mm;background:var(--accent)}
+.edu{margin-bottom:3.5mm}
+.edu .degree{font-weight:700}
+.edu .date{color:var(--grey)}
+.lang{margin-bottom:.8mm}
+.job{margin-bottom:3.5mm}
+.jobhead{display:flex;justify-content:space-between;gap:6mm;align-items:baseline}
+.jobtitle{font-weight:700;font-size:1.06em}
+.jobdate{color:var(--grey);white-space:nowrap}
+.company{color:var(--accent);margin-bottom:1.5mm}
+.company strong{font-weight:700}
+.page ul{margin:0;padding-left:4.5mm}
+.page li{margin-bottom:.9mm;padding-left:.5mm}
+.page li::marker{color:var(--accent)}
+[contenteditable]:focus{outline:1px dashed var(--accent);outline-offset:3px}
+
+/* --- verschiebbare Abschnitte --- */
+.blk{position:relative}
+.blk + .blk,.page .main > .side{margin-top:7mm}
+.inhalt > *:last-child{margin-bottom:0}
+.inhalt > .job:last-child,.inhalt > .edu:last-child{margin-bottom:0}
+.griff{position:absolute;right:-1mm;top:-2mm;z-index:5;display:none;gap:4px;
+       background:#2e2826;border-radius:4px;padding:2px 5px;font:12px/1.1 Arial,sans-serif;color:#fff}
+.blk:hover > .griff{display:flex}
+.griff .zieh{cursor:grab;padding:2px 3px}
+.griff .weg{cursor:pointer;padding:2px 3px;opacity:.7}
+.griff .weg:hover{opacity:1;color:#ff9a9a}
+.blk.zieht{opacity:.4}
+.page .photo{cursor:grab}
+.page .photo:active{cursor:grabbing}
+.page .photo.aktiv{outline:.5mm dashed var(--accent);outline-offset:1.5mm}
+.blk.zielvor{box-shadow:0 -2mm 0 -1.2mm var(--accent)}
+.side.zielende > .blk:last-child,.main.zielende > .blk:last-child{box-shadow:0 2mm 0 -1.2mm var(--accent)}
+.side.zielleer,.main.zielleer{box-shadow:inset 0 0 0 .5mm var(--accent)}
+.blk.ueberlauf{outline:.5mm dashed #c0392b;outline-offset:2mm}
+.randmarke{position:absolute;left:0;right:0;bottom:12mm;height:0;z-index:4;
+           border-top:.5mm dashed transparent;pointer-events:none}
+.page.voll .randmarke{border-top-color:#c0392b}
+
+/* ==================================================================
+   Die Varianten – jede setzt nur Geometrie und Farben um
+   ================================================================== */
+/* t1 Diagonale links: Grundzustand */
+
+/* t2 Diagonale rechts: alles gespiegelt */
+.t2 .sidebg{left:auto;right:0}
+.t2 .band{background:linear-gradient(315deg,var(--sidebar) 0,var(--sidebar) var(--diag),
+                                             var(--accent) var(--diag),var(--accent) 100%)}
+.t2 .photo{left:auto;right:12.5mm}
+.t2 .photo.rund{left:auto;right:13.75mm}
+.t2 .bandtext{left:12mm;right:86mm}
+.t2 .side{left:auto;right:0;padding:0 8mm 0 7mm}
+.t2 .main{left:11mm;right:74mm}
+
+/* t3 Gerades Band: ohne Diagonale */
+.t3 .band{background:var(--accent)}
+
+/* t4 Ruhiger Kopf: kein Farbband, Name in Akzentfarbe */
+.t4 .band,.t4 .bandbg{display:none}
+.t4 .bandtext{color:var(--dark)}
+.t4 .bandtext h1{color:var(--accent);border-color:var(--accent)}
+.t4 .bandtext .role{color:var(--accent)}
+.t4 .photo{border-color:var(--sidebar)}
+
+/* t5 Dunkler Kopf: Band in Textfarbe, Rolle in Akzent */
+.t5 .band{background:linear-gradient(45deg,var(--sidebar) 0,var(--sidebar) var(--diag),
+                                             var(--dark) var(--diag),var(--dark) 100%)}
+.t5 .bandtext{color:#fff}
+.t5 .bandtext .role{color:var(--accent)}
+
+/* t6 Farbige Leiste: Seitenleiste in Akzentfarbe, Kopf ruhig */
+.t6 .sidebg{background:var(--accent)}
+.t6 .bandbg{background:var(--accent);left:0;right:auto;width:var(--sidew)}
+.t6 .band{display:none}
+.t6 .bandtext{color:var(--dark)}
+.t6 .bandtext h1{color:var(--accent);border-color:var(--accent)}
+.t6 .bandtext .role{color:var(--accent)}
+.t6 .side{color:var(--onaccent)}
+.t6 .side h2.sec{border-color:currentColor}
+.t6 .side .edu .date{color:inherit;opacity:.85}
+.t6 .side .contact .ic{background:currentColor;opacity:.85}
+.t6 .side li::marker{color:currentColor}
+
+/* t7 Einspaltig: keine Seitenleiste, Kopfband über die volle Breite.
+   Reihenfolge Berufserfahrung -> Ausbildung -> Kenntnisse, wie es
+   Bewerbermanagement-Systeme erwarten. */
+.t7{--band:56mm;--diag:39.6mm}
+.t7 .sidebg,.t7 .bandbg{display:none}
+.t7 .band{background:var(--accent)}
+.t7 .photo{left:auto;right:15mm;top:10mm;width:32mm;height:38mm;border-width:0}
+.t7 .photo.rund{left:auto;right:15mm;top:10mm;width:36mm;height:36mm}
+.t7 .bandtext{left:15mm;right:54mm;top:10mm}
+.t7 .bandtext h1{font-size:2.5em;margin-bottom:2.5mm;padding-bottom:2.5mm}
+.t7 .main{left:15mm;right:15mm}
+.t7 .side{position:static;width:auto;padding:0}
+.t7 .side .contact,.t7 .side .edu,.t7 .side .lang{max-width:none}
+.t7 .side .kompakt{columns:2;column-gap:10mm}
+
+/* t8 Datumsspalte: klassisch tabellarisch, ruhiger Kopf ohne Farbfläche,
+   links eine schmale Spalte nur für die Zeiträume. */
+.t8{--band:52mm;--datecol:26mm}
+.t8 .sidebg,.t8 .bandbg{display:none}
+.t8 .band{top:calc(var(--band) - 1mm);height:.8mm;background:var(--accent)}
+.t8 .photo{left:auto;right:15mm;top:8mm;width:30mm;height:36mm;border-width:0}
+.t8 .photo.rund{left:auto;right:15mm;top:8mm;width:34mm;height:34mm}
+.t8 .bandtext{left:15mm;right:52mm;top:9mm;color:var(--dark)}
+.t8 .bandtext h1{font-size:2.5em;color:var(--accent);border:0;margin-bottom:1.5mm;padding-bottom:0}
+.t8 .bandtext .role{color:var(--accent)}
+.t8 .main{left:15mm;right:15mm}
+.t8 .side{position:static;width:auto;padding:0}
+.t8 h2.sec{border-bottom-width:.3mm}
+.t8 .job,.t8 .edu{position:relative;padding-left:var(--datecol);min-height:4mm}
+.t8 .jobhead{display:block}
+.t8 .jobdate,.t8 .edu .date{position:absolute;left:0;top:.2mm;width:calc(var(--datecol) - 4mm);
+     white-space:normal;color:var(--accent);font-weight:600}
+.t8 .side .contact{padding-left:var(--datecol)}
+.t8 .side .lang{padding-left:var(--datecol)}
+.t8 .side ul,.t8 .main ul{margin-left:0}
+.t8 .side > ul{padding-left:calc(var(--datecol) + 4.5mm)}
+
+/* t9 Zeitstrahl (Typ „Concept“): einspaltig, Stationen an einer
+   senkrechten Linie mit Punkten. */
+.t9{--band:56mm;--diag:39.6mm}
+.t9 .sidebg,.t9 .bandbg{display:none}
+.t9 .band{background:var(--accent)}
+.t9 .photo{left:auto;right:15mm;top:10mm;width:32mm;height:38mm;border-width:0}
+.t9 .photo.rund{left:auto;right:15mm;top:10mm;width:36mm;height:36mm}
+.t9 .bandtext{left:15mm;right:54mm;top:10mm}
+.t9 .bandtext h1{font-size:2.5em;margin-bottom:2.5mm;padding-bottom:2.5mm}
+.t9 .main{left:15mm;right:15mm}
+.t9 .side{position:static;width:auto;padding:0}
+.t9 h2.sec{border:0;color:var(--accent);margin:0 0 3.5mm}
+.t9 .job,.t9 .edu{position:relative;padding-left:7mm;margin-left:1.6mm;
+     border-left:.4mm solid var(--accent);padding-bottom:1.5mm}
+.t9 .job::before,.t9 .edu::before{content:"";position:absolute;left:-1.8mm;top:1.4mm;
+     width:3.2mm;height:3.2mm;border-radius:50%;background:var(--accent)}
+.t9 .side > ul{padding-left:11mm}
+
+/* t10 Kopfblock (Typ „Influx“/„Bold“): kräftiger dunkler Kopf,
+   Rubriktitel auf getönter Fläche, einspaltig. */
+.t10{--band:60mm}
+.t10 .sidebg,.t10 .bandbg{display:none}
+.t10 .band{background:var(--dark)}
+.t10 .photo{left:auto;right:15mm;top:11mm;width:34mm;height:38mm;border-width:0}
+.t10 .photo.rund{left:auto;right:15mm;top:11mm;width:36mm;height:36mm}
+.t10 .bandtext{left:15mm;right:56mm;top:11mm;color:#fff}
+.t10 .bandtext h1{font-size:3.1em;border:0;margin-bottom:1.5mm;padding-bottom:0}
+.t10 .bandtext .role{color:var(--accent);text-transform:uppercase;letter-spacing:.6mm}
+.t10 .main{left:15mm;right:15mm}
+.t10 .side{position:static;width:auto;padding:0}
+.t10 h2.sec{border:0;background:var(--sidebar);color:var(--dark);padding:1.6mm 3mm;
+     font-size:1.25em;margin:0 0 3mm}
+
+/* t11 Zentriert mit Serifen-Anmutung: Foto rund und mittig,
+   feine Linien, viel Weißraum. */
+.t11{--band:78mm}
+.t11 .sidebg,.t11 .bandbg,.t11 .band{display:none}
+.t11 .photo{left:50%;margin-left:-16mm;top:9mm;width:32mm;height:32mm;border-radius:50%;border-width:0}
+.t11 .photo.rund{left:50%;margin-left:-16mm;top:9mm;width:32mm;height:32mm}
+.t11 .bandtext{left:32mm;right:32mm;top:45mm;text-align:center;color:var(--dark)}
+.t11 .bandtext h1{font-size:2.5em;font-weight:400;letter-spacing:1.1mm;border:0;
+     margin-bottom:1.5mm;padding-bottom:0}
+.t11 .bandtext .role{color:var(--accent);text-transform:uppercase;letter-spacing:.7mm;margin-bottom:2.5mm}
+.t11 .main{left:22mm;right:22mm}
+.t11 .side{position:static;width:auto;padding:0}
+.t11 h2.sec{text-align:center;border:0;border-top:.3mm solid var(--dark);padding:2.2mm 0 0;
+     margin:0 0 3mm;font-weight:400;letter-spacing:1mm}
+
+/* t12 Zweispalter ohne Tönung (Typ „Bordered“): zwei Spalten,
+   getrennt nur durch eine feine Linie. */
+.t12{--band:50mm}
+.t12 .bandbg,.t12 .band{display:none}
+.t12 .sidebg{background:none;top:var(--band);border-right:.3mm solid var(--accent);width:calc(var(--sidew) - 4mm)}
+.t12 .photo{left:auto;right:15mm;top:7mm;width:30mm;height:36mm;border-width:0}
+.t12 .photo.rund{left:auto;right:15mm;top:7mm;width:34mm;height:34mm}
+.t12 .bandtext{left:15mm;right:52mm;top:8mm;color:var(--dark)}
+.t12 .bandtext h1{font-size:2.5em;color:var(--dark);border-bottom-color:var(--accent);
+     margin-bottom:2.5mm;padding-bottom:2.5mm}
+.t12 .bandtext .role{color:var(--accent)}
+.t12 .side{padding:0 10mm 0 15mm}
+.t12 .main{left:76mm}
+.t12 h2.sec{border-bottom-width:.3mm;font-size:1.2em;margin:0 0 2.5mm}
+
+/* Kontaktangaben laufen in einspaltigen Varianten in einer Zeile */
+.t7 .side .contact,.t9 .side .contact,.t10 .side .contact,.t11 .side .contact{
+  display:inline-flex;margin:0 8mm 1.8mm 0}
+.t11 .side .contact{margin:0 4mm 1.8mm}
+.t11 .side{text-align:center}
+.t11 .side .edu,.t11 .side ul{text-align:left;max-width:120mm;margin-left:auto;margin-right:auto}
+
+/* Ausbildung in einspaltigen Varianten zweispaltig setzen – spart Platz */
+.t7 .side .edu,.t9 .side .edu,.t10 .side .edu,.t12 .side .edu{break-inside:avoid}
+
+/* t13 Schlicht (ATS pur): keine Farbflächen, kein Foto, eine Spalte.
+   Die sicherste Struktur für Bewerbermanagement-Systeme. */
+.t13{--band:44mm}
+.t13 .sidebg,.t13 .bandbg{display:none}
+.t13 .band{top:calc(var(--band) - 1mm);height:.35mm;background:var(--dark)}
+.t13 .photo{display:none}
+.t13 .bandtext{left:15mm;right:15mm;top:14mm;color:var(--dark)}
+.t13 .bandtext h1{font-size:2.3em;color:var(--dark);border:0;margin-bottom:1.5mm;padding-bottom:0}
+.t13 .bandtext .role{color:var(--dark);font-weight:600}
+.t13 .main{left:15mm;right:15mm}
+.t13 .side{position:static;width:auto;padding:0}
+.t13 h2.sec{border-bottom-width:.25mm;font-size:1.2em;letter-spacing:.2mm}
+.t13 li::marker{color:var(--dark)}
+.t13 .company{color:var(--dark)}
+.t13 .contact .ic{background:var(--dark)}
+
+/* t14 Kopfkarte: der Kopf steht in einem gerahmten Kasten,
+   Kontaktdaten laufen als Zeile darunter. Einspaltig. */
+.t14{--band:66mm}
+.t14 .sidebg,.t14 .bandbg{display:none}
+.t14 .band{left:15mm;right:15mm;top:9mm;height:calc(var(--band) - 17mm);
+     background:none;border:.4mm solid var(--accent)}
+.t14 .photo{left:auto;right:22mm;top:15mm;width:28mm;height:32mm;border-width:0}
+.t14 .photo.rund{left:auto;right:22mm;top:16mm;width:30mm;height:30mm}
+.t14 .bandtext{left:22mm;right:58mm;top:15mm;color:var(--dark)}
+.t14 .bandtext h1{font-size:2.3em;color:var(--accent);border:0;margin-bottom:1.5mm;padding-bottom:0}
+.t14 .bandtext .role{color:var(--dark);font-weight:600}
+.t14 .main{left:15mm;right:15mm}
+.t14 .side{position:static;width:auto;padding:0}
+.t14 h2.sec{border:0;color:var(--accent);border-bottom:.3mm solid var(--accent)}
+
+/* t15 Breite Leiste: 88 mm Seitenspalte für Profile mit vielen
+   Kenntnissen, Sprachen und Zertifikaten. */
+.t15{--sidew:88mm;--band:76mm;--diag:53.7mm}
+.t15 .photo{left:16mm;top:18mm;width:56mm;height:52mm}
+.t15 .photo.rund{left:30mm;top:18mm;width:52mm;height:52mm}
+.t15 .bandtext{left:100mm;right:12mm;top:14mm}
+.t15 .bandtext h1{font-size:2.4em}
+.t15 .main{left:96mm;right:12mm}
+.t15 .side{padding:0 8mm 0 12mm}
+
+/* t16 Akzentstreifen: kräftige Farbkante am Blattrand, sonst ruhig.
+   Einspaltig mit eingerücktem Textblock. */
+.t16{--band:54mm}
+.t16 .sidebg{width:9mm;background:var(--accent)}
+.t16 .bandbg{display:none}
+.t16 .band{left:9mm;background:var(--sidebar);height:calc(var(--band) - 4mm)}
+.t16 .photo{left:auto;right:15mm;top:9mm;width:32mm;height:38mm;border-width:0}
+.t16 .photo.rund{left:auto;right:15mm;top:9mm;width:36mm;height:36mm}
+.t16 .bandtext{left:20mm;right:54mm;top:10mm;color:var(--dark)}
+.t16 .bandtext h1{font-size:2.4em;color:var(--accent);border-bottom-color:var(--accent);
+     margin-bottom:2.5mm;padding-bottom:2.5mm}
+.t16 .bandtext .role{color:var(--dark);font-weight:600}
+.t16 .main{left:20mm;right:15mm}
+.t16 .side{position:static;width:auto;padding:0}
+.t16 h2.sec{border:0;border-left:1.2mm solid var(--accent);padding:0 0 0 3mm;margin-bottom:3mm}
+
+/* Kontaktangaben laufen in allen einspaltigen Varianten in einer Zeile */
+.t13 .side .contact,.t14 .side .contact,.t16 .side .contact{display:inline-flex;margin:0 8mm 1.8mm 0}
+
+/* ==================================================================
+   Druck
+   ================================================================== */
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  #seitenleiste,#hint,#help,.griff,.randmarke{display:none !important}
+  #buehne{padding:0}
+  #blaetter{zoom:1 !important}
+  body{display:block}
+  .blk.ueberlauf{outline:0 !important}
+  .page{margin:0;box-shadow:none;page-break-after:always}
+  .page:last-of-type{page-break-after:auto}
+  .page[style*="display: none"]{display:none !important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= Linke Spalte ================= -->
+<aside id="seitenleiste" class="ui">
+  <div class="kopf">
+    <a href="index.html" style="text-decoration:none;color:inherit"><b data-t="marke">Lebenslauf-Editor</b></a>
+    <span><span id="kopfName">Max Mustermann</span> &middot; <span id="varName">Diagonale links</span></span>
+  </div>
+
+  <div class="rollbar">
+
+    <div class="gruppe">
+      <h4 data-t="gSprache">Sprache</h4>
+      <select id="fSprache">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gText">Text</h4>
+      <div class="reihe">
+        <button class="icon" onclick="cmd('bold')" title="Fett"><b>F</b></button>
+        <button class="icon" onclick="cmd('italic')" title="Kursiv"><i>K</i></button>
+        <button class="icon" onclick="cmd('underline')" title="Unterstrichen"><u>U</u></button>
+        <button class="icon" onclick="cmd('insertUnorderedList')" title="Aufzählung">&#8226;</button>
+        <button class="icon" onclick="groesse(-1)" title="Markierung verkleinern">A&minus;</button>
+        <button class="icon" onclick="groesse(1)" title="Markierung vergrößern">A+</button>
+        <input type="color" value="#3B3B3B" title="Textfarbe der Markierung"
+               onchange="cmd('foreColor',this.value)">
+        <button class="icon" onclick="cmd('undo')" title="Rückgängig">&#8630;</button>
+        <button class="icon" onclick="cmd('redo')" title="Wiederholen">&#8631;</button>
+      </div>
+      <div class="reihe" style="margin-top:7px">
+        <button data-t="format" onclick="cmd('removeFormat')">Format entfernen</button>
+        <button data-t="abschnitt" onclick="abschnittNeu()">+ Abschnitt</button>
+      </div>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gLayout">Layout</h4>
+      <div class="vars" id="varListe"></div>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gFarben">Farben</h4>
+      <div class="reihe" style="margin-bottom:10px">
+        <button class="sw" style="background:#B3988D" title="Altrosa" onclick="palette('#B3988D','#EEE4E3','#3B3B3B')"></button>
+        <button class="sw" style="background:#2F6F6B" title="Petrol" onclick="palette('#2F6F6B','#E2EDEB','#233331')"></button>
+        <button class="sw" style="background:#3A5A8C" title="Marine" onclick="palette('#3A5A8C','#E5EAF3','#22304A')"></button>
+        <button class="sw" style="background:#8C4A52" title="Bordeaux" onclick="palette('#8C4A52','#F3E7E8','#382426')"></button>
+        <button class="sw" style="background:#6B7A3A" title="Oliv" onclick="palette('#6B7A3A','#EDF0E2','#2F361B')"></button>
+        <button class="sw" style="background:#C08A2E" title="Ocker" onclick="palette('#C08A2E','#F6EEDE','#463414')"></button>
+        <button class="sw" style="background:#4A4A50" title="Graphit" onclick="palette('#4A4A50','#ECECEF','#2A2A2E')"></button>
+        <button class="sw" style="background:#7A4FA3" title="Violett" onclick="palette('#7A4FA3','#EEE7F5','#32204A')"></button>
+      </div>
+      <div class="feld"><span data-t="akzent">Akzent</span><input type="color" id="cAccent" value="#B3988D"></div>
+      <div class="feld"><span data-t="leiste">Seitenleiste</span><input type="color" id="cSide" value="#EEE4E3"></div>
+      <div class="feld"><span data-t="textfarbe">Text</span><input type="color" id="cDark" value="#3B3B3B"></div>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gSchrift">Schrift</h4>
+      <select id="fFont">
+        <optgroup label="Serifenlos">
+          <option value='"Blinker", Arial, sans-serif'>Blinker</option>
+          <option value='"Inter", Arial, sans-serif'>Inter</option>
+          <option value='"Nunito Sans", Arial, sans-serif'>Nunito Sans</option>
+          <option value='"Open Sans", Arial, sans-serif'>Open Sans</option>
+          <option value='"Lato", Arial, sans-serif'>Lato</option>
+          <option value='"Work Sans", Arial, sans-serif'>Work Sans</option>
+          <option value='"IBM Plex Sans", Arial, sans-serif'>IBM Plex Sans</option>
+          <option value='"Montserrat", Arial, sans-serif'>Montserrat</option>
+          <option value='"Raleway", Arial, sans-serif'>Raleway</option>
+        </optgroup>
+        <optgroup label="Serifen">
+          <option value='"Source Serif 4", Georgia, serif'>Source Serif</option>
+          <option value='"Merriweather", Georgia, serif'>Merriweather</option>
+          <option value='"EB Garamond", Garamond, serif'>EB Garamond</option>
+          <option value='"Playfair Display", Georgia, serif'>Playfair Display</option>
+          <option value='"Roboto Slab", Georgia, serif'>Roboto Slab</option>
+        </optgroup>
+        <optgroup label="Systemschriften">
+          <option value='Arial, Helvetica, sans-serif'>Arial</option>
+          <option value='"Segoe UI", Tahoma, sans-serif'>Segoe UI</option>
+          <option value='Verdana, Geneva, sans-serif'>Verdana</option>
+          <option value='Georgia, "Times New Roman", serif'>Georgia</option>
+          <option value='"Times New Roman", Times, serif'>Times New Roman</option>
+        </optgroup>
+      </select>
+      <div class="feld" style="margin-top:10px"><span data-t="groesse">Größe</span>
+        <input type="range" id="fSize" min="8" max="10.5" step="0.1" value="9">
+        <span class="wert" id="fSizeTxt">9,0 pt</span></div>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gFoto">Foto</h4>
+      <input type="file" id="fFoto" accept="image/*">
+      <div class="feld" style="margin-top:10px"><span data-t="groesse">Größe</span>
+        <input type="range" id="fFotoSize" min="60" max="150" step="2" value="100">
+        <span class="wert" id="fFotoTxt">100 %</span></div>
+      <div class="reihe">
+        <button data-t="fotoform" onclick="fotoForm()">Eckig / rund</button>
+        <button data-t="fotoan" onclick="fotoZeigen()">Ein / aus</button>
+        <button class="breit" data-t="fotoreset" onclick="fotoZuruecksetzen()">Neu ausrichten</button>
+      </div>
+    </div>
+
+    <div class="gruppe">
+      <h4 data-t="gAnsicht">Ansicht</h4>
+      <div class="feld"><span data-t="zoom">Zoom</span>
+        <input type="range" id="fZoom" min="45" max="110" step="5" value="85">
+        <span class="wert" id="fZoomTxt">85 %</span></div>
+      <div class="reihe">
+        <button data-t="seite2" onclick="seite2()">Seite 2 ein / aus</button>
+        <button data-t="pruefen" onclick="checkFit(true)">Prüfen</button>
+        <button class="breit" data-t="reset" onclick="zuruecksetzen()">Farben &amp; Schrift zurücksetzen</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="fuss">
+    <button class="prim" data-t="pdf" onclick="window.print()">Als PDF speichern</button>
+    <button onclick="wordExport()">Word</button>
+    <button data-t="sichern" onclick="htmlSpeichern()">Sichern</button>
+  </div>
+</aside>
+
+<!-- ================= Bühne ================= -->
+<div id="buehne">
+<div id="hint" class="ui"></div>
+<div id="blaetter">
+
+<!-- ================= Seite 1 ================= -->
+<section class="page p1">
+  <div class="randmarke"></div>
+  <div class="sidebg"></div>
+  <div class="bandbg"></div>
+  <div class="band"></div>
+  <img class="photo" alt="Foto" draggable="false"
+       src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 340'%3E%3Crect width='320' height='340' fill='%23e4e1df'/%3E%3Ccircle cx='160' cy='130' r='58' fill='%23b7b1ad'/%3E%3Cpath d='M42 340c0-70 52-112 118-112s118 42 118 112z' fill='%23b7b1ad'/%3E%3C/svg%3E">
+
+  <div class="bandtext" contenteditable="true">
+    <h1>Max Mustermann</h1>
+    <div class="role">Projektmanager Digitalisierung</div>
+    <p>Projektmanager mit acht Jahren Erfahrung in der Steuerung IT-naher Vorhaben vom ersten
+       Konzept bis zum Rollout. Schwerpunkte sind Prozessanalyse, Anforderungsmanagement und
+       die Zusammenarbeit mit internen Fachbereichen wie externen Dienstleistern. Strukturierte,
+       klar kommunizierende Arbeitsweise, auch bei mehreren parallelen Vorhaben.</p>
+  </div>
+
+  <aside class="side">
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Persönliche Daten</h2>
+    <div class="contact"><span class="ic"></span><span>Musterstraße 12, 90402 Nürnberg</span></div>
+    <div class="contact"><span class="ic"></span><span>+49 170 123 45 67</span></div>
+    <div class="contact"><span class="ic"></span><span>max.mustermann@example.de</span></div>
+    <div class="contact"><span class="ic"></span><span>14.05.1990</span></div>
+      </div>
+    </section>
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Ausbildung</h2>
+    <div class="edu">
+      <div class="degree">Master of Science</div>
+      <div>Wirtschaftsinformatik</div>
+      <div><strong>Universität Musterstadt</strong></div>
+      <div class="date">2015 – 2017</div>
+      <ul><li>Abschlussnote 1,7</li></ul>
+    </div>
+    <div class="edu">
+      <div class="degree">Bachelor of Arts</div>
+      <div>Betriebswirtschaft</div>
+      <div><strong>Hochschule Beispielstadt</strong></div>
+      <div class="date">2011 – 2015</div>
+      <ul><li>Abschlussnote 2,1</li></ul>
+    </div>
+    <div class="edu">
+      <div class="degree">Abitur</div>
+      <div>Leistungskurse Mathematik, Englisch</div>
+      <div><strong>Muster-Gymnasium, Nürnberg</strong></div>
+      <div class="date">2002 – 2011</div>
+    </div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Berufserfahrung</h2>
+
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Projektmanager Digitalisierung</span><span class="jobdate">03/2021 – heute</span></div>
+      <div class="company"><strong>Beispiel GmbH</strong> – Nürnberg</div>
+      <ul>
+        <li>Leitung von vier parallelen Digitalisierungsprojekten mit Budgets bis 500.000&nbsp;€</li>
+        <li>Aufnahme und Priorisierung von Anforderungen gemeinsam mit sechs Fachbereichen</li>
+        <li>Steuerung externer Dienstleister inklusive Abnahme und Rechnungsprüfung</li>
+        <li>Einführung eines einheitlichen Berichtswesens für die Geschäftsführung</li>
+        <li>Aufbau und Schulung eines fünfköpfigen Projektteams</li>
+        <li>Verantwortung für Zeit-, Budget- und Qualitätsziele gegenüber der Bereichsleitung</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Projektreferent</span><span class="jobdate">08/2017 – 02/2021</span></div>
+      <div class="company"><strong>Musterfirma AG</strong> – Fürth</div>
+      <ul>
+        <li>Vorbereitung von Entscheidungsvorlagen und Wirtschaftlichkeitsrechnungen</li>
+        <li>Koordination von Terminen, Meilensteinen und Projektdokumentation</li>
+        <li>Analyse bestehender Abläufe und Ableitung von Verbesserungsvorschlägen</li>
+        <li>Ansprechpartner für Anwenderfragen während zweier Systemeinführungen</li>
+        <li>Moderation von Workshops mit bis zu 20 Teilnehmenden</li>
+      </ul>
+    </div>
+
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Werkstudent Prozessmanagement</span><span class="jobdate">10/2015 – 07/2017</span></div>
+      <div class="company"><strong>Beispiel Handels KG</strong> – Erlangen</div>
+      <ul>
+        <li>Dokumentation und Visualisierung von Kernprozessen</li>
+        <li>Auswertungen und Reports für die Bereichsleitung</li>
+        <li>Unterstützung bei der Einführung eines Ticketsystems</li>
+      </ul>
+    </div>
+      </div>
+    </section>
+  </main>
+</section>
+
+<!-- ================= Seite 2 ================= -->
+<section class="page p2">
+  <div class="randmarke"></div>
+  <div class="sidebg"></div>
+
+  <aside class="side">
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Kompetenzen</h2>
+    <ul>
+      <li>Projektsteuerung nach Scrum und klassisch</li>
+      <li>Anforderungs- und Prozessanalyse</li>
+      <li>Jira &amp; Confluence – routinierte Anwendung</li>
+      <li>SAP – Grundkenntnisse</li>
+      <li>Microsoft Office – fortgeschrittene Anwenderkenntnisse</li>
+      <li>Präsentation und Moderation</li>
+    </ul>
+      </div>
+    </section>
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Sprachen</h2>
+    <div class="lang"><strong>Deutsch</strong>: Muttersprache</div>
+    <div class="lang"><strong>Englisch</strong>: C1</div>
+    <div class="lang"><strong>Spanisch</strong>: B1</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true">
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Praktikant Unternehmensberatung</span><span class="jobdate">03/2015 – 08/2015</span></div>
+      <div class="company"><strong>Consult &amp; Partner GmbH</strong> – München</div>
+      <ul>
+        <li>Mitarbeit an einer Prozessaufnahme im Einkauf eines Industriekunden</li>
+        <li>Erstellung von Präsentationen und Ergebnisdokumentationen</li>
+        <li>Recherche und Aufbereitung von Marktdaten</li>
+      </ul>
+    </div>
+      </div>
+    </section>
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Weiterbildung</h2>
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Professional Scrum Master I</span><span class="jobdate">2022</span></div>
+      <div class="company"><strong>Scrum.org</strong></div>
+    </div>
+    <div class="job">
+      <div class="jobhead"><span class="jobtitle">Projektmanagement nach IPMA Level D</span><span class="jobdate">2019</span></div>
+      <div class="company"><strong>GPM Deutsche Gesellschaft für Projektmanagement</strong></div>
+    </div>
+      </div>
+    </section>
+    <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
+      <div class="inhalt" contenteditable="true"><h2 class="sec">Interessen</h2>
+    <ul>
+      <li>Langstreckenlauf</li>
+      <li>Fotografie</li>
+      <li>Ehrenamt im Sportverein</li>
+    </ul>
+      </div>
+    </section>
+  </main>
+</section>
+
+</div>
+
+
+
+<script>
+/* ---------------- Layouts ---------------- */
+const VARS = [
+  {k:'t1', n:'Diagonale links',  b:'Original'},
+  {k:'t2', n:'Diagonale rechts', b:'gespiegelt'},
+  {k:'t3', n:'Gerades Band',     b:'ohne Diagonale'},
+  {k:'t4', n:'Ruhiger Kopf',     b:'ohne Farbband'},
+  {k:'t5', n:'Dunkler Kopf',     b:'kräftig'},
+  {k:'t6', n:'Farbige Leiste',   b:'Leiste in Akzentfarbe'},
+  {k:'t7', n:'Einspaltig',       b:'ATS-sicher, ohne Leiste'},
+  {k:'t8', n:'Datumsspalte',     b:'klassisch tabellarisch'},
+  {k:'t9', n:'Zeitstrahl',       b:'Stationen an einer Linie'},
+  {k:'t10',n:'Kopfblock',        b:'kräftiger dunkler Kopf'},
+  {k:'t11',n:'Zentriert',        b:'rundes Foto, viel Weißraum'},
+  {k:'t12',n:'Feine Trennlinie', b:'zwei Spalten ohne Tönung'},
+  {k:'t13',n:'Schlicht',        b:'ohne Foto, ATS-sicher'},
+  {k:'t14',n:'Kopfkarte',       b:'gerahmter Kopfbereich'},
+  {k:'t15',n:'Breite Leiste',   b:'viel Platz für Kenntnisse'},
+  {k:'t16',n:'Akzentstreifen',  b:'Farbkante am Rand'}
+];
+const EINSPALTIG = ['t7','t8','t9','t10','t11','t13','t14','t16'];
+const INHALT = {"en": {"p1kopf": "<h1>John Doe</h1><div class=\"role\">Digital Transformation Project Manager</div><p>Project manager with eight years of experience steering IT-related initiatives from first concept to rollout. Focus on process analysis, requirements management and working with internal departments as well as external service providers. Structured, clear communicator, comfortable running several projects in parallel.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Personal details</h2><div class=\"contact\"><span class=\"ic\"></span><span>12 Sample Street, 90402 Nuremberg</span></div><div class=\"contact\"><span class=\"ic\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic\"></span><span>john.doe@example.com</span></div><div class=\"contact\"><span class=\"ic\"></span><span>14 May 1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Education</h2><div class=\"edu\"><div class=\"degree\">Master of Science</div><div>Business Information Systems</div><div><strong>Sample University</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Final grade 1.7 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachelor of Arts</div><div>Business Administration</div><div><strong>Example University of Applied Sciences</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Final grade 2.1 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Abitur (A-levels)</div><div>Majors in mathematics and English</div><div><strong>Sample Grammar School, Nuremberg</strong></div><div class=\"date\">2002 – 2011</div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Work experience</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Digital Transformation Project Manager</span><span class=\"jobdate\">03/2021 – present</span></div><div class=\"company\"><strong>Example GmbH</strong> – Nuremberg</div><ul><li>Led four parallel digitalisation projects with budgets of up to €500,000</li><li>Gathered and prioritised requirements together with six departments</li><li>Managed external service providers including acceptance testing and invoice review</li><li>Introduced consistent reporting for the management board</li><li>Built and trained a five-person project team</li><li>Accountable for schedule, budget and quality targets towards the division head</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Project Officer</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Sample AG</strong> – Fürth</div><ul><li>Prepared decision papers and cost-benefit analyses</li><li>Coordinated deadlines, milestones and project documentation</li><li>Analysed existing workflows and proposed improvements</li><li>Point of contact for user questions during two system rollouts</li><li>Facilitated workshops with up to 20 participants</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Working Student, Process Management</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Example Trading KG</strong> – Erlangen</div><ul><li>Documented and visualised core business processes</li><li>Produced analyses and reports for the division head</li><li>Supported the introduction of a ticketing system</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Skills</h2><ul><li>Project management, agile and traditional</li><li>Requirements and process analysis</li><li>Jira &amp; Confluence – confident daily use</li><li>SAP – working knowledge</li><li>Microsoft Office – advanced</li><li>Presenting and facilitating</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Languages</h2><div class=\"lang\"><strong>English</strong>: native speaker</div><div class=\"lang\"><strong>German</strong>: C1</div><div class=\"lang\"><strong>Spanish</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Intern, Management Consulting</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Munich</div><ul><li>Supported a procurement process review at an industrial client</li><li>Produced presentations and result documentation</li><li>Researched and prepared market data</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Further training</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">IPMA Level D Project Management</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>German Association for Project Management</strong></div></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Interests</h2><ul><li>Long-distance running</li><li>Photography</li><li>Volunteering at a local sports club</li></ul></div></section>"}, "es": {"p1kopf": "<h1>Juan Pérez</h1><div class=\"role\">Jefe de proyecto de digitalización</div><p>Jefe de proyecto con ocho años de experiencia dirigiendo iniciativas de TI desde el concepto inicial hasta su implantación. Especializado en análisis de procesos, gestión de requisitos y colaboración con departamentos internos y proveedores externos. Trabajo estructurado, comunicación clara y soltura con varios proyectos en paralelo.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Datos personales</h2><div class=\"contact\"><span class=\"ic\"></span><span>Calle Ejemplo 12, 90402 Núremberg</span></div><div class=\"contact\"><span class=\"ic\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic\"></span><span>juan.perez@example.com</span></div><div class=\"contact\"><span class=\"ic\"></span><span>14/05/1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación</h2><div class=\"edu\"><div class=\"degree\">Máster</div><div>Sistemas de Información Empresarial</div><div><strong>Universidad de Ejemplo</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Nota final 1,7 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Grado</div><div>Administración de Empresas</div><div><strong>Escuela Superior de Ejemplo</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Nota final 2,1 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachillerato</div><div>Modalidad matemáticas e inglés</div><div><strong>Instituto Ejemplo, Núremberg</strong></div><div class=\"date\">2002 – 2011</div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Experiencia profesional</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Jefe de proyecto de digitalización</span><span class=\"jobdate\">03/2021 – actualidad</span></div><div class=\"company\"><strong>Ejemplo GmbH</strong> – Núremberg</div><ul><li>Dirección de cuatro proyectos de digitalización simultáneos con presupuestos de hasta 500.000 €</li><li>Recogida y priorización de requisitos junto a seis departamentos</li><li>Gestión de proveedores externos, incluidas recepción y revisión de facturas</li><li>Implantación de un sistema de informes unificado para la dirección</li><li>Creación y formación de un equipo de cinco personas</li><li>Responsable de los objetivos de plazo, presupuesto y calidad ante la dirección</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Técnico de proyectos</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Empresa Ejemplo AG</strong> – Fürth</div><ul><li>Elaboración de propuestas de decisión y análisis de rentabilidad</li><li>Coordinación de plazos, hitos y documentación del proyecto</li><li>Análisis de procesos existentes y propuestas de mejora</li><li>Persona de contacto para los usuarios durante dos implantaciones de sistemas</li><li>Moderación de talleres con hasta 20 participantes</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Estudiante en prácticas, gestión de procesos</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Comercial Ejemplo KG</strong> – Erlangen</div><ul><li>Documentación y representación gráfica de los procesos clave</li><li>Análisis e informes para la dirección de área</li><li>Apoyo en la implantación de un sistema de tickets</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Competencias</h2><ul><li>Gestión de proyectos, ágil y clásica</li><li>Análisis de requisitos y de procesos</li><li>Jira &amp; Confluence – uso habitual</li><li>SAP – conocimientos básicos</li><li>Microsoft Office – nivel avanzado</li><li>Presentación y moderación</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Idiomas</h2><div class=\"lang\"><strong>Español</strong>: lengua materna</div><div class=\"lang\"><strong>Inglés</strong>: C1</div><div class=\"lang\"><strong>Alemán</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Prácticas en consultoría</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Múnich</div><ul><li>Colaboración en un análisis de procesos de compras en un cliente industrial</li><li>Elaboración de presentaciones y documentación de resultados</li><li>Búsqueda y preparación de datos de mercado</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación continua</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Gestión de proyectos IPMA nivel D</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>Asociación Alemana de Gestión de Proyectos</strong></div></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Intereses</h2><ul><li>Carreras de fondo</li><li>Fotografía</li><li>Voluntariado en un club deportivo</li></ul></div></section>"}};
+const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Format entfernen", "abschnitt": "+ Abschnitt", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "seite2": "Seite 2 ein / aus", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "seite2": "Page 2 on / off", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "seite2": "Página 2 sí / no", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia"}};
+const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel anklicken und überschreiben.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – click the title to rename it.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: haz clic en el título para cambiarlo.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos."}};
+const VARNAMEN = {"de": [["Diagonale links", "Original"], ["Diagonale rechts", "gespiegelt"], ["Gerades Band", "ohne Diagonale"], ["Ruhiger Kopf", "ohne Farbband"], ["Dunkler Kopf", "kräftig"], ["Farbige Leiste", "Leiste in Akzentfarbe"], ["Einspaltig", "ATS-sicher"], ["Datumsspalte", "klassisch tabellarisch"], ["Zeitstrahl", "Stationen an einer Linie"], ["Kopfblock", "dunkler Kopf"], ["Zentriert", "rundes Foto"], ["Feine Trennlinie", "zwei Spalten ohne Tönung"], ["Schlicht", "ohne Foto, ATS-sicher"], ["Kopfkarte", "gerahmter Kopf"], ["Breite Leiste", "viel Platz für Kenntnisse"], ["Akzentstreifen", "Farbkante am Rand"]], "en": [["Diagonal left", "original"], ["Diagonal right", "mirrored"], ["Solid banner", "no diagonal"], ["Quiet header", "no colour band"], ["Dark header", "bold"], ["Coloured sidebar", "accent fill"], ["Single column", "ATS-safe"], ["Date column", "classic tabular"], ["Timeline", "dots on a line"], ["Header block", "dark header"], ["Centred", "round photo"], ["Fine divider", "two columns, no tint"], ["Plain", "no photo, ATS-safe"], ["Header card", "framed header"], ["Wide sidebar", "room for skills"], ["Accent edge", "colour bar at the margin"]], "es": [["Diagonal izquierda", "original"], ["Diagonal derecha", "invertido"], ["Banda plana", "sin diagonal"], ["Cabecera sobria", "sin franja de color"], ["Cabecera oscura", "contrastada"], ["Barra en color", "barra con acento"], ["Una columna", "apto para ATS"], ["Columna de fechas", "tabular clásico"], ["Línea de tiempo", "puntos en una línea"], ["Bloque de cabecera", "cabecera oscura"], ["Centrado", "foto redonda"], ["Separador fino", "dos columnas sin fondo"], ["Sobrio", "sin foto, apto para ATS"], ["Cabecera enmarcada", "cabecera con marco"], ["Barra ancha", "espacio para competencias"], ["Borde de acento", "franja en el margen"]]};
+const HILFE = {"en": "<h3>How it works</h3><ul><li><b>Editing:</b> click into the text and type. Select text, then use <b>F</b> (bold), <b>K</b> (italic), <b>U</b>, A−/A+ or the colour swatch.</li><li><b>Photo:</b> drag it anywhere on the sheet. Size and shape in the Photo group.</li><li><b>Sections:</b> hover a section, grab the handle at its top right and drag it to another column or page. The ✕ removes it, “+ Section” adds a new one.</li><li><b>Two fixed pages:</b> if text runs past the bottom, a red line appears and the affected sections are outlined. Drag them to page 2.</li><li><b>PDF:</b> use “Save as PDF”, then choose margins “None” and tick <b>Background graphics</b>.</li><li><b>Word:</b> downloads a <code>.doc</code>. Open it in Word and save as <code>.docx</code>.</li><li><b>Save file:</b> downloads your current state as a new HTML file. Open it again later to carry on.</li></ul>", "es": "<h3>Cómo funciona</h3><ul><li><b>Editar:</b> haz clic en el texto y escribe. Selecciona y usa <b>F</b> (negrita), <b>K</b> (cursiva), <b>U</b>, A−/A+ o el selector de color.</li><li><b>Foto:</b> arrástrala a cualquier punto de la hoja. Tamaño y forma en el grupo Foto.</li><li><b>Secciones:</b> pasa el ratón por encima, agarra el asa de la esquina superior derecha y arrástrala a otra columna o página. La ✕ la elimina y «+ Sección» añade una nueva.</li><li><b>Dos páginas fijas:</b> si el texto se sale, aparece una línea roja y las secciones afectadas quedan marcadas. Arrástralas a la página 2.</li><li><b>PDF:</b> pulsa «Guardar como PDF», elige márgenes «Ninguno» y activa <b>gráficos de fondo</b>.</li><li><b>Word:</b> descarga un <code>.doc</code>. Ábrelo en Word y guárdalo como <code>.docx</code>.</li><li><b>Guardar archivo:</b> descarga tu estado actual como archivo HTML nuevo.</li></ul>"};
+let sprache = 'de';
+function T(k){ const m = MSG[sprache] || MSG.de; return m[k] !== undefined ? m[k] : MSG.de[k]; }
+
+const wurzel = document.documentElement;
+const seiten = () => document.querySelectorAll('#blaetter > .page');
+
+function varListe(){
+  const box = document.getElementById('varListe'); box.innerHTML = '';
+  VARS.forEach(v => {
+    const b = document.createElement('button');
+    const nb = (VARNAMEN[sprache] || VARNAMEN.de)[VARS.indexOf(v)] || [v.n, v.b];
+    b.innerHTML = '<span class="mini">' + (MINIS[v.k] || '') + '</span>' +
+                  '<span class="nm">' + nb[0] + '</span><span class="bs">' + nb[1] + '</span>';
+    b.dataset.k = v.k; b.onclick = () => setVar(v.k);
+    box.appendChild(b);
+  });
+  markiere();
+  vorschauen();
+}
+function aktuelleVar(){
+  const m = document.querySelector('#blaetter > .page').className.match(/\bt\d+\b/);
+  return m ? m[0] : 't1';
+}
+function markiere(){
+  const a = aktuelleVar();
+  document.querySelectorAll('#varListe button').forEach(b => b.classList.toggle('sel', b.dataset.k === a));
+  const v = VARS.find(x => x.k === a), feld = document.getElementById('varName');
+  if (v && feld){
+    const i = VARS.indexOf(v), nb = (VARNAMEN[sprache] || VARNAMEN.de)[i];
+    feld.textContent = nb ? nb[0] : v.n;
+  }
+}
+function grenzeVon(p){
+  const m = p.querySelector('.randmarke');
+  return m ? m.getBoundingClientRect().top : p.getBoundingClientRect().bottom;
+}
+function laeuftUeber(p){
+  const g = grenzeVon(p);
+  return [...p.querySelectorAll('.blk')].some(b => b.getBoundingClientRect().bottom > g);
+}
+function rolle(b){ return b.parentElement.classList.contains('side') ? '.side' : '.main'; }
+
+/* Schiebt überzählige Abschnitte auf Seite 2 und holt zurück, was wieder passt. */
+function verteilen(){
+  const ps = [...seiten()];
+  const p1 = ps[0], p2 = ps[1];
+  if (!p1 || !p2 || p2.style.display === 'none') return;
+  let schutz = 0;
+  while (laeuftUeber(p1) && schutz++ < 25){
+    const g = grenzeVon(p1);
+    const drueber = [...p1.querySelectorAll('.blk')].filter(b => b.getBoundingClientRect().bottom > g);
+    const b = drueber[drueber.length - 1];
+    if (!b) break;
+    const ziel = p2.querySelector(rolle(b)) || p2.querySelector('.main');
+    ziel.insertBefore(b, ziel.firstChild);
+  }
+  schutz = 0;
+  while (schutz++ < 25){
+    const erster = p2.querySelector('.main > .blk') || p2.querySelector('.side > .blk');
+    if (!erster) break;
+    const heimat = p1.querySelector(rolle(erster)) || p1.querySelector('.main');
+    const zurueck = erster.nextElementSibling, eltern = erster.parentElement;
+    heimat.appendChild(erster);
+    if (laeuftUeber(p1)){
+      if (zurueck) eltern.insertBefore(erster, zurueck); else eltern.appendChild(erster);
+      break;
+    }
+  }
+}
+
+/* Feste Schema-Vorschau je Layout, als SVG im A4-Verhältnis.
+   Die Farben kommen über CSS-Variablen, passen sich also dem Farbschema an. */
+const MINIS = {
+  t1: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,77 77,77" style="fill:var(--accent)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t2: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="139" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 133,77 0,77" style="fill:var(--accent)"/><rect x="151" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="20" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="151" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="151" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="151" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="151" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="20" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="20" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t3: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--accent)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t4: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="15" y="16" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="20" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="88" y="33" width="104" height="2" style="fill:#e7e1de"/><rect x="88" y="41" width="104" height="2" style="fill:#e7e1de"/><rect x="88" y="49" width="104" height="2" style="fill:#e7e1de"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t5: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="77" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,77 77,77" style="fill:var(--dark)"/><rect x="15" y="18" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="22" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="88" y="35" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="43" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="88" y="51" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t6: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="71" height="297" style="fill:var(--accent)"/><rect x="15" y="16" width="44" height="46" style="fill:#d2cbc7" rx="2"/><rect x="88" y="20" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="88" y="33" width="104" height="2" style="fill:#e7e1de"/><rect x="88" y="41" width="104" height="2" style="fill:#e7e1de"/><rect x="88" y="49" width="104" height="2" style="fill:#e7e1de"/><rect x="14" y="96" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="107" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="116" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="125" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="134" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="155" width="24.750000000000004" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="166" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="175" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="184" width="45" height="2" style="fill:#e7e1de"/><rect x="14" y="193" width="45" height="2" style="fill:#e7e1de"/><rect x="88" y="96" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="107" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="116" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="125" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="134" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="143" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="152" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="173" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="88" y="184" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="193" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="202" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="211" width="108" height="2" style="fill:#e7e1de"/><rect x="88" y="220" width="108" height="2" style="fill:#e7e1de"/></svg>',
+  t7: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="210" height="72" style="fill:var(--accent)"/><rect x="151" y="14" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="20" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="33" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="41" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="49" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="90" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="101" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="110" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="119" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="128" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="137" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="146" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="167" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="178" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="187" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="196" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="205" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="214" width="170" height="2" style="fill:#e7e1de"/></svg>',
+  t8: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="20" y="64" width="170" height="1.6" style="fill:var(--accent)"/><rect x="151" y="12" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="18" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="20" y="31" width="104" height="2" style="fill:#e7e1de"/><rect x="20" y="39" width="104" height="2" style="fill:#e7e1de"/><rect x="20" y="47" width="104" height="2" style="fill:#e7e1de"/><rect x="56" y="84" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="56" y="95" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="104" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="113" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="122" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="131" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="140" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="161" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="56" y="172" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="181" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="190" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="199" width="134" height="2" style="fill:#e7e1de"/><rect x="56" y="208" width="134" height="2" style="fill:#e7e1de"/><rect x="20" y="118" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="160" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="202" width="26" height="2.6" style="fill:var(--accent)" rx="1"/><rect x="20" y="244" width="26" height="2.6" style="fill:var(--accent)" rx="1"/></svg>',
+  t9: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="210" height="72" style="fill:var(--accent)"/><rect x="151" y="14" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="20" width="70" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="33" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="41" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="49" width="104" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="34" y="90" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="34" y="101" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="110" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="119" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="128" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="137" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="146" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="167" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="34" y="178" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="187" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="196" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="205" width="156" height="2" style="fill:#e7e1de"/><rect x="34" y="214" width="156" height="2" style="fill:#e7e1de"/><rect x="24" y="108" width="1.6" height="150" style="fill:var(--accent)"/><circle cx="24.8" cy="116" r="3.2" style="fill:var(--accent)"/><circle cx="24.8" cy="166" r="3.2" style="fill:var(--accent)"/><circle cx="24.8" cy="216" r="3.2" style="fill:var(--accent)"/></svg>',
+  t10: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="210" height="84" style="fill:var(--dark)"/><rect x="151" y="16" width="42" height="46" style="fill:#d2cbc7" rx="2"/><rect x="20" y="24" width="78" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="20" y="37" width="106" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="45" width="106" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="53" width="106" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="20" y="102" width="170" height="9" style="fill:var(--sidebar)" rx="1.5"/><rect x="20" y="118" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="127" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="136" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="145" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="154" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="163" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="184" width="170" height="9" style="fill:var(--sidebar)" rx="1.5"/><rect x="20" y="200" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="209" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="218" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="227" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="236" width="170" height="2" style="fill:#e7e1de"/></svg>',
+  t11: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><circle cx="105" cy="32" r="16" style="fill:#d2cbc7"/><rect x="65" y="60" width="80" height="6" style="fill:var(--accent)" rx="1"/><rect x="65" y="73" width="110" height="2" style="fill:#e7e1de"/><rect x="65" y="81" width="110" height="2" style="fill:#e7e1de"/><rect x="40" y="112" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="40" y="123" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="132" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="141" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="150" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="159" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="180" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="40" y="191" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="200" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="209" width="130" height="2" style="fill:#e7e1de"/><rect x="40" y="218" width="130" height="2" style="fill:#e7e1de"/></svg>',
+  t12: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="151" y="12" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="20" y="18" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="20" y="31" width="104" height="2" style="fill:#e7e1de"/><rect x="20" y="39" width="104" height="2" style="fill:#e7e1de"/><rect x="20" y="47" width="104" height="2" style="fill:#e7e1de"/><rect x="20" y="92" width="23.1" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="103" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="112" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="121" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="130" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="151" width="23.1" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="162" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="171" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="180" width="42" height="2" style="fill:#e7e1de"/><rect x="20" y="189" width="42" height="2" style="fill:#e7e1de"/><rect x="84" y="92" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="84" y="103" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="112" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="121" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="130" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="139" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="148" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="169" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="84" y="180" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="189" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="198" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="207" width="106" height="2" style="fill:#e7e1de"/><rect x="84" y="216" width="106" height="2" style="fill:#e7e1de"/><rect x="71" y="80" width="0.9" height="195" style="fill:var(--accent)"/></svg>',
+  t13: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="20" y="56" width="170" height="1.6" style="fill:var(--accent)"/><rect x="20" y="16" width="70" height="6" style="fill:var(--accent)" rx="1"/><rect x="20" y="29" width="120" height="2" style="fill:#e7e1de"/><rect x="20" y="37" width="120" height="2" style="fill:#e7e1de"/><rect x="20" y="45" width="120" height="2" style="fill:#e7e1de"/><rect x="20" y="76" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="87" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="96" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="105" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="114" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="123" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="132" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="153" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="164" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="173" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="182" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="191" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="200" width="170" height="2" style="fill:#e7e1de"/></svg>',
+  t14: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="20" y="14" width="170" height="54" style="fill:none;stroke:var(--accent);stroke-width:1.4"/><rect x="145" y="26" width="38" height="40" style="fill:#d2cbc7" rx="2"/><rect x="30" y="28" width="62" height="6" style="fill:var(--accent)" rx="1"/><rect x="30" y="41" width="92" height="2" style="fill:#e7e1de"/><rect x="30" y="49" width="92" height="2" style="fill:#e7e1de"/><rect x="30" y="57" width="92" height="2" style="fill:#e7e1de"/><rect x="20" y="94" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="105" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="114" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="123" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="132" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="141" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="150" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="171" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="20" y="182" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="191" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="200" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="209" width="170" height="2" style="fill:#e7e1de"/><rect x="20" y="218" width="170" height="2" style="fill:#e7e1de"/></svg>',
+  t15: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="97" height="297" style="fill:var(--sidebar)"/><rect x="0" y="0" width="210" height="86" style="fill:var(--sidebar)"/><polygon points="0,0 210,0 210,86 86,86" style="fill:var(--accent)"/><rect x="16" y="20" width="62" height="52" style="fill:#d2cbc7" rx="2"/><rect x="112" y="24" width="62" height="6" style="fill:rgba(255,255,255,.92)" rx="1"/><rect x="112" y="37" width="82" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="112" y="45" width="82" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="112" y="53" width="82" height="2" style="fill:rgba(255,255,255,.5)"/><rect x="14" y="104" width="37.400000000000006" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="115" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="124" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="133" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="142" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="163" width="37.400000000000006" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="14" y="174" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="183" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="192" width="68" height="2" style="fill:#e7e1de"/><rect x="14" y="201" width="68" height="2" style="fill:#e7e1de"/><rect x="112" y="104" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="112" y="115" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="124" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="133" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="142" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="151" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="160" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="181" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="112" y="192" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="201" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="210" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="219" width="84" height="2" style="fill:#e7e1de"/><rect x="112" y="228" width="84" height="2" style="fill:#e7e1de"/></svg>',
+  t16: '<svg width="210" height="297" viewBox="0 0 210 297" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><rect x="0" y="0" width="210" height="297" style="fill:#ffffff"/><rect x="0" y="0" width="17" height="297" style="fill:var(--accent)"/><rect x="17" y="0" width="193" height="66" style="fill:var(--sidebar)"/><rect x="151" y="12" width="42" height="44" style="fill:#d2cbc7" rx="2"/><rect x="28" y="18" width="64" height="6" style="fill:var(--accent)" rx="1"/><rect x="28" y="31" width="98" height="2" style="fill:#e7e1de"/><rect x="28" y="39" width="98" height="2" style="fill:#e7e1de"/><rect x="28" y="47" width="98" height="2" style="fill:#e7e1de"/><rect x="28" y="84" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="28" y="95" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="104" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="113" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="122" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="131" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="140" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="161" width="46" height="4.5" style="fill:var(--accent)" rx="1"/><rect x="28" y="172" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="181" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="190" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="199" width="162" height="2" style="fill:#e7e1de"/><rect x="28" y="208" width="162" height="2" style="fill:#e7e1de"/><rect x="0" y="0" width="17" height="297" style="fill:var(--accent)"/></svg>'
+};
+
+function vorschauen(){ /* Vorschauen sind fest, nichts neu zu zeichnen */ }
+
+function setVar(k){
+  const einspaltig = EINSPALTIG.indexOf(k) >= 0;
+  seiten().forEach(p => {
+    p.className = p.className.replace(/\bt\d+\b/g,'').trim() + ' ' + k;
+    const side = p.querySelector('.side'), main = p.querySelector('.main');
+    if (!side || !main) return;
+    if (einspaltig) { if (side.parentElement !== main) main.appendChild(side); }
+    else { if (side.parentElement === main) p.insertBefore(side, main); }
+  });
+  markiere();
+  fotoZuruecksetzen(true);
+  setTimeout(() => { verteilen(); checkFit(false); vorschauen(); }, 80);
+}
+
+/* ---------------- Text ---------------- */
+document.execCommand('styleWithCSS', false, true);
+function cmd(b, w){ document.execCommand(b, false, w || null); }
+function groesse(r){
+  const sel = window.getSelection();
+  if (!sel.rangeCount || sel.isCollapsed) { melde(T('markieren')); return; }
+  const stufen = ['0.8em','0.9em','1em','1.15em','1.3em','1.6em'];
+  const range = sel.getRangeAt(0);
+  const el = range.commonAncestorContainer.parentElement;
+  let i = stufen.indexOf(el && el.style ? el.style.fontSize : ''); if (i < 0) i = 2;
+  i = Math.max(0, Math.min(stufen.length-1, i + r));
+  const span = document.createElement('span'); span.style.fontSize = stufen[i];
+  try { range.surroundContents(span); } catch(e){ span.appendChild(range.extractContents()); range.insertNode(span); }
+}
+function melde(t, dauer){
+  const h = document.getElementById('hint'); h.textContent = t; h.style.display = 'block';
+  clearTimeout(window._h); window._h = setTimeout(() => h.style.display = 'none', dauer || 2600);
+}
+
+/* ---------------- Überlauf prüfen ---------------- */
+function checkFit(laut){
+  const betroffen = [];
+  document.querySelectorAll('#blaetter .blk').forEach(b => b.classList.remove('ueberlauf'));
+  seiten().forEach((p, i) => {
+    p.classList.remove('voll');
+    if (p.style.display === 'none') return;
+    const marke = p.querySelector('.randmarke');
+    const grenze = marke ? marke.getBoundingClientRect().top : p.getBoundingClientRect().bottom;
+    let voll = false;
+    p.querySelectorAll('.blk').forEach(b => {
+      if (b.getBoundingClientRect().bottom > grenze) { b.classList.add('ueberlauf'); voll = true; }
+    });
+    const kopf = p.querySelector('.bandtext');
+    if (kopf && kopf.getBoundingClientRect().bottom > grenze) voll = true;
+    if (voll) { p.classList.add('voll'); betroffen.push(T('seite') + ' ' + (i + 1)); }
+  });
+  if (betroffen.length)
+    melde(T('zuviel').replace('{s}', betroffen.join(T('und'))), 7000);
+  else if (laut) melde(T('passt'));
+}
+document.addEventListener('input', () => { clearTimeout(window._t);
+  window._t = setTimeout(() => { checkFit(); vorschauen(); }, 600); });
+document.documentElement.style.setProperty('--zoom', .85);
+window.addEventListener('load', () => { verteilen(); checkFit(false); vorschauen(); });
+
+/* ---------------- Abschnitte verschieben ---------------- */
+let gezogen = null;
+
+function zonen(){ return document.querySelectorAll('#blaetter .side, #blaetter .main'); }
+function saubermachen(){
+  document.querySelectorAll('.zielvor').forEach(e => e.classList.remove('zielvor'));
+  zonen().forEach(z => z.classList.remove('zielende', 'zielleer'));
+}
+function zielBlock(zone, y){
+  const kinder = [...zone.children].filter(e => e.classList.contains('blk') && e !== gezogen);
+  for (const k of kinder){
+    const r = k.getBoundingClientRect();
+    if (y < r.top + r.height / 2) return k;
+  }
+  return null;
+}
+
+document.addEventListener('mousedown', e => {
+  const griff = e.target.closest('.zieh');
+  if (griff) griff.closest('.blk').setAttribute('draggable', 'true');
+});
+document.addEventListener('mouseup', () => {
+  document.querySelectorAll('#blaetter .blk[draggable]').forEach(b => b.removeAttribute('draggable'));
+});
+document.addEventListener('dragstart', e => {
+  const b = e.target.closest('.blk');
+  if (!b || b.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+  gezogen = b; b.classList.add('zieht');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', 'blk');
+});
+document.addEventListener('dragend', () => {
+  if (gezogen) gezogen.classList.remove('zieht');
+  gezogen = null; saubermachen();
+  document.querySelectorAll('#blaetter .blk[draggable]').forEach(b => b.removeAttribute('draggable'));
+  checkFit(false);
+});
+document.addEventListener('dragover', e => {
+  if (!gezogen) return;
+  const zone = e.target.closest('.side, .main');
+  if (!zone) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  saubermachen();
+  const ziel = zielBlock(zone, e.clientY);
+  if (ziel) ziel.classList.add('zielvor');
+  else if (zone.querySelector(':scope > .blk')) zone.classList.add('zielende');
+  else zone.classList.add('zielleer');
+});
+document.addEventListener('drop', e => {
+  if (!gezogen) return;
+  const zone = e.target.closest('.side, .main');
+  if (!zone) return;
+  e.preventDefault();
+  const ziel = zielBlock(zone, e.clientY);
+  if (ziel) zone.insertBefore(gezogen, ziel); else zone.appendChild(gezogen);
+  saubermachen(); checkFit(false); vorschauen();
+});
+
+function blockWeg(el){
+  const b = el.closest('.blk');
+  const titel = b.querySelector('h2') ? b.querySelector('h2').textContent.trim() : 'diesen Abschnitt';
+  if (confirm(T('weg').replace('{t}', titel))) { b.remove(); checkFit(false); }
+}
+
+function abschnittNeu(){
+  const ziel = document.querySelector('#blaetter > .page.p1 .main');
+  const b = document.createElement('section');
+  b.className = 'blk';
+  b.innerHTML = '<div class="griff" contenteditable="false">' +
+    '<span class="zieh" title="Abschnitt verschieben">&#9776;</span>' +
+    '<span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>' +
+    '<div class="inhalt" contenteditable="true"><h2 class="sec">' + T('neuerTitel') + '</h2>' +
+    '<ul><li>' + T('neuerPunkt') + '</li></ul></div>';
+  ziel.appendChild(b);
+  b.scrollIntoView({block:'center'});
+  melde(T('neu'), 5000);
+}
+
+/* ---------------- Design ---------------- */
+function klappe(){ /* Einstellungen stehen dauerhaft links */ }
+function hell(hex){ const h = hex.replace('#','');
+  return (0.299*parseInt(h.substr(0,2),16)+0.587*parseInt(h.substr(2,2),16)+0.114*parseInt(h.substr(4,2),16)) > 150; }
+function palette(a, s, d){
+  document.getElementById('cAccent').value = a; document.getElementById('cSide').value = s;
+  document.getElementById('cDark').value = d; farben();
+}
+function farben(){
+  const a = document.getElementById('cAccent').value;
+  wurzel.style.setProperty('--accent', a);
+  wurzel.style.setProperty('--sidebar', document.getElementById('cSide').value);
+  wurzel.style.setProperty('--dark', document.getElementById('cDark').value);
+  wurzel.style.setProperty('--onaccent', hell(a) ? '#2B2B2B' : '#FFFFFF');
+}
+['cAccent','cSide','cDark'].forEach(id => document.getElementById(id).addEventListener('input', farben));
+document.getElementById('fFont').addEventListener('change', e => wurzel.style.setProperty('--font', e.target.value));
+document.getElementById('fSize').addEventListener('input', e => {
+  wurzel.style.setProperty('--fs', e.target.value + 'pt');
+  document.getElementById('fSizeTxt').textContent = (+e.target.value).toFixed(1).replace('.',',') + ' pt';
+  clearTimeout(window._t); window._t = setTimeout(checkFit, 300);
+});
+document.getElementById('fFoto').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = ev => { foto().src = ev.target.result; };
+  r.readAsDataURL(f);
+});
+/* --- Foto frei verschieben und skalieren --- */
+let fotoBasis = null;
+
+function foto(){ return document.querySelector('#blaetter .photo'); }
+
+function fotoZuruecksetzen(still){
+  const f = foto(); if (!f) return;
+  ['left','top','right','bottom','width','height','marginLeft'].forEach(e => f.style.removeProperty(e));
+  fotoBasis = null;
+  const r = document.getElementById('fFotoSize');
+  if (r){ r.value = 100; document.getElementById('fFotoTxt').textContent = '100 %'; }
+  if (!still) melde(T('fotoweg'));
+}
+
+function fotoBasisLesen(){
+  const f = foto(); if (!f) return null;
+  const st = getComputedStyle(f), seite = f.closest('.page');
+  const pr = seite.getBoundingClientRect(), fr = f.getBoundingClientRect();
+  const mm = 210 / pr.width;
+  fotoBasis = { b: fr.width * mm, h: fr.height * mm,
+                l: (fr.left - pr.left) * mm, t: (fr.top - pr.top) * mm };
+  return fotoBasis;
+}
+
+function fotoGroesse(prozent){
+  const f = foto(); if (!f) return;
+  if (!fotoBasis) fotoBasisLesen();
+  const k = prozent / 100;
+  f.style.left = fotoBasis.l.toFixed(1) + 'mm';
+  f.style.top = fotoBasis.t.toFixed(1) + 'mm';
+  f.style.right = 'auto'; f.style.marginLeft = '0';
+  f.style.width = (fotoBasis.b * k).toFixed(1) + 'mm';
+  f.style.height = (fotoBasis.h * k).toFixed(1) + 'mm';
+}
+
+document.addEventListener('mousedown', e => {
+  const f = e.target.closest('.page .photo');
+  if (!f || e.button !== 0) return;
+  e.preventDefault();
+  const seite = f.closest('.page');
+  const pr = seite.getBoundingClientRect(), fr = f.getBoundingClientRect();
+  const mm = 210 / pr.width;
+  const dx = e.clientX - fr.left, dy = e.clientY - fr.top;
+  if (!fotoBasis) fotoBasisLesen();
+  f.classList.add('aktiv');
+  f.style.right = 'auto'; f.style.marginLeft = '0';
+  f.style.width = fr.width * mm + 'mm'; f.style.height = fr.height * mm + 'mm';
+  function zieh(ev){
+    f.style.left = ((ev.clientX - pr.left - dx) * mm).toFixed(1) + 'mm';
+    f.style.top  = ((ev.clientY - pr.top  - dy) * mm).toFixed(1) + 'mm';
+  }
+  function los(){
+    f.classList.remove('aktiv');
+    document.removeEventListener('mousemove', zieh);
+    document.removeEventListener('mouseup', los);
+    const nr = f.getBoundingClientRect();
+    fotoBasis = { b: fotoBasis.b, h: fotoBasis.h,
+                  l: (nr.left - pr.left) * mm, t: (nr.top - pr.top) * mm };
+  }
+  document.addEventListener('mousemove', zieh);
+  document.addEventListener('mouseup', los);
+});
+
+function fotoForm(){ foto().classList.toggle('rund'); }
+document.getElementById('fZoom').addEventListener('input', e => {
+  document.documentElement.style.setProperty('--zoom', e.target.value / 100);
+  document.getElementById('fZoomTxt').textContent = e.target.value + ' %';
+  clearTimeout(window._t); window._t = setTimeout(() => checkFit(false), 250);
+});
+
+document.getElementById('fFotoSize').addEventListener('input', e => {
+  fotoGroesse(+e.target.value);
+  document.getElementById('fFotoTxt').textContent = e.target.value + ' %';
+});
+
+function fotoZeigen(){ const f = foto(); f.style.display = f.style.display === 'none' ? '' : 'none'; }
+function seite2(){ const p = document.querySelector('#blaetter > .page.p2'); p.style.display = p.style.display === 'none' ? '' : 'none'; }
+function zuruecksetzen(){
+  ['--accent','--sidebar','--dark','--onaccent','--font','--fs'].forEach(v => wurzel.style.removeProperty(v));
+  palette('#B3988D','#EEE4E3','#3B3B3B');
+  document.getElementById('fFont').selectedIndex = 0;
+  document.getElementById('fSize').value = 9; document.getElementById('fSizeTxt').textContent = '9,0 pt';
+}
+
+/* ---------------- Export ---------------- */
+function wert(v){ return getComputedStyle(wurzel).getPropertyValue(v).trim(); }
+function sauber(sel){
+  return [...document.querySelectorAll(sel)].map(el => {
+    const k = el.cloneNode(true);
+    k.querySelectorAll('.griff').forEach(n => n.remove());
+    k.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
+    return k.innerHTML;
+  }).join('');
+}
+function wordExport(){
+  const a = wert('--accent'), s = wert('--sidebar'), d = wert('--dark'), g = wert('--grey'), on = wert('--onaccent');
+  const v = aktuelleVar();
+  const f = foto();
+  const fotoSrc = f.style.display === 'none' ? null : f.getAttribute('src');
+  const kopf = sauber('#blaetter > .page.p1 .bandtext');
+  const seite = sauber('#blaetter > .page:not([style*="none"]) .side');
+  const haupt = sauber('#blaetter > .page:not([style*="none"]) .main');
+  const ohneKopffarbe = ['t4','t6','t8','t11','t12','t13','t14','t16'];
+  const dunklerKopf = ['t5','t10'];
+  const kopfBg = ohneKopffarbe.indexOf(v) >= 0 ? '#FFFFFF' : (dunklerKopf.indexOf(v) >= 0 ? d : a);
+  const kopfFg = ohneKopffarbe.indexOf(v) >= 0 ? d : (dunklerKopf.indexOf(v) >= 0 ? '#FFFFFF' : on);
+  const leisteBg = v === 't6' ? a : s, leisteFg = v === 't6' ? on : d;
+
+  const css = `
+    @page WordSection1 { size:21cm 29.7cm; margin:0cm; } div.WordSection1 { page:WordSection1; }
+    body,td,p,li,div { font-family:Arial,sans-serif; font-size:9.5pt; color:${d}; line-height:1.35; }
+    h1 { font-size:24pt; margin:0 0 6pt 0; color:${kopfFg}; }
+    .role { font-weight:bold; font-size:11pt; margin-bottom:6pt; color:${kopfFg}; }
+    .kopf p { color:${kopfFg}; }
+    h2.sec { font-size:12pt; text-transform:uppercase; letter-spacing:.5pt; border-bottom:1pt solid ${d};
+             margin:14pt 0 6pt 0; padding-bottom:2pt; }
+    .leiste, .leiste td, .leiste div, .leiste li, .leiste h2.sec { color:${leisteFg}; border-color:${leisteFg}; }
+    .ic { display:none; }
+    .jobtitle { font-weight:bold; } .jobdate { color:${g}; } .company { color:${a}; margin-bottom:3pt; }
+    .degree { font-weight:bold; } .date { color:${g}; }
+    ul { margin:0 0 6pt 0; padding-left:14pt; } li { margin-bottom:2pt; } .job { margin-bottom:9pt; }
+  `;
+  const tmp = document.createElement('div'); tmp.innerHTML = haupt;
+  tmp.querySelectorAll('.jobhead').forEach(h => {
+    const t = h.querySelector('.jobtitle'), dt = h.querySelector('.jobdate');
+    const tab = document.createElement('table'); tab.setAttribute('width','100%'); tab.style.cssText = 'border-collapse:collapse;margin:0';
+    tab.innerHTML = '<tr><td style="padding:0;border:0"><span class="jobtitle">' + (t ? t.innerHTML : '') +
+      '</span></td><td style="padding:0;border:0;text-align:right" class="jobdate">' + (dt ? dt.innerHTML : '') + '</td></tr>';
+    h.replaceWith(tab);
+  });
+  const fotoTag = fotoSrc ? '<p style="margin:0 0 12pt 0"><img src="' + fotoSrc + '" width="140" height="150" alt=""></p>' : '';
+  const leisteZelle = '<td width="33%" valign="top" class="leiste" bgcolor="' + leisteBg + '" style="background:' + leisteBg +
+      ';padding:24pt 16pt 24pt 20pt">' + fotoTag + seite + '</td>';
+  const hauptZelle = '<td width="67%" valign="top" style="padding:0">' +
+      '<table width="100%" style="border-collapse:collapse"><tr><td class="kopf" bgcolor="' + kopfBg + '" style="background:' +
+      kopfBg + ';padding:26pt 20pt">' + kopf + '</td></tr></table>' +
+      '<div style="padding:8pt 20pt 24pt 20pt">' + tmp.innerHTML + '</div></td>';
+  let koerper;
+  if (EINSPALTIG.indexOf(v) >= 0){
+    koerper = '<div style="padding:26pt 34pt">' +
+      (fotoSrc ? '<div style="float:right;margin:0 0 10pt 14pt"><img src="' + fotoSrc +
+                 '" width="110" height="128" alt=""></div>' : '') +
+      '<div class="kopf" style="background:' + kopfBg + ';padding:' +
+      (kopfBg === '#FFFFFF' ? '0 0 10pt 0' : '18pt') + '">' + kopf + '</div>' +
+      '<div style="clear:both;height:8pt"></div>' + tmp.innerHTML + seite + '</div>';
+  } else {
+    koerper = '<table width="100%" style="border-collapse:collapse"><tr>' +
+      (v === 't2' ? hauptZelle + leisteZelle : leisteZelle + hauptZelle) + '</tr></table>';
+  }
+  const datei = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+    'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>Lebenslauf</title><style>' + css +
+    '</style></head><body><div class="WordSection1">' + koerper + '</div></body></html>';
+  lade(new Blob(['\ufeff' + datei], {type:'application/msword'}), 'Lebenslauf.doc');
+}
+function htmlSpeichern(){
+  const k = document.documentElement.cloneNode(true);
+  k.querySelectorAll('#hint').forEach(n => { n.style.display = 'none'; n.textContent = ''; });
+  k.querySelectorAll('.panel').forEach(n => n.classList.remove('open'));
+  k.querySelectorAll('.blk').forEach(n => { n.classList.remove('ueberlauf','zieht'); n.removeAttribute('draggable'); });
+  k.querySelectorAll('.page').forEach(n => n.classList.remove('voll'));
+  k.querySelectorAll('.vars .mini').forEach(n => { n.innerHTML = ''; });
+  lade(new Blob(['<!DOCTYPE html>\n' + k.outerHTML], {type:'text/html;charset=utf-8'}), 'Lebenslauf.html');
+  melde(T('gesichert'));
+}
+function lade(blob, name){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+/* ---------------- Sprache ---------------- */
+const INHALT_DE = {};
+function inhaltLesen(){
+  INHALT_DE.p1kopf = document.querySelector('#blaetter > .page.p1 .bandtext').innerHTML;
+  INHALT_DE.p1side = document.querySelector('#blaetter > .page.p1 .side').innerHTML;
+  INHALT_DE.p1main = document.querySelector('#blaetter > .page.p1 .main').innerHTML;
+  INHALT_DE.p2side = document.querySelector('#blaetter > .page.p2 .side').innerHTML;
+  INHALT_DE.p2main = document.querySelector('#blaetter > .page.p2 .main').innerHTML;
+}
+function inhaltSetzen(code){
+  const q = sel => document.querySelector('#blaetter > .page' + sel);
+  const d = code === 'de' ? INHALT_DE : INHALT[code];
+  if (!d) return;
+  /* In einspaltigen Layouts steckt .side in .main – vorher herauslösen. */
+  seiten().forEach(p => {
+    const sd = p.querySelector('.side'), mn = p.querySelector('.main');
+    if (sd && mn && sd.parentElement === mn) p.insertBefore(sd, mn);
+  });
+  q('.p1 .bandtext').innerHTML = d.p1kopf;
+  q('.p1 .side').innerHTML = d.p1side;
+  q('.p1 .main').innerHTML = d.p1main;
+  q('.p2 .side').innerHTML = d.p2side;
+  q('.p2 .main').innerHTML = d.p2main;
+  setVar(aktuelleVar());
+}
+function kopfNameSetzen(){
+  const h1 = document.querySelector('#blaetter > .page.p1 .bandtext h1');
+  const feld = document.getElementById('kopfName');
+  if (h1 && feld) feld.textContent = h1.textContent.trim();
+}
+
+function oberflaeche(){
+  const t = UITXT[sprache] || UITXT.de;
+  document.querySelectorAll('[data-t]').forEach(el => {
+    if (t[el.dataset.t] !== undefined) el.innerHTML = t[el.dataset.t];
+  });
+  const datei = document.getElementById('fFoto');
+  if (datei) datei.title = t.datei;
+  const hilfe = document.getElementById('help');
+  if (hilfe){
+    if (sprache !== 'de' && HILFE[sprache]) hilfe.innerHTML = HILFE[sprache];
+    else if (HILFE_DE) hilfe.innerHTML = HILFE_DE;
+  }
+  varListe();
+}
+let HILFE_DE = '';
+
+function setSprache(code, fragen){
+  if (code === sprache) return;
+  const eigenerText = !inhaltGleichAktuell();
+  if (fragen && eigenerText && !confirm(T('wechsel'))){
+    document.getElementById('fSprache').value = sprache; return;
+  }
+  AKTUELL = code === 'de' ? INHALT_DE : INHALT[code];
+  sprache = code;
+  document.documentElement.lang = code;
+  oberflaeche();
+  inhaltSetzen(code);
+  kopfNameSetzen();
+}
+
+/* Vergleich gegen die zuletzt eingesetzte Fassung */
+let AKTUELL = null;
+function inhaltGleichAktuell(){
+  if (!AKTUELL) return true;
+  const q = sel => document.querySelector('#blaetter > .page' + sel).innerHTML;
+  return q('.p1 .bandtext') === AKTUELL.p1kopf;
+}
+
+document.getElementById('fSprache').addEventListener('change', e => setSprache(e.target.value, true));
+
+inhaltLesen();
+AKTUELL = INHALT_DE;
+document.addEventListener('input', () => { clearTimeout(window._n);
+  window._n = setTimeout(kopfNameSetzen, 700); });
+function hilfeMerken(){
+  const h = document.getElementById('help');
+  if (!h) return;
+  if (!HILFE_DE) HILFE_DE = h.innerHTML;
+  if (sprache !== 'de' && HILFE[sprache]) h.innerHTML = HILFE[sprache];
+}
+/* Standardsprache: Englisch. Die deutsche Fassung steht im Markup und wird
+   vorher gesichert, damit man jederzeit zurückschalten kann. */
+setSprache('en', false);
+/* Aus der Vorlagengalerie kommt die gewünschte Variante als ?t=… mit. */
+(function(){
+  const wunsch = new URLSearchParams(location.search).get('t');
+  if (wunsch && VARS.some(v => v.k === wunsch)) setVar(wunsch);
+})();
+document.getElementById('fSprache').value = 'en';
+
+if (document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', hilfeMerken);
+else hilfeMerken();
+varListe();
+</script>
+<div id="help" class="ui">
+  <h3>Kurzanleitung</h3>
+  <ul>
+    <li><b>Text ändern:</b> Hineinklicken und tippen. Markieren, dann <b>F</b>, <b>K</b>, <b>U</b>, A&minus;/A+ oder das Farbfeld. Enter in einer Aufzählung erzeugt einen neuen Punkt.</li>
+    <li><b>Foto:</b> Direkt anfassen und an eine beliebige Stelle ziehen. Größe über den Regler im Design-Bereich, „Foto neu ausrichten“ setzt es auf die Position des Layouts zurück.</li>
+    <li><b>Abschnitte verschieben:</b> Mit der Maus über einen Abschnitt fahren – oben rechts erscheint ein Griff. Am Griff anfassen und an eine andere Stelle ziehen: innerhalb einer Spalte, in die andere Spalte oder auf die zweite Seite. Das ✕ daneben entfernt den Abschnitt, „+ Abschnitt“ in der Leiste legt einen neuen an.</li>
+    <li><b>Einträge ergänzen:</b> Einen bestehenden Eintrag markieren, kopieren, an der gewünschten Stelle einfügen und überschreiben – so bleibt die Formatierung erhalten.</li>
+    <li><b>Zwei feste Seiten:</b> Läuft Text unten aus einer Seite, erscheint eine rote Linie am unteren Seitenrand und die betroffenen Abschnitte werden rot umrandet. Dann einfach per Griff auf die zweite Seite ziehen. Reicht eine Seite, „Seite 2 ein / aus“ links.</li>
+    <li><b>Einstellungen:</b> Zwölf geprüfte Layouts – sieben zweispaltige und fünf einspaltige, acht Farbvorlagen, freie Farbfelder, Schriftart und Grundgröße, eigenes Foto (eckig oder rund).</li>
+    <li><b>PDF:</b> Knopf „Als PDF speichern“ unten links, im Druckdialog Ziel „Als PDF speichern“, Ränder „Keine“, <b>Hintergrundgrafiken</b> aktivieren.</li>
+    <li><b>Word:</b> Lädt eine <code>.doc</code>. In Word öffnen, als <code>.docx</code> speichern. Word bekommt eine zweispaltige Tabellenfassung ohne Diagonale.</li>
+    <li><b>Sichern:</b> Lädt den aktuellen Stand als neue HTML-Datei herunter – mit allen Texten, Farben und Layout. Diese Datei später wieder im Browser öffnen und weiterarbeiten.</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>

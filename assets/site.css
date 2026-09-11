@@ -1,0 +1,161 @@
+/* ------------------------------------------------------------------
+   Design tokens. Ink on paper, cool grey desk, one green accent.
+   ------------------------------------------------------------------ */
+:root{
+  --ink:#16202B;
+  --paper:#FFFFFF;
+  --wash:#EDEFF2;
+  --rule:#D5DBE1;
+  --accent:#1F5F5B;
+  --muted:#5A6773;
+  --sidebar:#E6ECEA;
+  --dark:#16202B;
+  --measure:66ch;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--wash);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16.5px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.wordmark,.numeral{
+  font-family:"Newsreader",Georgia,"Times New Roman",serif;
+  font-weight:500;letter-spacing:-.012em;
+}
+h1{font-size:clamp(2.3rem,5.2vw,3.7rem);line-height:1.04;margin:0 0 .5em}
+h2{font-size:clamp(1.55rem,2.6vw,2.15rem);line-height:1.14;margin:0 0 .55em}
+h3{font-size:1.22rem;line-height:1.25;margin:0 0 .35em}
+p{margin:0 0 1.05em;max-width:var(--measure)}
+a{color:var(--accent)}
+a:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+img,svg{max-width:100%}
+
+.wrap{max-width:1140px;margin:0 auto;padding:0 26px}
+
+/* ---------------------------------- Kopfleiste */
+.topbar{background:var(--paper);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:20}
+.topbar .wrap{display:flex;align-items:center;gap:30px;height:66px}
+.wordmark{font-size:1.32rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em}
+.wordmark b{font-weight:600}
+.topnav{margin-left:auto;display:flex;align-items:center;gap:26px}
+.topnav a{color:var(--ink);text-decoration:none;font-size:.95rem}
+.topnav a:hover{color:var(--accent)}
+.topnav .btn{margin-left:4px}
+
+.btn{
+  display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+  padding:13px 22px;border-radius:3px;font-size:.97rem;font-weight:500;
+  transition:background .15s;
+}
+.btn:hover{background:#174a47;color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule);padding:12px 21px}
+.btn.ghost:hover{border-color:var(--ink);background:transparent;color:var(--ink)}
+
+/* ---------------------------------- Blatt */
+.sheet{
+  background:var(--paper);border-radius:2px;overflow:hidden;
+  box-shadow:0 16px 34px rgba(22,32,43,.16),0 2px 5px rgba(22,32,43,.07);
+}
+.sheet svg{display:block;width:100%;height:auto}
+
+/* ---------------------------------- Hero */
+.hero{padding:76px 0 66px}
+.hero .wrap{display:grid;grid-template-columns:1.04fr .96fr;gap:64px;align-items:center}
+.hero h1{max-width:14ch}
+.lead{font-size:1.13rem;color:var(--ink);max-width:52ch}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 22px}
+.aside-note{font-size:.9rem;color:var(--muted);max-width:46ch;margin:0}
+.hero .sheet{max-width:430px;margin-left:auto}
+
+/* ---------------------------------- Aussagenband */
+.claims{background:var(--paper);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.claims .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.claims div{padding:30px 30px 30px 0}
+.claims div + div{border-left:1px solid var(--rule);padding-left:30px}
+.claims strong{display:block;font-weight:600;margin-bottom:3px}
+.claims p{font-size:.93rem;color:var(--muted);margin:0;max-width:34ch}
+
+/* ---------------------------------- Abschnitte */
+.band{padding:72px 0}
+.band.tight{padding:56px 0}
+.band-head{max-width:62ch;margin-bottom:34px}
+.band-head p{color:var(--muted);margin:0}
+
+/* ---------------------------------- Galerie */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:34px 26px}
+.tile{text-decoration:none;color:inherit;display:block}
+.tile .sheet{transition:transform .16s,box-shadow .16s}
+.tile:hover .sheet{transform:translateY(-3px);box-shadow:0 22px 42px rgba(22,32,43,.2)}
+.tile h3{margin:14px 0 2px;font-size:1.08rem}
+.tile span{display:block;font-size:.86rem;color:var(--muted);line-height:1.45}
+
+/* ---------------------------------- Ablauf */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;counter-reset:s}
+.steps li{list-style:none;counter-increment:s;border-top:2px solid var(--ink);padding-top:14px}
+.steps li::before{
+  content:counter(s);font-family:"Newsreader",serif;font-size:1.5rem;color:var(--accent);
+  display:block;margin-bottom:6px;line-height:1;
+}
+.steps h3{margin-bottom:4px}
+.steps p{font-size:.95rem;color:var(--muted);margin:0}
+
+/* ---------------------------------- Vorlagenseite */
+.detail{padding:56px 0 10px}
+.detail .wrap{display:grid;grid-template-columns:0.92fr 1.08fr;gap:60px;align-items:start}
+.detail .sheet{max-width:400px}
+.kicker{font-size:.95rem;color:var(--muted);margin:0 0 10px}
+.specs{border-top:1px solid var(--rule);margin:26px 0 0;padding:0;list-style:none}
+.specs li{display:flex;justify-content:space-between;gap:24px;
+  border-bottom:1px solid var(--rule);padding:11px 0;font-size:.95rem}
+.specs li span:first-child{color:var(--muted)}
+.fits{margin:0 0 26px;padding:0 0 0 1.1em}
+.fits li{margin-bottom:7px}
+
+/* ---------------------------------- Werbefläche */
+.ad{
+  margin:60px auto;padding:16px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+}
+.ad > small{font-size:.7rem;letter-spacing:.06em;color:var(--muted);text-transform:lowercase}
+
+/* ---------------------------------- Fragen */
+.faq{border-top:1px solid var(--rule)}
+.faq > div{border-bottom:1px solid var(--rule);padding:22px 0;display:grid;
+  grid-template-columns:minmax(0,22ch) 1fr;gap:36px}
+.faq h3{margin:0;font-size:1.06rem}
+.faq p{margin:0;color:var(--muted)}
+
+/* ---------------------------------- Fuß */
+footer{background:var(--paper);border-top:1px solid var(--rule);padding:46px 0 60px;margin-top:20px}
+footer .cols{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:40px}
+footer h3{font-size:.95rem;font-family:inherit;font-weight:600;margin:0 0 10px}
+footer ul{list-style:none;margin:0;padding:0}
+footer li{margin-bottom:7px}
+footer a{color:var(--ink);text-decoration:none;font-size:.93rem}
+footer a:hover{color:var(--accent)}
+footer .fine{color:var(--muted);font-size:.85rem;margin:30px 0 0;max-width:60ch}
+
+/* ---------------------------------- Fließtext */
+.prose{max-width:var(--measure)}
+.prose h2{margin-top:1.6em}
+.prose ul{padding-left:1.1em}
+.prose li{margin-bottom:7px}
+
+@media (max-width:900px){
+  .hero .wrap,.detail .wrap{grid-template-columns:1fr;gap:40px}
+  .hero .sheet{margin:0;max-width:360px}
+  .claims .wrap{grid-template-columns:1fr}
+  .claims div{padding:22px 0}
+  .claims div + div{border-left:0;border-top:1px solid var(--rule);padding-left:0}
+  .steps{grid-template-columns:1fr}
+  .faq > div{grid-template-columns:1fr;gap:8px}
+  .topnav{gap:16px}
+  .topnav a.hide-s{display:none}
+  footer .cols{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
