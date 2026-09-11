@@ -6,19 +6,45 @@ database. The editor runs entirely in the visitor's browser; the pages around
 it carry the advertising that pays for the hosting.
 
 ```
-index.html          Landing page
-templates.html      Gallery of all sixteen layouts
-templates/*.html    One page per layout
-guides/*.html       Twelve guides, plus the guides index
-examples/*.html     Eight worked resume examples by occupation
-editor.html         The editor, accepts ?t=t1 … ?t=t16
-about.html          Who runs it and how it is paid for
-privacy.html        Privacy notice, contains two placeholders
-imprint.html        Imprint and contact, contains placeholders
-404.html            Not-found page
-assets/             Stylesheet, scripts, self-hosted fonts, icons
-tools/              Generators. Not served, not needed to run the site.
+index.html              Landing page (English)
+templates.html          Gallery of all sixteen layouts
+templates/*.html        One page per layout
+guides/*.html           Twelve guides, plus the guides index
+examples/*.html         Eight worked resume examples by occupation
+about.html              Who runs it and how it is paid for
+privacy.html            Privacy notice, contains two placeholders
+imprint.html            Imprint and contact, contains placeholders
+404.html                Not-found page
+
+de/                     The German site, with German slugs
+  index.html            Startseite
+  lebenslauf-vorlagen.html
+  vorlagen/*.html       Sixteen layouts, German copy
+  ratgeber/*.html       Eight guides written for the DACH market
+  muster/*.html         Four worked examples by occupation
+  ueber-uns.html, datenschutz.html, impressum.html
+
+editor.html             The editor. Accepts ?t=t1 … ?t=t16 and ?lang=de
+assets/                 Stylesheet, scripts, self-hosted fonts, icons
+tools/                  Generators. Not served, not needed to run the site.
 ```
+
+## Two languages, one codebase
+
+The German tree is not a translation. A DACH application follows different
+rules — photo, Anschreiben, Arbeitszeugnis, month-accurate dates — and the
+topics people search for there do not exist in the English set. `tools/i18n`
+lives in the `LANGS` table at the top of `tools/build.py`; German copy is in
+`tools/content_de.py`.
+
+What follows the language automatically: the navigation and footer, the
+breadcrumbs, the consent notice (`assets/consent.js` reads
+`document.documentElement.lang`), the ad label — *Anzeige* rather than
+*advertisement*, which German law expects — the house promos, the editor
+interface, and `hreflang` pairs on every page that exists in both.
+
+Pages know their own depth through `data-root` on `<html>`, written by the
+generator, so the scripts never guess from the URL.
 
 ## Going live
 
@@ -33,12 +59,13 @@ AdSense publisher ID, ad unit IDs and the analytics choice all live there.
 python3 tools/build.py
 ```
 
-This renders all 44 pages from `tools/build.py` and `tools/content.py`, stamps the
+This renders all 79 pages from `tools/build.py`, `tools/content.py` and
+`tools/content_de.py`, stamps the
 domain into every canonical URL, every `og:` tag and the editor, and regenerates
 `sitemap.xml`, `robots.txt`, `site.webmanifest` and `ads.txt`.
 
-The site is *served* without a build step; the generator exists so that forty-odd
-pages can share one header, one footer and one set of meta tags. Commit whatever
+The site is *served* without a build step; the generator exists so that eighty
+pages in two languages can share one header, one footer and one set of meta tags. Commit whatever
 it writes.
 
 ### 3. Publish
@@ -128,20 +155,39 @@ advertisers pay for.
 
 | Command | What it does |
 | --- | --- |
-| `python3 tools/build.py` | Renders every page, the sitemap, robots.txt, the manifest and ads.txt |
+| `python3 tools/build.py` | Renders every page in both languages, the sitemap, robots.txt, the manifest and ads.txt |
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
 
-Page copy lives in `tools/content.py` (`GUIDES` and `EXAMPLES`) and in the
-`page_*` functions of `tools/build.py` (everything else). Template descriptions are in
+Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
+`EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
 `tools/data/templates.json`.
 
 ## Still worth doing
 
-- German translations. The editor already speaks German, Spanish and English;
-  the written content does not. A `/de/` tree with `hreflang` would roughly
-  double the addressable search traffic for a German operator.
-- More occupations. The eight in `examples/` cover the biggest search volumes;
-  the structure takes another one in about twenty minutes of writing.
+- More German occupations. There are four in `de/muster/` against eight in
+  English; Erzieherin, Verkäuferin, Elektroniker and Bürokauffrau are the
+  obvious next ones.
+- A Spanish tree. The editor already speaks Spanish, so `LANGS` would take an
+  `es` entry and the content would need writing.
+- Once AdSense is approved, compare the fixed slots against Auto ads on a
+  fraction of traffic before deciding which earns more.
+
+## What this will and will not do
+
+The site is built properly, which is a precondition and not a result. Free
+resume builders are one of the most contested niches in search: Zety,
+resume.io, Novoresume, Canva and Indeed all outrank a new domain on every
+English query worth having, and they buy traffic on top. Expect close to
+nothing from English organic search for the first six months.
+
+The German tree is the better bet, and the reason it exists: fewer well-made
+competitors, and most international ones serve machine-translated pages that
+get the DACH conventions wrong. It is still a market with incumbents.
+
+What moves the needle beyond content: a domain that ages, links from places
+where people discuss job applications, and the fact that this tool is
+genuinely free with no paywall at the download — which is a story worth
+telling in the places that would otherwise never link to a resume site.
 - Once AdSense is approved, compare the fixed slots against Auto ads on a
   fraction of traffic before deciding which earns more.

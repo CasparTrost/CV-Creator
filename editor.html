@@ -434,7 +434,7 @@ h2.sec{margin:0 0 2.5mm;padding-bottom:1.2mm;font-size:1.4em;font-weight:700;let
   <div class="kopf">
     <a href="index.html" style="text-decoration:none;color:inherit"><b data-t="marke">Lebenslauf-Editor</b></a>
     <span><span id="kopfName">Max Mustermann</span> &middot; <span id="varName">Diagonale links</span></span>
-    <nav class="zurueck">
+    <nav class="zurueck" id="zurueck">
       <a href="index.html">PlainSheet</a>
       <a href="templates.html" data-t="zurueck">Vorlagen</a>
       <a href="guides/index.html" data-t="ratgeber">Ratgeber</a>
@@ -1220,6 +1220,17 @@ function kopfNameSetzen(){
   if (h1 && feld) feld.textContent = h1.textContent.trim();
 }
 
+/* Links zurück auf die Seite: je Sprache in den passenden Teil. */
+const SEITENLINKS = {
+  de: ['de/index.html', 'de/lebenslauf-vorlagen.html', 'de/ratgeber/index.html'],
+  en: ['index.html', 'templates.html', 'guides/index.html'],
+  es: ['index.html', 'templates.html', 'guides/index.html']
+};
+function seitenlinks(){
+  const ziele = SEITENLINKS[sprache] || SEITENLINKS.en;
+  document.querySelectorAll('#zurueck a').forEach((a, i) => { a.href = ziele[i]; });
+}
+
 function oberflaeche(){
   const t = UITXT[sprache] || UITXT.de;
   document.querySelectorAll('[data-t]').forEach(el => {
@@ -1233,6 +1244,7 @@ function oberflaeche(){
     else if (HILFE_DE) hilfe.innerHTML = HILFE_DE;
   }
   varListe();
+  seitenlinks();
 }
 let HILFE_DE = '';
 
@@ -1271,14 +1283,20 @@ function hilfeMerken(){
   if (sprache !== 'de' && HILFE[sprache]) h.innerHTML = HILFE[sprache];
 }
 /* Standardsprache: Englisch. Die deutsche Fassung steht im Markup und wird
-   vorher gesichert, damit man jederzeit zurückschalten kann. */
-setSprache('en', false);
+   vorher gesichert, damit man jederzeit zurückschalten kann. Wer aus dem
+   deutschen Teil der Seite kommt, bringt ?lang=de mit. */
+const WUNSCHSPRACHE = (function(){
+  const p = new URLSearchParams(location.search).get('lang');
+  return (p && UITXT[p]) ? p : 'en';
+})();
+if (WUNSCHSPRACHE === sprache) oberflaeche();   /* Markup ist schon deutsch */
+else setSprache(WUNSCHSPRACHE, false);
 /* Aus der Vorlagengalerie kommt die gewünschte Variante als ?t=… mit. */
 (function(){
   const wunsch = new URLSearchParams(location.search).get('t');
   if (wunsch && VARS.some(v => v.k === wunsch)) setVar(wunsch);
 })();
-document.getElementById('fSprache').value = 'en';
+document.getElementById('fSprache').value = WUNSCHSPRACHE;
 
 if (document.readyState === 'loading')
   document.addEventListener('DOMContentLoaded', hilfeMerken);

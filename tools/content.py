@@ -1946,3 +1946,12 @@ example(
          'impression you want.'),
     ],
 )
+
+
+def for_lang(code):
+    """Return the module holding the copy for a language."""
+    if code == 'de':
+        import content_de
+        return content_de
+    import sys
+    return sys.modules[__name__]

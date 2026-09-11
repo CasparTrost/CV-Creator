@@ -77,40 +77,95 @@
   /* ---- The notice ------------------------------------------------ */
   var bar = null;
 
-  var MARKUP = [
-    '<div class="cbar-in">',
-    '<div>',
-    '<strong>Advertising cookies</strong>',
-    '<p>The editor needs none: your resume never leaves your browser. The rest of the site is ',
-    'paid for by advertising, and our ad partner would like to store a cookie to measure and ',
-    'personalise what you see. Your call, changeable later on any page.</p>',
-    '</div>',
-    '<div class="cbar-btns">',
-    '<button type="button" class="lnk" data-c="manage">Choose individually</button>',
-    '<button type="button" class="btn ghost" data-c="reject">Reject</button>',
-    '<button type="button" class="btn" data-c="accept">Accept</button>',
-    '</div>',
-    '</div>',
-    '<div class="cbar-detail" hidden>',
-    '<div class="in">',
-    '<label class="copt fixed"><input type="checkbox" checked disabled>',
-    '<span><strong>Strictly necessary</strong>Remembering this choice, and the draft the editor ',
-    'keeps on your own device. Never shared.</span></label>',
-    '<label class="copt"><input type="checkbox" data-cat="ads">',
-    '<span><strong>Advertising</strong>Lets our ad partner store an identifier so it can measure ',
-    'performance and personalise ads. Rejecting means no ads are loaded at all.</span></label>',
-    '<label class="copt"><input type="checkbox" data-cat="measurement">',
-    '<span><strong>Measurement</strong>Aggregate statistics about which pages are read. Never used ',
-    'to build a profile of you.</span></label>',
-    '<span class="copt"><span><a href="PRIVACY">Read the privacy notice</a><br>',
-    '<button type="button" class="lnk" data-c="save">Save my choice</button></span></span>',
-    '</div>',
-    '</div>'
-  ].join('');
+  var TEXT = {
+    en: {
+      label: 'Cookie choices',
+      title: 'Advertising cookies',
+      intro: 'The editor needs none: your resume never leaves your browser. The rest of the ' +
+             'site is paid for by advertising, and our ad partner would like to store a ' +
+             'cookie to measure and personalise what you see. Your call, changeable later ' +
+             'on any page.',
+      manage: 'Choose individually',
+      reject: 'Reject',
+      accept: 'Accept',
+      save: 'Save my choice',
+      privacy: 'Read the privacy notice',
+      necessary: ['Strictly necessary',
+                  'Remembering this choice, and the draft the editor keeps on your own ' +
+                  'device. Never shared.'],
+      ads: ['Advertising',
+            'Lets our ad partner store an identifier so it can measure performance and ' +
+            'personalise ads. Rejecting means no ads are loaded at all.'],
+      measurement: ['Measurement',
+                    'Aggregate statistics about which pages are read. Never used to build ' +
+                    'a profile of you.'],
+      href: 'privacy.html'
+    },
+    de: {
+      label: 'Cookie-Auswahl',
+      title: 'Cookies für Werbung',
+      intro: 'Der Editor braucht keine: Ihr Lebenslauf verlässt Ihren Browser nicht. Die ' +
+             'übrige Seite finanziert sich über Werbung, und unser Werbepartner möchte ' +
+             'dafür ein Cookie setzen, um Werbung zu messen und zu personalisieren. Das ' +
+             'entscheiden Sie — auf jeder Seite auch später wieder.',
+      manage: 'Einzeln auswählen',
+      reject: 'Ablehnen',
+      accept: 'Zustimmen',
+      save: 'Auswahl speichern',
+      privacy: 'Zur Datenschutzerklärung',
+      necessary: ['Unbedingt erforderlich',
+                  'Diese Entscheidung und der Arbeitsstand, den der Editor auf Ihrem ' +
+                  'eigenen Gerät behält. Wird nie geteilt.'],
+      ads: ['Werbung',
+            'Erlaubt unserem Werbepartner, eine Kennung zu setzen, um Werbung zu messen ' +
+            'und zu personalisieren. Bei Ablehnung wird überhaupt keine Werbung geladen.'],
+      measurement: ['Reichweitenmessung',
+                    'Zusammengefasste Statistik darüber, welche Seiten gelesen werden. Nie ' +
+                    'für ein Profil über Sie.'],
+      href: 'datenschutz.html'
+    }
+  };
+
+  function strings() {
+    return TEXT[(document.documentElement.lang || 'en').slice(0, 2)] || TEXT.en;
+  }
+
+  /* data-root is written into every page by tools/build.py, so no guessing. */
+  function root() {
+    return document.documentElement.getAttribute('data-root') || '';
+  }
 
   function privacyHref() {
-    /* Content pages sit at the root; templates/ and guides/ are one down. */
-    return /\/(templates|guides|examples)\//.test(location.pathname) ? '../privacy.html' : 'privacy.html';
+    var t = strings();
+    return root() + (t === TEXT.de ? 'de/' : '') + t.href;
+  }
+
+  function markup() {
+    var t = strings();
+    function option(cat, pair) {
+      return '<label class="copt"><input type="checkbox" data-cat="' + cat + '">' +
+             '<span><strong>' + pair[0] + '</strong>' + pair[1] + '</span></label>';
+    }
+    return [
+      '<div class="cbar-in">',
+      '<div><strong>' + t.title + '</strong><p>' + t.intro + '</p></div>',
+      '<div class="cbar-btns">',
+      '<button type="button" class="lnk" data-c="manage">' + t.manage + '</button>',
+      '<button type="button" class="btn ghost" data-c="reject">' + t.reject + '</button>',
+      '<button type="button" class="btn" data-c="accept">' + t.accept + '</button>',
+      '</div>',
+      '</div>',
+      '<div class="cbar-detail" hidden>',
+      '<div class="in">',
+      '<label class="copt fixed"><input type="checkbox" checked disabled>',
+      '<span><strong>' + t.necessary[0] + '</strong>' + t.necessary[1] + '</span></label>',
+      option('ads', t.ads),
+      option('measurement', t.measurement),
+      '<span class="copt"><span><a href="' + privacyHref() + '">' + t.privacy + '</a><br>',
+      '<button type="button" class="lnk" data-c="save">' + t.save + '</button></span></span>',
+      '</div>',
+      '</div>'
+    ].join('');
   }
 
   function build() {
@@ -118,8 +173,8 @@
     bar = document.createElement('aside');
     bar.className = 'cbar';
     bar.setAttribute('role', 'dialog');
-    bar.setAttribute('aria-label', 'Cookie choices');
-    bar.innerHTML = MARKUP.replace('PRIVACY', privacyHref());
+    bar.setAttribute('aria-label', strings().label);
+    bar.innerHTML = markup();
     bar.addEventListener('click', function (ev) {
       var what = ev.target.getAttribute && ev.target.getAttribute('data-c');
       if (!what) return;

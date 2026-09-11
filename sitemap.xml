@@ -6,6 +6,11 @@
   <url><loc>https://YOUR-DOMAIN.example/index.html</loc><lastmod>2026-09-11</lastmod><priority>1.0</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/privacy.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/templates.html</loc><lastmod>2026-09-11</lastmod><priority>0.9</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/datenschutz.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/impressum.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/index.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/lebenslauf-vorlagen.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ueber-uns.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/examples/accountant.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/examples/administrative-assistant.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/examples/index.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
@@ -44,4 +49,34 @@
   <url><loc>https://YOUR-DOMAIN.example/templates/slate-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/templates/verso-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://YOUR-DOMAIN.example/templates/vesper-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/muster/bueromanagement.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/muster/index.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/muster/lagerlogistik.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/muster/pflegefachkraft.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/muster/softwareentwickler.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/anschreiben.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/arbeitszeugnis.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/bewerbung-per-email.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/bewerbung-usa-uk.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/bewerbungsfoto.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/index.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/lebenslauf-luecken.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/lebenslauf-schreiben.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/ratgeber/quereinstieg.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/aster-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/broadsheet-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/cobalt-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/frame-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/hairline-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/halden-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/ledger-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/linden-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/margin-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/milestone-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/onyx-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/plainfield-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/quill-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/slate-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/verso-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://YOUR-DOMAIN.example/de/vorlagen/vesper-resume-template.html</loc><lastmod>2026-09-11</lastmod><priority>0.7</priority></url>
 </urlset>

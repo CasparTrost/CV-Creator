@@ -304,7 +304,9 @@ a.feature:hover{border-color:var(--accent);box-shadow:var(--shadow-s)}
    but the rules only appear once there is something between them. */
 .ad[data-state="ad"],.ad[data-state="house"]{border-color:var(--rule)}
 .ad[data-state="empty"]{display:none}
-.ad > small{font-size:.7rem;letter-spacing:.06em;color:var(--muted);text-transform:lowercase}
+/* No text-transform: the label's casing comes from the script, because
+   German capitalises nouns and "anzeige" would be wrong. */
+.ad > small{font-size:.7rem;letter-spacing:.06em;color:var(--muted)}
 .ad ins{display:block;width:100%}
 .ad-house{
   display:flex;gap:18px;align-items:center;text-decoration:none;color:inherit;width:100%;
