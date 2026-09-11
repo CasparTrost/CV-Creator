@@ -46,6 +46,36 @@ interface, and `hreflang` pairs on every page that exists in both.
 Pages know their own depth through `data-root` on `<html>`, written by the
 generator, so the scripts never guess from the URL.
 
+## Looking at it locally
+
+```sh
+git clone https://github.com/CasparTrost/CV-Creator.git
+cd CV-Creator
+python3 tools/serve.py          # http://localhost:8000
+```
+
+`tools/serve.py` also serves `404.html` for a missing path and sends
+`Cache-Control: no-store`, so a reload after `tools/build.py` shows the new
+page rather than the old one. `python3 -m http.server` works too and does
+neither.
+
+Open the site over `http://localhost`, not by double-clicking a file: over
+`file://` Chrome blocks browser storage, so neither the cookie notice nor
+the editor's draft behaves correctly.
+
+Worth clicking through: the language switch at the right of the navigation,
+a guide, a worked example, the editor (type something, reload the tab, watch
+the draft come back), and the cookie notice — accept, then reopen it from the
+footer.
+
+**To see real ad slots** before AdSense has answered, put any publisher ID
+into `assets/site-config.js` — `ca-pub-0000000000000000` will do — and
+reload. Empty slots become labelled ad units that stay unfilled, which is
+what the layout will look like in production. Remove it again afterwards.
+
+**To get the cookie notice back**, run `Consent.reset()` in the browser
+console, or clear site data for localhost.
+
 ## Going live
 
 ### 1. Fill in `assets/site-config.js`
@@ -158,6 +188,7 @@ advertisers pay for.
 | `python3 tools/build.py` | Renders every page in both languages, the sitemap, robots.txt, the manifest and ads.txt |
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
+| `python3 tools/serve.py [port]` | Serves the site locally with 404 handling and no caching |
 
 Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 `EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
