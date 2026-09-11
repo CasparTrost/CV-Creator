@@ -487,26 +487,25 @@ def faq_block(pairs):
 # ---------------------------------------------------------------- pages
 
 def page_index():
+    """The landing page. It has one job: say what this is and show it."""
     depth = 0
     faq, faq_ld = faq_block([
-        ('Is the download really free?',
-         'Yes. The export is a browser print to PDF, so there is nothing for us to charge for '
-         'and no watermark to remove. The site is paid for by advertising on the pages around '
-         'the editor, not by the editor.'),
+        ('Is it really free?',
+         'Yes. The export is your browser printing to PDF, so there is nothing for us to '
+         'charge for and no watermark to remove. Advertising on the pages around the editor '
+         'pays for the site.'),
         ('Do I need an account?',
          'No. There is no sign-up because there is no server storing anything. Use Save file '
-         'to keep a copy on your own machine, and open that file again to carry on.'),
-        ('Will it pass an applicant tracking system?',
-         'Single-column layouts such as Linden and Plainfield parse most reliably. Sidebar '
-         'layouts look better to a human but can confuse parsers that read across columns. '
-         'The guide on applicant tracking systems explains what actually breaks.'),
-        ('Where is my data stored?',
+         'to keep a copy on your own machine and open it again later.'),
+        ('Will it get through an applicant tracking system?',
+         'Single-column layouts such as Plainfield and Linden parse most reliably. Sidebar '
+         'layouts look better to a human but can confuse parsers that read across columns.'),
+        ('Where is my data?',
          'In your browser, on your device. The editor keeps a working draft locally so a '
-         'closed tab does not lose your work, and that draft never leaves the machine. '
-         'Clearing your browser data removes it.'),
-        ('Can I get it as a Word document?',
+         'closed tab does not lose your work, and that draft never leaves the machine.'),
+        ('Can I get a Word file?',
          'Yes, though Word receives a simplified table version. Diagonals and round photos '
-         'are beyond what Word can draw reliably.'),
+         'are beyond what Word draws reliably.'),
     ])
     software_ld = {
         '@context': 'https://schema.org',
@@ -515,16 +514,15 @@ def page_index():
         'applicationCategory': 'BusinessApplication',
         'operatingSystem': 'Any browser',
         'url': DOMAIN + '/editor.html',
-        'description': 'A resume builder that runs entirely in the browser, with sixteen '
-                       'A4 layouts and a free PDF export.',
+        'description': 'A free resume builder that runs entirely in the browser, with '
+                       'sixteen A4 layouts and a free PDF export.',
         'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'},
     }
-    hero_svg = BY_ID['t1']['svg']
 
     return '\n'.join([
-        head('Free resume builder with a real PDF export — %s' % BRAND,
-             'Build a resume in your browser and download the PDF for free. Sixteen layouts, '
-             'no account, no watermark, nothing uploaded to a server.',
+        head('Free resume builder — no account, no watermark | %s' % BRAND,
+             'Write your resume in the browser and download the PDF free. Sixteen layouts, '
+             'no sign-up, no watermark, and nothing you type is uploaded.',
              'index.html', depth, extra_ld=[software_ld, faq_ld],
              alternate={'de': 'de/index.html'}),
         topbar(None, depth),
@@ -532,44 +530,42 @@ def page_index():
         '<main id="main">',
         '<section class="hero">',
         '  <div class="wrap">',
-        '    <div>',
-        '      <p class="eyebrow">Free, no account, nothing uploaded</p>',
-        '      <h1>Write it, see it, download it.</h1>',
-        '      <p class="lead">A resume editor with a live A4 page in front of you. What you see '
-        'is exactly what comes out of the PDF, down to the millimetre.</p>',
-        '      <div class="actions">',
-        '        <a class="btn" href="editor.html">Open the editor</a>',
-        '        <a class="btn ghost" href="templates.html">Browse sixteen layouts</a>',
-        '      </div>',
-        '      <p class="aside-note">Everything runs inside your browser. Your resume is never '
-        'sent anywhere, which also means there is no account to create and nothing to delete '
-        'afterwards.</p>',
+        '    <h1>Build your resume in your browser. Free.</h1>',
+        '    <p class="lead">Type into a live A4 page, pick one of sixteen layouts, and save '
+        'the PDF. No account, no watermark, and nothing you write is uploaded anywhere.</p>',
+        '    <div class="actions">',
+        '      <a class="btn" href="editor.html">Start writing</a>',
+        '      <a class="btn ghost" href="templates.html">See the layouts</a>',
         '    </div>',
-        '    <div class="sheet">%s</div>' % hero_svg,
+        '    <p class="under"><b>Free</b> · no sign-up · works on any browser</p>',
+        '    <div class="shot">',
+        '      <img src="assets/hero-en.png" width="1360" height="720" alt="The editor: '
+        'controls on the left, a live A4 page on the right." loading="eager">',
+        '    </div>',
         '  </div>',
         '</section>',
         '',
-        '<section class="claims">',
+        '<section class="facts">',
         '  <div class="wrap">',
-        '    <div><strong>The PDF is free</strong><p>No trial, no card, no watermark stamped '
-        'across the page you worked on.</p></div>',
-        '    <div><strong>Nothing leaves your machine</strong><p>The editor is a single page of '
-        'code. There is no server holding your employment history.</p></div>',
+        '    <div><strong>Nothing to pay</strong><p>The PDF is free at the end, not after a '
+        'trial. There is no download button to put a price behind.</p></div>',
+        '    <div><strong>Nothing uploaded</strong><p>The editor is one page of code running '
+        'on your machine. No server ever sees your employment history.</p></div>',
         '    <div><strong>Sixteen layouts, one text</strong><p>Switch the design whenever you '
-        'like. Your content stays where it is.</p></div>',
+        'like. What you wrote stays where it is.</p></div>',
         '  </div>',
         '</section>',
         '',
         '<section class="band">',
         '  <div class="wrap">',
         '    <div class="band-head">',
-        '      <h2>Start from a layout</h2>',
-        '      <p>Each one is a finished A4 document, not a mood board. Pick the structure that '
-        'fits how much you have to say.</p>',
+        '      <h2>Pick a layout</h2>',
+        '      <p>Each one is a finished A4 document. Single column parses most reliably '
+        'through employer portals; a sidebar reads better when a person opens the PDF.</p>',
         '    </div>',
         '    <div class="grid">%s</div>' % ''.join(
             template_tile(t, depth) for t in TEMPLATES[:8]),
-        '    <p style="margin-top:30px"><a href="templates.html">See all sixteen layouts</a></p>',
+        '    <p style="margin-top:30px"><a href="templates.html">All sixteen layouts</a></p>',
         '  </div>',
         '</section>',
         '',
@@ -577,24 +573,10 @@ def page_index():
         '',
         '<section class="band tight">',
         '  <div class="wrap">',
-        '    <div class="band-head"><h2>How it works</h2></div>',
-        '    <ol class="steps">',
-        '      <li><h3>Replace the sample text</h3><p>The editor opens with a filled-in example. '
-        'Click into any line and type over it.</p></li>',
-        '      <li><h3>Move sections where you want them</h3><p>Drag a section by its handle into '
-        'the other column or onto the second page.</p></li>',
-        '      <li><h3>Save the PDF</h3><p>Print to PDF with margins set to none and background '
-        'graphics switched on.</p></li>',
-        '    </ol>',
-        '  </div>',
-        '</section>',
-        '',
-        '<section class="band tight">',
-        '  <div class="wrap">',
         '    <div class="band-head">',
-        '      <h2>See one that is finished</h2>',
-        '      <p>A worked resume for eight occupations, with the reasoning written out: what '
-        'the person hiring checks first, and which lines are worth their space.</p>',
+        '      <h2>See a finished one</h2>',
+        '      <p>A worked resume for eight occupations, with the reasoning: what the person '
+        'hiring checks first, and which lines are worth their space.</p>',
         '    </div>',
         '    <div class="cards">%s</div>' % ''.join(
             example_card(e, depth) for e in content.EXAMPLES[:3]),
@@ -605,9 +587,9 @@ def page_index():
         '<section class="band tight">',
         '  <div class="wrap">',
         '    <div class="band-head">',
-        '      <h2>Read this before you start</h2>',
-        '      <p>The editor handles the layout. These handle the words, which is the part that '
-        'decides whether anyone calls you.</p>',
+        '      <h2>What to write on it</h2>',
+        '      <p>The editor handles the layout. These handle the words, which is the part '
+        'that decides whether anyone calls you.</p>',
         '    </div>',
         '    <div class="cards">%s</div>' % ''.join(
             guide_card(g, depth) for g in content.GUIDES[:3]),
@@ -617,8 +599,9 @@ def page_index():
         '',
         '<section class="band tight">',
         '  <div class="wrap">',
-        '    <div class="band-head"><h2>Questions people ask</h2></div>',
+        '    <div class="band-head"><h2>Questions</h2></div>',
         '    ' + faq,
+        '    ' + cta(depth),
         '  </div>',
         '</section>',
         '</main>',
@@ -1294,25 +1277,24 @@ def page_index_de():
     depth = 1
     L = LANGS['de']
     faq, faq_ld = faq_block([
-        ('Ist der Download wirklich kostenlos?',
-         'Ja. Der Export ist der Druck-nach-PDF Ihres Browsers, es gibt also nichts, wofür '
-         'wir etwas verlangen könnten, und kein Wasserzeichen zu entfernen. Bezahlt wird die '
-         'Seite über Werbung auf den Seiten um den Editor herum, nicht über den Editor.'),
+        ('Ist es wirklich kostenlos?',
+         'Ja. Der Export ist der Druck-nach-PDF Ihres Browsers — es gibt nichts, wofür wir '
+         'etwas verlangen könnten, und kein Wasserzeichen zu entfernen. Bezahlt wird die '
+         'Seite über Werbung auf den Seiten um den Editor herum.'),
         ('Brauche ich ein Konto?',
          'Nein. Es gibt keine Anmeldung, weil kein Server etwas speichert. Mit „Sichern“ '
-         'legen Sie eine Datei auf Ihrem eigenen Rechner ab und arbeiten später daran '
-         'weiter.'),
+         'legen Sie eine Datei auf Ihrem Rechner ab und arbeiten später daran weiter.'),
         ('Kommt der Lebenslauf durch ein Bewerbungssystem?',
-         'Einspaltige Layouts wie Linden und Plainfield werden am zuverlässigsten eingelesen. '
-         'Layouts mit Seitenleiste gefallen einem Menschen besser, können aber Programme '
-         'verwirren, die quer über die Spalten lesen.'),
+         'Einspaltige Layouts wie Plainfield und Linden werden am zuverlässigsten '
+         'eingelesen. Layouts mit Seitenleiste gefallen einem Menschen besser, können aber '
+         'Programme verwirren, die quer über die Spalten lesen.'),
         ('Wo liegen meine Daten?',
          'In Ihrem Browser, auf Ihrem Gerät. Der Editor behält einen Arbeitsstand lokal, '
          'damit ein geschlossener Tab keine Stunde kostet, und dieser Stand verlässt das '
-         'Gerät nie. Browserdaten löschen entfernt ihn.'),
-        ('Kann ich den Lebenslauf als Word-Datei bekommen?',
-         'Ja, Word erhält allerdings eine vereinfachte Tabellenfassung. Diagonalen und runde '
-         'Fotos gehen über das hinaus, was Word zuverlässig zeichnet.'),
+         'Gerät nie.'),
+        ('Mit Foto oder ohne?',
+         'Im deutschsprachigen Raum ist ein Foto weiterhin üblich, in den USA und '
+         'Großbritannien ein Risiko. Jedes Layout funktioniert mit und ohne.'),
     ])
     software_ld = {
         '@context': 'https://schema.org',
@@ -1322,8 +1304,8 @@ def page_index_de():
         'operatingSystem': 'Jeder Browser',
         'inLanguage': 'de',
         'url': '%s/%s' % (DOMAIN, L['editor']),
-        'description': 'Ein Lebenslauf-Editor, der vollständig im Browser läuft, mit '
-                       'sechzehn A4-Layouts und kostenlosem PDF-Export.',
+        'description': 'Ein kostenloser Lebenslauf-Editor, der vollständig im Browser läuft, '
+                       'mit sechzehn A4-Layouts und kostenlosem PDF-Export.',
         'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'},
     }
     guides = content.for_lang('de').GUIDES
@@ -1331,8 +1313,8 @@ def page_index_de():
 
     return '\n'.join([
         head('Lebenslauf erstellen — kostenlos, ohne Anmeldung | %s' % BRAND,
-             'Lebenslauf im Browser erstellen und kostenlos als PDF herunterladen. '
-             'Sechzehn Vorlagen, kein Konto, kein Wasserzeichen, nichts wird hochgeladen.',
+             'Lebenslauf im Browser schreiben und kostenlos als PDF herunterladen. Sechzehn '
+             'Vorlagen, keine Anmeldung, kein Wasserzeichen, nichts wird hochgeladen.',
              'de/index.html', depth, extra_ld=[software_ld, faq_ld], lang='de',
              alternate={'en': 'index.html'}),
         topbar(None, depth, 'de'),
@@ -1340,46 +1322,46 @@ def page_index_de():
         '<main id="main">',
         '<section class="hero">',
         '  <div class="wrap">',
-        '    <div>',
-        '      <p class="eyebrow">Kostenlos, ohne Konto, nichts wird hochgeladen</p>',
-        '      <h1>Schreiben, sehen, herunterladen.</h1>',
-        '      <p class="lead">Ein Lebenslauf-Editor mit einer echten A4-Seite vor Ihnen. Was '
-        'Sie sehen, kommt millimetergenau so aus dem PDF heraus.</p>',
-        '      <div class="actions">',
-        '        <a class="btn" href="%s%s">Editor öffnen</a>' % (up(depth), L['editor']),
-        '        <a class="btn ghost" href="%s%s">Sechzehn Vorlagen ansehen</a>'
+        '    <h1>Lebenslauf im Browser schreiben. Kostenlos.</h1>',
+        '    <p class="lead">Direkt in eine echte A4-Seite tippen, eines von sechzehn Layouts '
+        'wählen, PDF speichern. Ohne Anmeldung, ohne Wasserzeichen, und nichts von dem, was '
+        'Sie schreiben, wird hochgeladen.</p>',
+        '    <div class="actions">',
+        '      <a class="btn" href="%s%s">Jetzt schreiben</a>' % (up(depth), L['editor']),
+        '      <a class="btn ghost" href="%s%s">Vorlagen ansehen</a>'
         % (up(depth), L['templates']),
-        '      </div>',
-        '      <p class="aside-note">Alles läuft in Ihrem Browser. Ihr Lebenslauf wird '
-        'nirgendwohin geschickt — deshalb gibt es auch kein Konto anzulegen und hinterher '
-        'nichts zu löschen.</p>',
         '    </div>',
-        '    <div class="sheet">%s</div>' % BY_ID['t1']['svg'],
+        '    <p class="under"><b>Kostenlos</b> · keine Anmeldung · läuft in jedem Browser</p>',
+        '    <div class="shot">',
+        '      <img src="../assets/hero-de.png" width="1360" height="720" alt="Der Editor: '
+        'links die Bedienung, rechts die A4-Seite." loading="eager">',
+        '    </div>',
         '  </div>',
         '</section>',
         '',
-        '<section class="claims">',
+        '<section class="facts">',
         '  <div class="wrap">',
-        '    <div><strong>Das PDF ist kostenlos</strong><p>Keine Testphase, keine Karte, kein '
-        'Wasserzeichen über der Seite, an der Sie gearbeitet haben.</p></div>',
-        '    <div><strong>Nichts verlässt Ihr Gerät</strong><p>Der Editor ist eine einzige '
-        'Seite Programmcode. Es gibt keinen Server, der Ihren Werdegang hält.</p></div>',
-        '    <div><strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, '
-        'wann Sie wollen. Ihr Inhalt bleibt, wo er ist.</p></div>',
+        '    <div><strong>Nichts zu bezahlen</strong><p>Das PDF ist am Ende kostenlos, nicht '
+        'nach einer Testphase. Es gibt keinen Download-Knopf, hinter den ein Preis passt.</p>'
+        '</div>',
+        '    <div><strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, '
+        'die auf Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang.</p></div>',
+        '    <div><strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, wann '
+        'Sie wollen. Was Sie geschrieben haben, bleibt stehen.</p></div>',
         '  </div>',
         '</section>',
         '',
         '<section class="band">',
         '  <div class="wrap">',
         '    <div class="band-head">',
-        '      <h2>Mit einer Vorlage anfangen</h2>',
-        '      <p>Jede ist ein fertiges A4-Dokument, keine Stilsammlung. Wählen Sie den '
-        'Aufbau, der dazu passt, wie viel Sie zu sagen haben — die tabellarischen mit '
-        'Datumsspalte entsprechen der hier üblichen Form.</p>',
+        '      <h2>Vorlage wählen</h2>',
+        '      <p>Jede ist ein fertiges A4-Dokument. Die tabellarischen mit Datumsspalte '
+        'entsprechen der hier üblichen Form; einspaltige werden von Bewerbungsportalen am '
+        'zuverlässigsten eingelesen.</p>',
         '    </div>',
         '    <div class="grid">%s</div>' % ''.join(
             template_tile(BY_ID[t], depth, 'de')
-            for t in ['t8', 't9', 't7', 't1', 't13', 't3', 't4', 't11']),
+            for t in ['t8', 't9', 't1', 't7', 't3', 't13', 't4', 't11']),
         '    <p style="margin-top:30px"><a href="%s%s">Alle sechzehn Vorlagen</a></p>'
         % (up(depth), L['templates']),
         '  </div>',
@@ -1389,24 +1371,10 @@ def page_index_de():
         '',
         '<section class="band tight">',
         '  <div class="wrap">',
-        '    <div class="band-head"><h2>So läuft es ab</h2></div>',
-        '    <ol class="steps">',
-        '      <li><h3>Beispieltext ersetzen</h3><p>Der Editor startet mit einem ausgefüllten '
-        'Beispiel. In eine Zeile klicken und darüberschreiben.</p></li>',
-        '      <li><h3>Abschnitte verschieben</h3><p>Einen Abschnitt am Griff anfassen und in '
-        'die andere Spalte oder auf die zweite Seite ziehen.</p></li>',
-        '      <li><h3>Als PDF speichern</h3><p>Über den Druckdialog, mit Rändern „keine“ und '
-        'eingeschalteten Hintergrundgrafiken.</p></li>',
-        '    </ol>',
-        '  </div>',
-        '</section>',
-        '',
-        '<section class="band tight">',
-        '  <div class="wrap">',
         '    <div class="band-head">',
         '      <h2>Ein fertiges Muster ansehen</h2>',
         '      <p>Ein vollständiger Lebenslauf für mehrere Berufe, mit der Begründung '
-        'daneben: was die einstellende Person zuerst prüft und welche Zeilen zählen.</p>',
+        'daneben: was zuerst geprüft wird und welche Zeilen zählen.</p>',
         '    </div>',
         '    <div class="cards">%s</div>' % ''.join(
             example_card(e, depth, 'de') for e in examples[:3]),
@@ -1418,12 +1386,12 @@ def page_index_de():
         '<section class="band tight">',
         '  <div class="wrap">',
         '    <div class="band-head">',
-        '      <h2>Vorher lesen</h2>',
+        '      <h2>Was hineingehört</h2>',
         '      <p>Das Layout übernimmt der Editor. Diese Texte behandeln die Worte — den '
         'Teil, an dem entschieden wird, ob jemand anruft.</p>',
         '    </div>',
         '    <div class="cards">%s</div>' % ''.join(
-            guide_card(g, depth, 'de') for g in [guides[0], guides[1], guides[3]]),
+            guide_card(g, depth, 'de') for g in [guides[0], guides[2], guides[3]]),
         '    <p style="margin-top:26px"><a href="%s%s">Alle acht Ratgeber</a></p>'
         % (up(depth), L['guides']),
         '  </div>',
@@ -1431,8 +1399,9 @@ def page_index_de():
         '',
         '<section class="band tight">',
         '  <div class="wrap">',
-        '    <div class="band-head"><h2>Häufige Fragen</h2></div>',
+        '    <div class="band-head"><h2>Fragen</h2></div>',
         '    ' + faq,
+        '    ' + cta(depth, lang='de'),
         '  </div>',
         '</section>',
         '</main>',

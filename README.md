@@ -70,12 +70,16 @@ the editor's draft behaves correctly.
 Worth clicking through: the language switch at the right of the navigation,
 a guide, a worked example, the editor (type something, reload the tab, watch
 the draft come back), and the cookie notice — accept, then reopen it from the
-footer.
+footer. In the editor, step through all sixteen layouts: each one is expected
+to hold the sample on a single page with nothing clipped.
 
-**To see real ad slots** before AdSense has answered, put any publisher ID
-into `assets/site-config.js` — `ca-pub-0000000000000000` will do — and
-reload. Empty slots become labelled ad units that stay unfilled, which is
-what the layout will look like in production. Remove it again afterwards.
+**The ad slots are already visible.** `assets/site-config.js` ships with the
+placeholder publisher ID `ca-pub-0000000000000000`, and in that one case each
+slot draws its own outline, its label and its name — so you can see exactly
+where advertising will sit before AdSense has answered. Google serves nothing
+against that ID and no cookie is set until a visitor accepts. Replace it with
+your own ID after approval (the outline disappears by itself), or set it back
+to `''` to hide the slots entirely.
 
 **To get the cookie notice back**, run `Consent.reset()` in the browser
 console, or clear site data for localhost.
@@ -192,6 +196,7 @@ advertisers pay for.
 | `python3 tools/build.py` | Renders every page in both languages, the sitemap, robots.txt, the manifest and ads.txt |
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
+| `node tools/make-hero.js` | Re-photographs the editor for the landing pages (needs Playwright and a running server) |
 | `python3 tools/serve.py [port]` | Serves the site locally with 404 handling and no caching |
 | `tools\serve.cmd [port]` | The same, for Windows |
 
@@ -201,6 +206,17 @@ site itself is plain HTML and needs nothing.
 Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 `EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
 `tools/data/templates.json`.
+
+## The landing page
+
+It answers one question above anything else: *what is this?* Headline, one
+sentence, one button, then a photograph of the editor itself — taken by
+`tools/make-hero.js`, so it shows the real product rather than an
+illustration of it. The step-by-step "how it works" blocks are gone: a tool
+that needs instructions on its own landing page has a different problem.
+
+Below that, in order: three facts, the layouts, a worked example, the
+guides, and the questions people actually ask.
 
 ## Still worth doing
 

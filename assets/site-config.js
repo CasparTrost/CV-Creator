@@ -21,10 +21,14 @@ window.PLAINSHEET = {
        which is what you want while AdSense is still reviewing you. */
     enabled: true,
 
-    /* Your AdSense publisher ID: 'ca-pub-0000000000000000'.
-       While this is empty no ad script is ever requested and the slots
-       show a house promo instead, so the layout is already final. */
-    client: '',
+    /* Your AdSense publisher ID.
+       This is a placeholder so that the ad slots are visible in the
+       layout: they render as labelled, empty units exactly where real
+       ads will sit. Google serves nothing against it, and no cookie is
+       set until a visitor accepts. Replace it with your own ID once
+       AdSense has approved the site — or set it back to '' to hide the
+       slots and show a single house promo instead. */
+    client: 'ca-pub-0000000000000000',
 
     /* Ad unit IDs from AdSense, one per placement. A placement with an
        empty ID falls back to the house promo. If you use Auto ads you

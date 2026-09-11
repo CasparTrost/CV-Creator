@@ -82,28 +82,45 @@ hr{border:0;border-top:1px solid var(--rule);margin:36px 0}
 }
 .sheet svg{display:block;width:100%;height:auto}
 
-/* ---------------------------------- Hero */
-.hero{padding:76px 0 66px;position:relative;overflow:hidden}
-.hero::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(var(--rule-soft) 1px,transparent 1px),
-                   linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
-  background-size:28px 28px;
-  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 30% 20%,#000,transparent 70%);
-          mask-image:radial-gradient(ellipse 70% 60% at 30% 20%,#000,transparent 70%);
-  opacity:.7;
+/* ---------------------------------- Hero
+   One job: say what this is, show it, and offer one button. Everything
+   else on the page comes after that. */
+.hero{padding:44px 0 0;position:relative;overflow:hidden;background:var(--paper);
+  border-bottom:1px solid var(--rule)}
+.hero .wrap{position:relative;text-align:center}
+.hero h1{max-width:22ch;margin:0 auto .5em;font-size:clamp(2.2rem,5vw,3.5rem)}
+.hero .lead{font-size:1.16rem;color:var(--muted);max-width:56ch;margin:0 auto}
+.hero .actions{justify-content:center;margin:28px 0 12px}
+.hero .btn{padding:15px 30px;font-size:1.03rem}
+.hero .under{font-size:.88rem;color:var(--muted);margin:0 auto}
+.hero .under b{color:var(--ink);font-weight:600}
+
+/* The product itself, photographed. An abstract illustration here told
+   visitors nothing about what they were about to get. */
+.shot{
+  margin:38px auto -1px;max-width:1020px;border:1px solid var(--rule);
+  border-bottom:0;border-radius:6px 6px 0 0;overflow:hidden;background:var(--wash);
+  box-shadow:0 -1px 0 var(--rule),0 24px 50px -22px rgba(22,32,43,.35);
 }
-.hero .wrap{display:grid;grid-template-columns:1.04fr .96fr;gap:64px;align-items:center;position:relative}
-.hero h1{max-width:14ch}
+.shot img{display:block;width:100%;height:auto}
+
 .lead{font-size:1.13rem;color:var(--ink);max-width:52ch}
 .actions{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 22px}
 .aside-note{font-size:.9rem;color:var(--muted);max-width:46ch;margin:0}
-.hero .sheet{max-width:430px;margin-left:auto}
 .eyebrow{
   display:inline-flex;align-items:center;gap:8px;font-size:.8rem;letter-spacing:.08em;
   text-transform:uppercase;color:var(--accent);background:var(--accent-wash);
   border-radius:100px;padding:6px 13px;margin:0 0 20px;font-weight:600;
 }
+
+/* Three facts on one line, no headings above them. */
+.facts{background:var(--paper);border-bottom:1px solid var(--rule)}
+.facts .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.facts .wrap > div{padding:26px 30px 26px 0}
+.facts .wrap > div + div{border-left:1px solid var(--rule);padding-left:30px}
+.facts strong{display:block;font-family:"Newsreader",Georgia,serif;font-weight:500;
+  font-size:1.12rem;margin-bottom:3px}
+.facts p{margin:0;font-size:.93rem;color:var(--muted);max-width:36ch}
 
 /* ---------------------------------- Aussagenband */
 .claims{background:var(--paper);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
@@ -123,6 +140,7 @@ hr{border:0;border-top:1px solid var(--rule);margin:36px 0}
 
 /* ---------------------------------- Galerie */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:34px 26px}
+@media (min-width:980px){.grid{grid-template-columns:repeat(4,1fr)}}
 .tile{text-decoration:none;color:inherit;display:block}
 .tile .sheet{transition:transform .16s,box-shadow .16s}
 .tile:hover .sheet{transform:translateY(-3px);box-shadow:var(--shadow-l)}
@@ -303,6 +321,20 @@ a.feature:hover{border-color:var(--accent);box-shadow:var(--shadow-s)}
 /* The height is reserved from the start so nothing jumps when an ad lands,
    but the rules only appear once there is something between them. */
 .ad[data-state="ad"],.ad[data-state="house"]{border-color:var(--rule)}
+
+/* Vorschau: solange die Platzhalter-Kennung in site-config.js steht,
+   zeigt der Platz seine Umrisse und seinen Namen. Mit einer echten
+   Kennung verschwindet das wieder. */
+.ad[data-state="preview"]{
+  border:1px dashed var(--rule);border-radius:3px;background:var(--wash-2);
+  padding:16px;gap:4px;
+}
+.ad[data-state="preview"] > small{color:var(--muted)}
+.ad[data-state="preview"] > em{
+  font-style:normal;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--rule);font-weight:600;
+}
+.ad[data-state="preview"] ins{min-height:0}
 .ad[data-state="empty"]{display:none}
 /* No text-transform: the label's casing comes from the script, because
    German capitalises nouns and "anzeige" would be wrong. */
@@ -380,9 +412,12 @@ footer button.lnk:hover{color:var(--accent)}
 .mid .actions{justify-content:center}
 
 @media (max-width:900px){
-  .hero{padding:52px 0 46px}
-  .hero .wrap,.detail .wrap,.article-cols{grid-template-columns:1fr;gap:40px}
-  .hero .sheet{margin:0;max-width:360px}
+  .hero{padding:40px 0 0}
+  .detail .wrap,.article-cols{grid-template-columns:1fr;gap:40px}
+  .shot{margin-top:32px;border-radius:5px 5px 0 0}
+  .facts .wrap{grid-template-columns:1fr}
+  .facts .wrap > div{padding:20px 0}
+  .facts .wrap > div + div{border-left:0;border-top:1px solid var(--rule);padding-left:0}
   .claims .wrap{grid-template-columns:1fr}
   .claims div{padding:22px 0}
   .claims div + div{border-left:0;border-top:1px solid var(--rule);padding-left:0}

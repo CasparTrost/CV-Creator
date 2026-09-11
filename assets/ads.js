@@ -21,6 +21,12 @@
 
   var cfg = (window.PLAINSHEET || {}).ads || {};
   var slotIds = cfg.slots || {};
+  /* The all-zeros ID is the documented placeholder. Google serves nothing
+     against it, so the slot would otherwise be an invisible gap. In that
+     one case the slot is outlined, which is how you check the geometry
+     before the real units arrive. */
+  var PREVIEW = 'ca-pub-0000000000000000';
+  var isPreview = cfg.client === PREVIEW;
   var scriptRequested = false;
   var housesShown = 0;
 
@@ -148,6 +154,12 @@
       label.textContent = LABEL[lang()];
       box.appendChild(label);
       unit(box, name);
+      if (isPreview) {
+        box.setAttribute('data-state', 'preview');
+        var note = document.createElement('em');
+        note.textContent = name;
+        box.appendChild(note);
+      }
     } else if (cfg.enabled === false) {
       box.setAttribute('data-state', 'empty');
     } else {
