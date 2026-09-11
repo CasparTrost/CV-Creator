@@ -1,0 +1,594 @@
+[
+ {
+  "slug": "aster-resume-template",
+  "name": "Aster",
+  "tagline": "Sidebar with a diagonal header",
+  "body": "A tinted column on the left carries your contact details and education, while a diagonal band across the top holds your name and a short profile. The diagonal is the only flourish; everything below it is quiet.",
+  "fits": [
+   "You want a design that stands out without looking decorative",
+   "Your experience needs the full width of the page",
+   "You are applying outside strictly conservative industries"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Diagonal colour band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t1",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"77\" style=\"fill:var(--sidebar)\"/><polygon points=\"0,0 210,0 210,77 77,77\" style=\"fill:var(--accent)\"/><rect x=\"15\" y=\"18\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"88\" y=\"22\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"88\" y=\"35\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"43\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"51\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"14\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Aster \u2014 sidebar with a diagonal header | free resume template",
+  "description": "Aster: sidebar with a diagonal header. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "verso-resume-template",
+  "name": "Verso",
+  "tagline": "Sidebar on the right",
+  "body": "The same structure as Aster, mirrored. Reading starts with your experience instead of your contact details, which suits people whose track record is the strongest argument.",
+  "fits": [
+   "Your work history should be the first thing a reader hits",
+   "You want something recognisably different from the usual left rail",
+   "You are sending a PDF rather than uploading to a portal"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Mirrored diagonal band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t2",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"139\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"77\" style=\"fill:var(--sidebar)\"/><polygon points=\"0,0 210,0 133,77 0,77\" style=\"fill:var(--accent)\"/><rect x=\"151\" y=\"18\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"22\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"20\" y=\"35\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"43\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"51\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"151\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"151\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"151\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"151\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Verso \u2014 sidebar on the right | free resume template",
+  "description": "Verso: sidebar on the right. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "halden-resume-template",
+  "name": "Halden",
+  "tagline": "Solid banner, no diagonal",
+  "body": "A flat band of colour across the top, a tinted sidebar underneath. Calmer than a diagonal and easier on printers that render gradients poorly.",
+  "fits": [
+   "You print your application rather than sending it",
+   "You prefer straight edges to angled ones",
+   "Your employer expects a conventional look"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Flat colour band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t3",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"77\" style=\"fill:var(--accent)\"/><rect x=\"15\" y=\"18\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"88\" y=\"22\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"88\" y=\"35\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"43\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"51\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"14\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Halden \u2014 solid banner, no diagonal | free resume template",
+  "description": "Halden: solid banner, no diagonal. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "quill-resume-template",
+  "name": "Quill",
+  "tagline": "Quiet header on white",
+  "body": "No colour field at all. Your name sits in the accent colour on white, with a rule beneath it. The tinted sidebar is the only fill on the page.",
+  "fits": [
+   "You find coloured banners too loud",
+   "You work in law, finance or public administration",
+   "You want colour used sparingly rather than as a background"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "None"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t4",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"15\" y=\"16\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"88\" y=\"20\" width=\"70\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"33\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"41\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"49\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Quill \u2014 quiet header on white | free resume template",
+  "description": "Quill: quiet header on white. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "onyx-resume-template",
+  "name": "Onyx",
+  "tagline": "Dark header, diagonal cut",
+  "body": "The header band takes the text colour instead of the accent, which reads as considerably more formal than a coloured one while keeping the same geometry.",
+  "fits": [
+   "You want contrast without brightness",
+   "Your accent colour is too light for white type",
+   "You are applying for a senior position"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Dark diagonal band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t5",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"77\" style=\"fill:var(--sidebar)\"/><polygon points=\"0,0 210,0 210,77 77,77\" style=\"fill:var(--dark)\"/><rect x=\"15\" y=\"18\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"88\" y=\"22\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"88\" y=\"35\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"43\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"88\" y=\"51\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"14\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Onyx \u2014 dark header, diagonal cut | free resume template",
+  "description": "Onyx: dark header, diagonal cut. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "cobalt-resume-template",
+  "name": "Cobalt",
+  "tagline": "Sidebar in the accent colour",
+  "body": "The sidebar takes the full accent colour with reversed type; the header stays white. The weight of the page shifts to the left edge.",
+  "fits": [
+   "Your accent colour is strong enough to carry white text",
+   "You want colour on the page without a banner",
+   "Your skills and languages deserve prominence"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Coloured sidebar"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t6",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"71\" height=\"297\" style=\"fill:var(--accent)\"/><rect x=\"15\" y=\"16\" width=\"44\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"88\" y=\"20\" width=\"70\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"33\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"41\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"49\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"96\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"107\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"116\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"125\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"134\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"155\" width=\"24.750000000000004\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"166\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"175\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"184\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"193\" width=\"45\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"96\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"107\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"116\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"125\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"134\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"143\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"152\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"173\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"88\" y=\"184\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"193\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"202\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"211\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"88\" y=\"220\" width=\"108\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Cobalt \u2014 sidebar in the accent colour | free resume template",
+  "description": "Cobalt: sidebar in the accent colour. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "linden-resume-template",
+  "name": "Linden",
+  "tagline": "Single column, colour band",
+  "body": "One column, top to bottom, with a coloured header across the full width. Applicant tracking systems read single-column documents in the order you wrote them, which is not true of sidebars.",
+  "fits": [
+   "You are uploading through an online application portal",
+   "You want the safest structure for automated parsing",
+   "Your content is long enough to fill the width"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Full-width band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t7",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"72\" style=\"fill:var(--accent)\"/><rect x=\"151\" y=\"14\" width=\"42\" height=\"44\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"20\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"20\" y=\"33\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"41\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"49\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"90\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"101\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"110\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"119\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"128\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"137\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"146\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"167\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"178\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"187\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"196\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"205\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"214\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Linden \u2014 single column, colour band | free resume template",
+  "description": "Linden: single column, colour band. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "ledger-resume-template",
+  "name": "Ledger",
+  "tagline": "Date column on the left",
+  "body": "A narrow column holds nothing but the dates; the wide column holds the substance. This is the classic tabular layout used across German-speaking Europe.",
+  "fits": [
+   "You are applying in Germany, Austria or Switzerland",
+   "Your career has clear, continuous dates",
+   "You want a formal document rather than a designed one"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Accent rule only"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t8",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"20\" y=\"64\" width=\"170\" height=\"1.6\" style=\"fill:var(--accent)\"/><rect x=\"151\" y=\"12\" width=\"42\" height=\"44\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"18\" width=\"70\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"31\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"39\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"47\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"84\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"56\" y=\"95\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"104\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"113\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"122\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"131\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"140\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"161\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"56\" y=\"172\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"181\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"190\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"199\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"56\" y=\"208\" width=\"134\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"118\" width=\"26\" height=\"2.6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"160\" width=\"26\" height=\"2.6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"202\" width=\"26\" height=\"2.6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"244\" width=\"26\" height=\"2.6\" style=\"fill:var(--accent)\" rx=\"1\"/></svg>",
+  "title": "Ledger \u2014 date column on the left | free resume template",
+  "description": "Ledger: date column on the left. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "milestone-resume-template",
+  "name": "Milestone",
+  "tagline": "Timeline down the page",
+  "body": "Each position hangs off a vertical line with a marker, so progression is visible before a word is read. Works best when the steps genuinely go upward.",
+  "fits": [
+   "Your career shows steady progression",
+   "You have three to six positions to show",
+   "You want the shape of your history to be legible at a glance"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Timeline with markers"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t9",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"72\" style=\"fill:var(--accent)\"/><rect x=\"151\" y=\"14\" width=\"42\" height=\"44\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"20\" width=\"70\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"20\" y=\"33\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"41\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"49\" width=\"104\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"34\" y=\"90\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"34\" y=\"101\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"110\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"119\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"128\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"137\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"146\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"167\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"34\" y=\"178\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"187\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"196\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"205\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"34\" y=\"214\" width=\"156\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"24\" y=\"108\" width=\"1.6\" height=\"150\" style=\"fill:var(--accent)\"/><circle cx=\"24.8\" cy=\"116\" r=\"3.2\" style=\"fill:var(--accent)\"/><circle cx=\"24.8\" cy=\"166\" r=\"3.2\" style=\"fill:var(--accent)\"/><circle cx=\"24.8\" cy=\"216\" r=\"3.2\" style=\"fill:var(--accent)\"/></svg>",
+  "title": "Milestone \u2014 timeline down the page | free resume template",
+  "description": "Milestone: timeline down the page. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "slate-resume-template",
+  "name": "Slate",
+  "tagline": "Heavy header block",
+  "body": "A deep header block with your role set in spaced capitals, and section titles on tinted bars. The boldest layout here, and the one that carries a strong accent colour best.",
+  "fits": [
+   "You want the page to make an immediate impression",
+   "You are in a field where design sense is part of the job",
+   "Your name and title are the headline"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Dark header block"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t10",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"84\" style=\"fill:var(--dark)\"/><rect x=\"151\" y=\"16\" width=\"42\" height=\"46\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"24\" width=\"78\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"20\" y=\"37\" width=\"106\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"45\" width=\"106\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"53\" width=\"106\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"20\" y=\"102\" width=\"170\" height=\"9\" style=\"fill:var(--sidebar)\" rx=\"1.5\"/><rect x=\"20\" y=\"118\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"127\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"136\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"145\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"154\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"163\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"184\" width=\"170\" height=\"9\" style=\"fill:var(--sidebar)\" rx=\"1.5\"/><rect x=\"20\" y=\"200\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"209\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"218\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"227\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"236\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Slate \u2014 heavy header block | free resume template",
+  "description": "Slate: heavy header block. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "vesper-resume-template",
+  "name": "Vesper",
+  "tagline": "Centred, round photo",
+  "body": "A round photograph above a centred name, with section titles between hairlines. Slower and more formal than anything else in the set.",
+  "fits": [
+   "You want a restrained, almost ceremonial document",
+   "A photograph is expected where you are applying",
+   "Your text is concise enough to sit centred"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Hairlines only"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t11",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><circle cx=\"105\" cy=\"32\" r=\"16\" style=\"fill:#d2cbc7\"/><rect x=\"65\" y=\"60\" width=\"80\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"65\" y=\"73\" width=\"110\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"65\" y=\"81\" width=\"110\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"112\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"40\" y=\"123\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"132\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"141\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"150\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"159\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"180\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"40\" y=\"191\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"200\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"209\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"40\" y=\"218\" width=\"130\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Vesper \u2014 centred, round photo | free resume template",
+  "description": "Vesper: centred, round photo. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "hairline-resume-template",
+  "name": "Hairline",
+  "tagline": "Two columns, no fill",
+  "body": "Two columns separated by a single accent rule and nothing else. All the structure of a sidebar layout, none of the ink.",
+  "fits": [
+   "You print in black and white",
+   "You want structure without background colour",
+   "Your reader values restraint"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Single rule"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t12",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"151\" y=\"12\" width=\"42\" height=\"44\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"20\" y=\"18\" width=\"70\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"31\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"39\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"47\" width=\"104\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"92\" width=\"23.1\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"103\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"112\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"121\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"130\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"151\" width=\"23.1\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"162\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"171\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"180\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"189\" width=\"42\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"92\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"84\" y=\"103\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"112\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"121\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"130\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"139\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"148\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"169\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"84\" y=\"180\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"189\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"198\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"207\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"84\" y=\"216\" width=\"106\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"71\" y=\"80\" width=\"0.9\" height=\"195\" style=\"fill:var(--accent)\"/></svg>",
+  "title": "Hairline \u2014 two columns, no fill | free resume template",
+  "description": "Hairline: two columns, no fill. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "plainfield-resume-template",
+  "name": "Plainfield",
+  "tagline": "No photo, no colour fields",
+  "body": "One column, no photograph, no filled areas, standard section headings. Built to survive automated parsing intact and to print identically anywhere.",
+  "fits": [
+   "You are applying through a large employer portal",
+   "The posting asks for a plain document",
+   "You are applying in a country where photographs are discouraged"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "No"
+   ],
+   [
+    "Header treatment",
+    "None"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t13",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"20\" y=\"56\" width=\"170\" height=\"1.6\" style=\"fill:var(--accent)\"/><rect x=\"20\" y=\"16\" width=\"70\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"29\" width=\"120\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"37\" width=\"120\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"45\" width=\"120\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"76\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"87\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"96\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"105\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"114\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"123\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"132\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"153\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"164\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"173\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"182\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"191\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"200\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Plainfield \u2014 no photo, no colour fields | free resume template",
+  "description": "Plainfield: no photo, no colour fields. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "frame-resume-template",
+  "name": "Frame",
+  "tagline": "Header inside a ruled box",
+  "body": "The header sits inside a thin ruled rectangle, which separates the introduction from the record below without using colour as a block.",
+  "fits": [
+   "You want a visible header without a coloured field",
+   "Your profile paragraph deserves its own space",
+   "You like drawn structure more than filled structure"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Ruled frame"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t14",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"20\" y=\"14\" width=\"170\" height=\"54\" style=\"fill:none;stroke:var(--accent);stroke-width:1.4\"/><rect x=\"145\" y=\"26\" width=\"38\" height=\"40\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"30\" y=\"28\" width=\"62\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"30\" y=\"41\" width=\"92\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"30\" y=\"49\" width=\"92\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"30\" y=\"57\" width=\"92\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"94\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"105\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"114\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"123\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"132\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"141\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"150\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"171\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"20\" y=\"182\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"191\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"200\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"209\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"20\" y=\"218\" width=\"170\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Frame \u2014 header inside a ruled box | free resume template",
+  "description": "Frame: header inside a ruled box. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "broadsheet-resume-template",
+  "name": "Broadsheet",
+  "tagline": "Wide sidebar",
+  "body": "The sidebar runs to 88 millimetres instead of 66, which stops long skill names and certifications from breaking across three lines.",
+  "fits": [
+   "You have many skills, languages or certifications",
+   "Your sidebar keeps overflowing in narrower layouts",
+   "Your job titles are long"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Two columns"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Diagonal band"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t15",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"97\" height=\"297\" style=\"fill:var(--sidebar)\"/><rect x=\"0\" y=\"0\" width=\"210\" height=\"86\" style=\"fill:var(--sidebar)\"/><polygon points=\"0,0 210,0 210,86 86,86\" style=\"fill:var(--accent)\"/><rect x=\"16\" y=\"20\" width=\"62\" height=\"52\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"112\" y=\"24\" width=\"62\" height=\"6\" style=\"fill:rgba(255,255,255,.92)\" rx=\"1\"/><rect x=\"112\" y=\"37\" width=\"82\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"112\" y=\"45\" width=\"82\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"112\" y=\"53\" width=\"82\" height=\"2\" style=\"fill:rgba(255,255,255,.5)\"/><rect x=\"14\" y=\"104\" width=\"37.400000000000006\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"115\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"124\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"133\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"142\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"163\" width=\"37.400000000000006\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"14\" y=\"174\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"183\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"192\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"14\" y=\"201\" width=\"68\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"104\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"112\" y=\"115\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"124\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"133\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"142\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"151\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"160\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"181\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"112\" y=\"192\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"201\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"210\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"219\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"112\" y=\"228\" width=\"84\" height=\"2\" style=\"fill:#DDE3E8\"/></svg>",
+  "title": "Broadsheet \u2014 wide sidebar | free resume template",
+  "description": "Broadsheet: wide sidebar. Edit it in your browser and download the PDF for free."
+ },
+ {
+  "slug": "margin-resume-template",
+  "name": "Margin",
+  "tagline": "Accent bar at the page edge",
+  "body": "A solid bar of colour runs down the outer edge of the sheet, with a softly tinted header beside it. Colour is present but never behind text.",
+  "fits": [
+   "You want colour that survives greyscale printing",
+   "You find full banners too heavy",
+   "You want a detail that is visible in a stack of applications"
+  ],
+  "specs": [
+   [
+    "Structure",
+    "Single column"
+   ],
+   [
+    "Photo",
+    "Yes"
+   ],
+   [
+    "Header treatment",
+    "Edge bar"
+   ],
+   [
+    "Pages",
+    "Two, second one optional"
+   ],
+   [
+    "Export",
+    "PDF and Word, free"
+   ]
+  ],
+  "tid": "t16",
+  "svg": "<svg width=\"210\" height=\"297\" viewBox=\"0 0 210 297\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"xMidYMid meet\"><rect x=\"0\" y=\"0\" width=\"210\" height=\"297\" style=\"fill:#ffffff\"/><rect x=\"0\" y=\"0\" width=\"17\" height=\"297\" style=\"fill:var(--accent)\"/><rect x=\"17\" y=\"0\" width=\"193\" height=\"66\" style=\"fill:var(--sidebar)\"/><rect x=\"151\" y=\"12\" width=\"42\" height=\"44\" style=\"fill:#d2cbc7\" rx=\"2\"/><rect x=\"28\" y=\"18\" width=\"64\" height=\"6\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"28\" y=\"31\" width=\"98\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"39\" width=\"98\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"47\" width=\"98\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"84\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"28\" y=\"95\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"104\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"113\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"122\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"131\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"140\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"161\" width=\"46\" height=\"4.5\" style=\"fill:var(--accent)\" rx=\"1\"/><rect x=\"28\" y=\"172\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"181\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"190\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"199\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"28\" y=\"208\" width=\"162\" height=\"2\" style=\"fill:#DDE3E8\"/><rect x=\"0\" y=\"0\" width=\"17\" height=\"297\" style=\"fill:var(--accent)\"/></svg>",
+  "title": "Margin \u2014 accent bar at the page edge | free resume template",
+  "description": "Margin: accent bar at the page edge. Edit it in your browser and download the PDF for free."
+ }
+]

@@ -1,2 +1,5 @@
-# Replace the line below with the one your ad network gives you.
-# AdSense format: google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+# Put the line your ad network gives you here. For AdSense it is
+# generated from the publisher ID in assets/site-config.js the next
+# time you run tools/build.py:
+#
+#   google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

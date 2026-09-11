@@ -1,0 +1,31 @@
+{
+  "name": "PlainSheet resume builder",
+  "short_name": "PlainSheet",
+  "description": "Build a resume in your browser and download the PDF for free.",
+  "start_url": "/editor.html",
+  "display": "standalone",
+  "background_color": "#EDEFF2",
+  "theme_color": "#1F5F5B",
+  "icons": [
+    {
+      "src": "/assets/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
