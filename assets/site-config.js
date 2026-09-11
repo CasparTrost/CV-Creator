@@ -34,6 +34,10 @@ window.PLAINSHEET = {
       'templates-foot': '',
       'template-mid': '',
       'guides-mid': '',
+      'examples-mid': '',
+      'example-top': '',
+      'example-mid': '',
+      'example-foot': '',
       'guide-top': '',
       'guide-mid': '',
       'guide-foot': ''

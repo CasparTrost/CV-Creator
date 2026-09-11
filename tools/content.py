@@ -1318,3 +1318,631 @@ international companies in Berlin, Vienna or Zurich the anonymous application is
 ordinary.</p>
 ''',
 )
+
+
+# ====================================================================
+# Worked examples, one per occupation.
+#
+# Each page shows a resume a hiring manager in that field would actually
+# be glad to receive, plus the reasoning: what gets scanned for first,
+# which lines carry weight and which are wasted.
+# ====================================================================
+
+EXAMPLES = []
+
+
+def example(**kw):
+    kw.setdefault('updated', UPDATED)
+    EXAMPLES.append(kw)
+
+
+example(
+    slug='software-developer',
+    role='Software developer',
+    field='Technology',
+    title='Software developer resume example, and what to put in it',
+    description='A software developer resume example with the reasoning behind every '
+                'line: what a hiring engineer scans for, and which bullet points get read.',
+    dek='Engineering resumes are read by engineers, who skim for the stack and then look '
+        'for evidence that you have shipped something to real users.',
+    minutes=7,
+    scans=[
+        'The stack, in the first ten seconds. Languages, frameworks and the database, '
+        'somewhere they can find without scrolling.',
+        'Whether you have run anything in production, or only built it.',
+        'Scale, in whatever unit your field uses: requests, users, records, deploys.',
+        'What you owned rather than contributed to.',
+        'Signs you can work with other people, because most of the job is that.',
+    ],
+    sample={
+        'name': 'Marek Toussaint',
+        'headline': 'Backend developer · Lisbon · marek.toussaint@example.com · github.com/example',
+        'summary': 'Backend developer, five years, mostly Python and Postgres on systems that '
+                   'handle money. Currently own the payments service at a 40-person logistics '
+                   'company. Looking for backend work where correctness matters more than '
+                   'shipping speed.',
+        'jobs': [
+            {'title': 'Backend developer', 'employer': 'Cargolane', 'dates': '2022 – present',
+             'bullets': [
+                 'Own the payments service: Python, FastAPI, Postgres, about 40,000 '
+                 'transactions a day across six currencies.',
+                 'Rewrote settlement reconciliation as an idempotent job after a duplicate '
+                 'payout incident; no repeat in two years and the finance team stopped '
+                 'checking manually.',
+                 'Cut p95 latency on the quote endpoint from 1.9s to 220ms by replacing three '
+                 'sequential calls with one materialised view.',
+                 'Introduced contract tests between our service and the carrier integrations, '
+                 'which turned a class of production failures into failing builds.',
+                 'Mentored two juniors through their first on-call rotation.',
+             ]},
+            {'title': 'Developer', 'employer': 'Studio Nord', 'dates': '2020 – 2022',
+             'bullets': [
+                 'Built and maintained Django applications for four client projects, from '
+                 'first commit through launch and handover.',
+                 'Moved deployments from manual SSH to GitLab CI, taking a release from an '
+                 'afternoon to eleven minutes.',
+             ]},
+        ],
+        'skills': 'Python (FastAPI, Django), SQL and Postgres including query plans, '
+                  'Docker, GitLab CI, AWS (ECS, RDS, S3), Terraform basics. '
+                  'Reading knowledge of Go.',
+        'education': 'BSc Computer Science, University of Porto, 2020',
+    },
+    pairs=[
+        ('Worked on the payments system using Python and PostgreSQL.',
+         'Own the payments service: Python, FastAPI, Postgres, about 40,000 transactions a '
+         'day across six currencies.'),
+        ('Improved performance of the API.',
+         'Cut p95 latency on the quote endpoint from 1.9s to 220ms by replacing three '
+         'sequential calls with one materialised view.'),
+    ],
+    templates=[('t13', 'Plainfield puts everything in one column, which is what the average '
+                       'engineering portal parses best.'),
+               ('t12', 'Hairline gives you two columns without any filled shapes, so a long '
+                       'skills list stops eating your experience section.')],
+    guides=['resume-bullet-points', 'ats-friendly-resume', 'resume-skills-section'],
+    faq=[
+        ('Should I list every technology I have touched?',
+         'No. List what you would be comfortable being interviewed on, and let the rest come '
+         'up in conversation. A list of forty technologies reads as a list of things tried '
+         'once.'),
+        ('Do side projects belong on a developer resume?',
+         'One or two, if they are real and reachable. A link someone can open in ten seconds '
+         'is worth more than a paragraph, and an abandoned repository is worth less than '
+         'nothing once they look.'),
+    ],
+)
+
+example(
+    slug='nurse',
+    role='Nurse',
+    field='Healthcare',
+    title='Nursing resume example: what ward managers look for',
+    description='A nursing resume example with the reasoning: registration details first, '
+                'then setting, caseload and the specifics that decide the shortlist.',
+    dek='A nursing resume is read for facts before it is read for prose: registration, '
+        'setting, caseload, and whether you have worked the kind of ward doing the hiring.',
+    minutes=7,
+    scans=[
+        'Your registration number and its expiry, near the top. Missing it stalls the whole '
+        'application.',
+        'The setting: acute, community, theatre, ICU, care home. They are different jobs.',
+        'Patient load and ratio, because it says more about your week than any adjective.',
+        'Current mandatory training and specialist certificates, with dates.',
+        'Whether you have precepted or supervised anyone.',
+    ],
+    sample={
+        'name': 'Aoife Brennan',
+        'headline': 'Registered Nurse · NMC 12A3456B, expires 09/2028 · Manchester · '
+                    'aoife.brennan@example.com',
+        'summary': 'Registered nurse, seven years, acute medical and respiratory. Currently '
+                   'band 6 on a 28-bed respiratory ward, precepting two newly qualified '
+                   'nurses. Looking for a band 6 post in respiratory or acute medicine.',
+        'jobs': [
+            {'title': 'Staff Nurse, Band 6, Respiratory', 'employer': 'Northgate NHS Trust',
+             'dates': '2021 – present',
+             'bullets': [
+                 '28-bed respiratory ward, typical allocation of six to eight patients, '
+                 'including NIV and tracheostomy care.',
+                 'Shift coordinator two or three times a week: allocation, escalation, and '
+                 'the point of contact for the outreach team.',
+                 'Precepted two newly qualified nurses through their first six months, both '
+                 'of whom passed sign-off on schedule.',
+                 'Rewrote the ward discharge checklist with the pharmacy team after repeated '
+                 'delays over TTOs; average discharge time moved from mid-afternoon to before '
+                 'midday.',
+                 'Link nurse for infection prevention, running monthly audits and feeding back '
+                 'at the ward meeting.',
+             ]},
+            {'title': 'Staff Nurse, Band 5, Acute Medicine', 'employer': 'Saint Columb Hospital',
+             'dates': '2019 – 2021',
+             'bullets': [
+                 'Acute medical unit, patients from ED and GP referrals, allocation of six.',
+                 'Completed venepuncture, cannulation and male catheterisation competencies.',
+             ]},
+        ],
+        'skills': 'NIV, tracheostomy care, venepuncture and cannulation, syringe drivers, '
+                  'ALS (2025), infection prevention link nurse, EPR: Cerner and SystmOne.',
+        'education': 'BSc (Hons) Adult Nursing, University of Salford, 2019',
+    },
+    pairs=[
+        ('Provided high-quality care to patients on a busy ward.',
+         '28-bed respiratory ward, typical allocation of six to eight patients, including NIV '
+         'and tracheostomy care.'),
+        ('Helped to improve the discharge process.',
+         'Rewrote the ward discharge checklist with the pharmacy team after repeated delays '
+         'over TTOs; average discharge time moved from mid-afternoon to before midday.'),
+    ],
+    templates=[('t7', 'Linden runs in a single column with a colour band, which suits the '
+                      'long training and certification lists a clinical resume carries.'),
+               ('t8', 'Ledger puts dates in their own column, so a series of rotations and '
+                      'bands reads at a glance.')],
+    guides=['resume-bullet-points', 'resume-skills-section', 'resume-length'],
+    faq=[
+        ('Where do I put my registration number?',
+         'In the contact block at the top, with its expiry date. Recruitment cannot progress '
+         'an application without checking it, and hunting for it delays you.'),
+        ('Should I list every mandatory training module?',
+         'Only the current ones, grouped into one line. The full matrix belongs in the '
+         'interview folder, not on the page.'),
+    ],
+)
+
+example(
+    slug='project-manager',
+    role='Project manager',
+    field='Business',
+    title='Project manager resume example, with the numbers that matter',
+    description='A project manager resume example: budget, team size, duration and outcome '
+                'on every project, and the vague phrases to replace.',
+    dek='Project management resumes fail in a specific way: they describe the methodology '
+        'and leave out the project. Budgets, headcount and outcomes are the content.',
+    minutes=7,
+    scans=[
+        'Budget and team size. Running a €80,000 project is a different job from running '
+        'a €8 million one.',
+        'Sector, because domain knowledge transfers and process knowledge mostly does not.',
+        'Whether you delivered, and what it cost when you did not.',
+        'Certifications: PRINCE2, PMP, IPMA, Scrum, with years.',
+        'How senior the people were that you had to persuade.',
+    ],
+    sample={
+        'name': 'Ingrid Halvorsen',
+        'headline': 'Project manager · Oslo · ingrid.halvorsen@example.com · +47 900 00 000',
+        'summary': 'Project manager, nine years, IT and process change in manufacturing. '
+                   'Budgets to NOK 40m, teams of six to twenty across three countries. '
+                   'PRINCE2 Practitioner and PSM I. Looking for a programme role in the same '
+                   'sector.',
+        'jobs': [
+            {'title': 'Senior project manager', 'employer': 'Vestland Industri',
+             'dates': '2021 – present',
+             'bullets': [
+                 'ERP replacement across four plants: NOK 38m, eighteen months, a core team '
+                 'of fourteen plus three external suppliers. Delivered a month late and '
+                 'within budget.',
+                 'Ran the steering committee for the CFO and two plant directors — monthly '
+                 'decision papers, and the awkward conversations when a date moved.',
+                 'Renegotiated the integration supplier contract mid-project after two missed '
+                 'milestones, recovering NOK 2.1m in service credits.',
+                 'Introduced a one-page weekly status that replaced three competing reports; '
+                 'still in use across the portfolio.',
+             ]},
+            {'title': 'Project manager', 'employer': 'Nordtek AS', 'dates': '2017 – 2021',
+             'bullets': [
+                 'Six warehouse automation projects, NOK 3m to 12m each, teams of six to ten.',
+                 'Took over a project eight weeks behind after a handover; brought it in on '
+                 'the revised date by cutting scope with the sponsor rather than adding people.',
+             ]},
+        ],
+        'skills': 'PRINCE2 Practitioner (2019), Professional Scrum Master I (2022), '
+                  'MS Project, Jira, Power BI reporting, SAP S/4HANA rollout experience. '
+                  'Norwegian (native), English (C1), German (B1).',
+        'education': 'MSc Industrial Economics, NTNU Trondheim, 2016',
+    },
+    pairs=[
+        ('Responsible for managing large, complex projects using agile and waterfall '
+         'methodologies.',
+         'ERP replacement across four plants: NOK 38m, eighteen months, a core team of '
+         'fourteen plus three external suppliers. Delivered a month late and within budget.'),
+        ('Managed stakeholder relationships at all levels of the organisation.',
+         'Ran the steering committee for the CFO and two plant directors — monthly decision '
+         'papers, and the awkward conversations when a date moved.'),
+    ],
+    templates=[('t8', 'Ledger gives each project its date in a left column, which suits a '
+                      'career made of discrete engagements.'),
+               ('t3', 'Halden keeps a sidebar for certifications and languages while the '
+                      'main column stays wide enough for project detail.')],
+    guides=['resume-bullet-points', 'resume-summary', 'resume-length'],
+    faq=[
+        ('Should I list every project I have run?',
+         'No. Three or four in detail, then one line summarising the rest: "Eleven further '
+         'projects, NOK 1m to 5m, all delivered." Detail on the recent and the relevant.'),
+        ('What if a project failed?',
+         'A project that was stopped for a good reason is fine to include if you say what you '
+         'did about it. "Recommended cancellation after the pilot, saving the remaining €400k '
+         'of budget" is a stronger line than most successes.'),
+    ],
+)
+
+example(
+    slug='sales-representative',
+    role='Sales representative',
+    field='Business',
+    title='Sales resume example: quota, territory and how you sell',
+    description='A sales resume example built around quota attainment, deal size and cycle '
+                'length — the three numbers every sales manager looks for first.',
+    dek='Sales is the one field where the resume is expected to contain numbers, and the one '
+        'where candidates most often leave them out.',
+    minutes=6,
+    scans=[
+        'Quota and attainment, per year, as a percentage.',
+        'Average deal size and sales cycle length — they define the job more than the title.',
+        'New business or account management, because they are different skills.',
+        'Who you sold to: job title and company size of the buyer.',
+        'Whether you have carried a team quota as well as your own.',
+    ],
+    sample={
+        'name': 'Daniel Okoro',
+        'headline': 'Account executive · Dublin · daniel.okoro@example.com · +353 87 000 0000',
+        'summary': 'Account executive, six years in B2B software, selling to operations '
+                   'directors at mid-market manufacturers. €1.4m quota, 118% attainment last '
+                   'year, average deal €62k on a four-month cycle. Looking for a senior AE or '
+                   'team lead role in the same segment.',
+        'jobs': [
+            {'title': 'Account executive', 'employer': 'Fieldbase Software',
+             'dates': '2022 – present',
+             'bullets': [
+                 'Quota €1.4m new business: 118% in 2025, 104% in 2024, 96% in 2023. '
+                 'Average deal €62k, cycle around four months.',
+                 'Sold to operations and plant directors at manufacturers of 200 to 2,000 '
+                 'staff across Ireland and the UK.',
+                 'Built the territory from three named accounts to a pipeline of forty; two '
+                 'of the first five became the company\'s largest customers.',
+                 'Wrote the objection-handling notes the team now uses for procurement-led '
+                 'deals, after losing two on price and working out why.',
+             ]},
+            {'title': 'Sales development representative', 'employer': 'Fieldbase Software',
+             'dates': '2020 – 2022',
+             'bullets': [
+                 'Averaged 14 qualified meetings a month against a target of 10.',
+                 'Promoted to AE after eighteen months, the first SDR in the company to make '
+                 'the move.',
+             ]},
+        ],
+        'skills': 'Salesforce, Outreach, MEDDIC, contract negotiation to €250k, '
+                  'procurement and tender processes. English (native), Irish (conversational).',
+        'education': 'BBS Marketing, Dublin City University, 2019',
+    },
+    pairs=[
+        ('Consistently exceeded sales targets and built strong client relationships.',
+         'Quota €1.4m new business: 118% in 2025, 104% in 2024, 96% in 2023. Average deal '
+         '€62k, cycle around four months.'),
+        ('Responsible for prospecting and developing a sales territory.',
+         'Built the territory from three named accounts to a pipeline of forty; two of the '
+         'first five became the company\'s largest customers.'),
+    ],
+    templates=[('t10', 'Slate leads with a heavy header block, which suits a summary carrying '
+                       'your headline numbers.'),
+               ('t7', 'Linden is single column and unfussy, so the quota figures are the only '
+                      'thing doing the talking.')],
+    guides=['resume-summary', 'resume-bullet-points', 'resume-mistakes'],
+    faq=[
+        ('What if I missed quota one year?',
+         'Include it. A run of 118%, 104%, 96% reads as an honest record; three identical '
+         '"exceeded target" claims read as a template. Be ready to say what happened.'),
+        ('Can I name my customers?',
+         'Name the type — "manufacturers of 200 to 2,000 staff" — unless the logo is public '
+         'and your employer would not mind. Naming accounts from a confidential pipeline is a '
+         'poor signal to your next employer.'),
+    ],
+)
+
+
+example(
+    slug='teacher',
+    role='Teacher',
+    field='Education',
+    title='Teacher resume example: subjects, key stages and outcomes',
+    description='A teaching resume example: what a head of department reads first, how to '
+                'write results without sounding like a league table, and what to leave out.',
+    dek='A teaching application is read by someone who will have to cover your timetable. '
+        'Subjects, key stages and what you can teach beyond your specialism come first.',
+    minutes=7,
+    scans=[
+        'Subjects and key stages or year groups, immediately. This is timetabling, and it '
+        'decides whether they read on.',
+        'Your qualified status and the year you got it.',
+        'Whether you can offer a second subject, and to what level.',
+        'Responsibilities beyond the classroom: form tutor, subject lead, clubs, trips.',
+        'Evidence about outcomes, phrased as what you changed rather than what the cohort was.',
+    ],
+    sample={
+        'name': 'Rachel Okonkwo',
+        'headline': 'Teacher of Science (Biology specialism) · QTS 2018 · Leeds · '
+                    'r.okonkwo@example.com',
+        'summary': 'Science teacher, seven years, KS3 to KS5 with biology to A-level and '
+                   'chemistry to GCSE. Second in department for two years, running KS4 '
+                   'curriculum and four staff. Looking for a head of science post.',
+        'jobs': [
+            {'title': 'Second in Science', 'employer': 'Hollowmead Academy, Leeds',
+             'dates': '2022 – present',
+             'bullets': [
+                 'Teach biology KS3 to A-level and chemistry to GCSE; timetable of 42 periods '
+                 'across a fortnight.',
+                 'Rewrote the KS4 scheme of work around retrieval practice and a common '
+                 'assessment calendar. GCSE grade 5+ in combined science moved from 48% to '
+                 '61% over three years against a broadly stable intake.',
+                 'Line-manage four teachers including two ECTs, with weekly coaching meetings '
+                 'and paired lesson observations.',
+                 'Run the STEM club and the annual field trip to Malham Tarn, 60 students.',
+                 'Introduced a shared bank of practical risk assessments after a CLEAPSS '
+                 'audit; the department has passed the two since without an action.',
+             ]},
+            {'title': 'Teacher of Science', 'employer': 'Fennerby High School',
+             'dates': '2018 – 2022',
+             'bullets': [
+                 'KS3 and KS4 science, form tutor for the same group through four years.',
+                 'Took the lowest KS4 set in the year group and brought pass rates in line '
+                 'with the middle sets by the second year.',
+             ]},
+        ],
+        'skills': 'QTS (2018), Biology to A-level, Chemistry to GCSE, Physics to KS3. '
+                  'Safeguarding Level 3 (2025), CLEAPSS trained, exam board: AQA and OCR. '
+                  'Google Classroom, SIMS, Century.',
+        'education': 'PGCE Secondary Science, University of Leeds, 2018<br>'
+                     'BSc (Hons) Biology 2:1, University of Sheffield, 2017',
+    },
+    pairs=[
+        ('Passionate and dedicated teacher committed to raising standards for all pupils.',
+         'Rewrote the KS4 scheme of work around retrieval practice and a common assessment '
+         'calendar. GCSE grade 5+ in combined science moved from 48% to 61% over three years '
+         'against a broadly stable intake.'),
+        ('Responsible for mentoring less experienced colleagues.',
+         'Line-manage four teachers including two ECTs, with weekly coaching meetings and '
+         'paired lesson observations.'),
+    ],
+    templates=[('t7', 'Linden is a single column with a colour band — plenty of room for '
+                      'subjects, key stages and responsibilities without crowding.'),
+               ('t14', 'Frame keeps the header inside a ruled box, which reads as formal '
+                       'without being stiff. Schools tend to prefer restrained documents.')],
+    guides=['resume-bullet-points', 'resume-length', 'cover-letter'],
+    faq=[
+        ('Should I include exam results?',
+         'Include the change you were responsible for, with enough context to be honest about '
+         'the intake. A raw percentage with no baseline tells a head of department nothing '
+         'and they know it.'),
+        ('How much detail about behaviour management?',
+         'One concrete example is worth a paragraph of claims. What you did with a specific '
+         'difficult group, and what changed, belongs in the cover letter more than the resume.'),
+    ],
+)
+
+example(
+    slug='accountant',
+    role='Accountant',
+    field='Finance',
+    title='Accountant resume example: qualification, systems, close',
+    description='An accounting resume example built around the three things a finance '
+                'director checks first: your qualification, your systems, and your close.',
+    dek='Accounting resumes are screened on three facts before anything else is read: what '
+        'you are qualified as, which systems you have worked in, and how big a close you '
+        'have owned.',
+    minutes=6,
+    scans=[
+        'Qualification and status: ACA, ACCA, CIMA, StB, part-qualified and how far.',
+        'Company size and turnover, because a €4m close and a €400m close are different jobs.',
+        'Which ERP. SAP, Netsuite, Datev, Xero, Sage — this is a filter, not a nice-to-have.',
+        'Whether you have owned a month-end or supported one.',
+        'Audit, tax, consolidation, group reporting: which of these you have actually done.',
+    ],
+    sample={
+        'name': 'Theo Vandenberg',
+        'headline': 'Management accountant (ACCA) · Rotterdam · t.vandenberg@example.com',
+        'summary': 'ACCA-qualified management accountant, eight years, manufacturing. Own the '
+                   'month-end close for three entities, €120m combined turnover, in SAP '
+                   'S/4HANA. Looking for a finance manager role with a team.',
+        'jobs': [
+            {'title': 'Management accountant', 'employer': 'Brandt Composites',
+             'dates': '2021 – present',
+             'bullets': [
+                 'Own the month-end close for three legal entities, €120m combined turnover: '
+                 'accruals, intercompany, stock provisioning and the reporting pack.',
+                 'Took the close from day nine to day five by moving intercompany '
+                 'reconciliation into the previous week and automating two manual journals.',
+                 'Built the rolling 13-week cash forecast now used by the board; it caught a '
+                 'covenant risk two quarters out.',
+                 'Sole finance contact for the external audit, three years running, with no '
+                 'audit adjustments in the last two.',
+                 'Rebuilt standard costing for 400 SKUs after a site consolidation, which '
+                 'moved reported gross margin by 2.4 points and explained a long-standing '
+                 'variance.',
+             ]},
+            {'title': 'Assistant accountant', 'employer': 'Delta Logistiek',
+             'dates': '2018 – 2021',
+             'bullets': [
+                 'Accounts payable and receivable for a €30m business, plus VAT returns.',
+                 'Qualified ACCA while working full time, first-time passes.',
+             ]},
+        ],
+        'skills': 'ACCA (2021). SAP S/4HANA FI/CO, Exact, Excel to Power Query and Power '
+                  'Pivot, Power BI. IFRS and Dutch GAAP. Dutch (native), English (C1), '
+                  'German (B2).',
+        'education': 'BSc Accounting and Control, Erasmus University Rotterdam, 2017',
+    },
+    pairs=[
+        ('Responsible for month-end close and financial reporting.',
+         'Own the month-end close for three legal entities, €120m combined turnover: '
+         'accruals, intercompany, stock provisioning and the reporting pack.'),
+        ('Improved efficiency of the finance function.',
+         'Took the close from day nine to day five by moving intercompany reconciliation into '
+         'the previous week and automating two manual journals.'),
+    ],
+    templates=[('t13', 'Plainfield has no photo and no colour fields, which is the register '
+                       'most finance departments read in.'),
+               ('t8', 'Ledger puts dates in a left column — useful when a qualification and '
+                      'a job ran in parallel.')],
+    guides=['resume-skills-section', 'resume-bullet-points', 'ats-friendly-resume'],
+    faq=[
+        ('I am part-qualified. How do I write that?',
+         'Exactly as it is: "ACCA, 11 of 13 papers, finalist September 2026". Vagueness here '
+         'is read as concealment, and the number of papers is the first thing asked at '
+         'interview anyway.'),
+        ('Does the accounting software really matter that much?',
+         'Yes. Recruiters filter on it because the learning curve is real. Name the version '
+         'and the modules, not just the vendor.'),
+    ],
+)
+
+example(
+    slug='warehouse-logistics',
+    role='Warehouse and logistics',
+    field='Operations',
+    title='Warehouse and logistics resume example',
+    description='A warehouse resume example: licences, systems and throughput, written so a '
+                'shift manager can see in ten seconds whether you can do the job.',
+    dek='Warehouse hiring is quick and practical. Licences, systems and numbers decide it; '
+        'a paragraph about being a hard worker does not.',
+    minutes=6,
+    scans=[
+        'Licences and their expiry: counterbalance, reach, PPT, VNA, LGV class.',
+        'The WMS you have used. SAP EWM, Manhattan, Körber, in-house — say which.',
+        'Throughput: picks per hour, lines per day, pallets, dispatch window.',
+        'Shift pattern experience, including nights.',
+        'Whether you have run a team, and how many.',
+    ],
+    sample={
+        'name': 'Marta Kowalczyk',
+        'headline': 'Warehouse team leader · Duisburg · m.kowalczyk@example.com · '
+                    '+49 151 000 0000',
+        'summary': 'Warehouse team leader, six years, third-party logistics. Run a night '
+                   'shift of fourteen against a two-hour dispatch window. Counterbalance and '
+                   'reach licences, SAP EWM daily. Looking for a shift manager role.',
+        'jobs': [
+            {'title': 'Team leader, night shift', 'employer': 'Rhein Fulfilment',
+             'dates': '2022 – present',
+             'bullets': [
+                 'Run a shift of fourteen pickers and two forklift drivers, 4,000 to 6,000 '
+                 'lines a night, dispatch cut-off at 05:00.',
+                 'Cut mis-picks from around 4% to under 1.5% in two months by replacing the '
+                 'paper handover with a five-minute standing briefing and a one-page sheet.',
+                 'Allocate labour against the wave plan and escalate to the duty manager when '
+                 'the volume forecast is wrong, which it is about once a week.',
+                 'Trained nine new starters on the WMS and the pick process; seven are still '
+                 'in post.',
+                 'Zero lost-time incidents on shift in three years; run the weekly racking '
+                 'and equipment checks.',
+             ]},
+            {'title': 'Forklift driver and picker', 'employer': 'Hansa Lager',
+             'dates': '2019 – 2022',
+             'bullets': [
+                 'Counterbalance and reach truck, goods-in and putaway, 120 pallets a shift.',
+                 'Covered goods-in supervisor during holidays for the last year.',
+             ]},
+        ],
+        'skills': 'Counterbalance (to 2027), reach truck (to 2027), pedestrian pallet truck. '
+                  'SAP EWM, Zebra RF scanners. Manual handling and fire marshal trained. '
+                  'Polish (native), German (C1), English (B1).',
+        'education': 'Fachoberschulreife, 2018',
+    },
+    pairs=[
+        ('Worked as part of a busy warehouse team picking and packing orders.',
+         'Run a shift of fourteen pickers and two forklift drivers, 4,000 to 6,000 lines a '
+         'night, dispatch cut-off at 05:00.'),
+        ('Helped to reduce errors and improve accuracy.',
+         'Cut mis-picks from around 4% to under 1.5% in two months by replacing the paper '
+         'handover with a five-minute standing briefing and a one-page sheet.'),
+    ],
+    templates=[('t13', 'Plainfield is plain text in one column, which is what most '
+                       'industrial application portals handle best.'),
+               ('t7', 'Linden adds a single colour band and nothing else, if you want the '
+                      'page to look a little less bare.')],
+    guides=['resume-bullet-points', 'first-resume-no-experience', 'ats-friendly-resume'],
+    faq=[
+        ('Do licence expiry dates need to be on the resume?',
+         'Yes. An expired counterbalance licence is the difference between starting Monday '
+         'and starting in six weeks, and the shift manager would rather know now.'),
+        ('I have worked through several agencies. How do I show that?',
+         'Group them: "Agency roles through Randstad and Adecco, 2019 – 2021: three '
+         'warehouse contracts, longest fourteen months at …". A list of six short entries '
+         'looks unstable; one grouped line is honest and reads calmly.'),
+    ],
+)
+
+example(
+    slug='administrative-assistant',
+    role='Administrative assistant',
+    field='Office',
+    title='Administrative assistant resume example',
+    description='An office administrator resume example: the systems, the scope of what you '
+                'ran, and how to make invisible work visible on the page.',
+    dek='Administrative work is judged on what stopped going wrong, which is the hardest '
+        'kind of achievement to write down and the reason most of these resumes read thin.',
+    minutes=6,
+    scans=[
+        'Which systems and to what depth. Outlook and Excel are assumed; the ERP, the CRM '
+        'and the finance system are not.',
+        'Who you supported, and how many of them.',
+        'Whether you have held a budget, however small.',
+        'Diary and travel complexity: how many calendars, how many countries.',
+        'Discretion, shown by what you were trusted with rather than claimed.',
+    ],
+    sample={
+        'name': 'Sofia Lindqvist',
+        'headline': 'Office manager · Gothenburg · sofia.lindqvist@example.com · '
+                    '+46 70 000 00 00',
+        'summary': 'Office manager, six years, currently running a 45-person office and '
+                   'supporting three directors. Own the supplier budget and the facilities '
+                   'contracts. Looking for an executive assistant or operations role.',
+        'jobs': [
+            {'title': 'Office manager', 'employer': 'Nordvik Consulting',
+             'dates': '2022 – present',
+             'bullets': [
+                 'Run the office for 45 staff: facilities, suppliers, onboarding, health and '
+                 'safety, and a SEK 900,000 annual budget.',
+                 'Support three directors — diaries, international travel, board packs, and '
+                 'the expenses nobody submits until asked twice.',
+                 'Renegotiated the cleaning, coffee and print contracts at renewal, saving '
+                 'SEK 140,000 a year with no change in service.',
+                 'Rebuilt onboarding into a one-week checklist shared with IT and HR; new '
+                 'starters now have accounts and equipment on day one, which was not true '
+                 'before.',
+                 'Sole administrator for the ISO 9001 audit documentation, passed in 2024 '
+                 'and 2025.',
+             ]},
+            {'title': 'Team assistant', 'employer': 'Bergman & Co',
+             'dates': '2019 – 2022',
+             'bullets': [
+                 'Supported a team of twelve consultants: diaries, travel, invoicing and '
+                 'client correspondence.',
+                 'Took over invoicing when the finance assistant left and ran it alone for '
+                 'five months alongside the main role.',
+             ]},
+        ],
+        'skills': 'Microsoft 365 including Excel to pivot tables and Power Query, SharePoint, '
+                  'Visma, Fortnox, Concur, Salesforce basics. ISO 9001 documentation. '
+                  'Swedish (native), English (C1), German (A2).',
+        'education': 'Yrkeshögskola diploma, Business Administration, Gothenburg, 2019',
+    },
+    pairs=[
+        ('Provided administrative support to senior management and the wider team.',
+         'Support three directors — diaries, international travel, board packs, and the '
+         'expenses nobody submits until asked twice.'),
+        ('Responsible for ordering supplies and managing suppliers.',
+         'Renegotiated the cleaning, coffee and print contracts at renewal, saving SEK '
+         '140,000 a year with no change in service.'),
+    ],
+    templates=[('t4', 'Quill keeps a quiet header on white and a sidebar for systems and '
+                      'languages — office roles reward a document that looks organised.'),
+               ('t13', 'Plainfield if the application goes through a large employer portal.')],
+    guides=['resume-bullet-points', 'resume-skills-section', 'resume-summary'],
+    faq=[
+        ('My work is invisible when it goes well. How do I show it?',
+         'Write the consequence. "New starters now have accounts and equipment on day one, '
+         'which was not true before" describes work nobody notices, in a way a reader '
+         'immediately understands.'),
+        ('Should I list Microsoft Office?',
+         'Only with detail behind it. "Excel to pivot tables and Power Query" is a claim; '
+         '"Microsoft Office" on its own suggests it was worth mentioning, which is not the '
+         'impression you want.'),
+    ],
+)

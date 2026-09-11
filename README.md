@@ -10,6 +10,7 @@ index.html          Landing page
 templates.html      Gallery of all sixteen layouts
 templates/*.html    One page per layout
 guides/*.html       Twelve guides, plus the guides index
+examples/*.html     Eight worked resume examples by occupation
 editor.html         The editor, accepts ?t=t1 … ?t=t16
 about.html          Who runs it and how it is paid for
 privacy.html        Privacy notice, contains two placeholders
@@ -32,11 +33,11 @@ AdSense publisher ID, ad unit IDs and the analytics choice all live there.
 python3 tools/build.py
 ```
 
-This renders every page from `tools/build.py` and `tools/content.py`, stamps the
+This renders all 44 pages from `tools/build.py` and `tools/content.py`, stamps the
 domain into every canonical URL, every `og:` tag and the editor, and regenerates
 `sitemap.xml`, `robots.txt`, `site.webmanifest` and `ads.txt`.
 
-The site is *served* without a build step; the generator exists so that thirty-six
+The site is *served* without a build step; the generator exists so that forty-odd
 pages can share one header, one footer and one set of meta tags. Commit whatever
 it writes.
 
@@ -100,12 +101,15 @@ your situation. `ads.js` works with either: it only ever asks
 | `templates/*.html` | `template-mid` |
 | `guides/index.html` | `guides-mid` |
 | `guides/*.html` | `guide-top`, `guide-mid`, `guide-foot` |
+| `examples/index.html` | `examples-mid` |
+| `examples/*.html` | `example-top`, `example-mid`, `example-foot` |
 | `editor.html` | none, deliberately |
 
 The editor carries no advertising. A visitor spends twenty minutes there and
 produces a single page view, so ads would earn almost nothing while making the
-tool worse. The guides are what earn: several page views per visit, search
-traffic that arrives with intent, and the subject matter advertisers pay for.
+tool worse. The guides and the examples are what earn: several page views per
+visit, search traffic that arrives with intent, and the subject matter
+advertisers pay for.
 
 ## Privacy decisions baked in
 
@@ -128,15 +132,16 @@ traffic that arrives with intent, and the subject matter advertisers pay for.
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
 
-Page copy lives in `tools/content.py` (guides) and in the `page_*` functions of
-`tools/build.py` (everything else). Template descriptions are in
+Page copy lives in `tools/content.py` (`GUIDES` and `EXAMPLES`) and in the
+`page_*` functions of `tools/build.py` (everything else). Template descriptions are in
 `tools/data/templates.json`.
 
 ## Still worth doing
 
-- Profession-specific example resumes (`/examples/nurse`, `/examples/developer`
-  and so on). They rank well and add page views per visit.
-- German translations of the guides. The editor already speaks German, Spanish
-  and English; the written content does not.
+- German translations. The editor already speaks German, Spanish and English;
+  the written content does not. A `/de/` tree with `hreflang` would roughly
+  double the addressable search traffic for a German operator.
+- More occupations. The eight in `examples/` cover the biggest search volumes;
+  the structure takes another one in about twenty minutes of writing.
 - Once AdSense is approved, compare the fixed slots against Auto ads on a
   fraction of traffic before deciding which earns more.

@@ -110,7 +110,7 @@
 
   function privacyHref() {
     /* Content pages sit at the root; templates/ and guides/ are one down. */
-    return /\/(templates|guides)\//.test(location.pathname) ? '../privacy.html' : 'privacy.html';
+    return /\/(templates|guides|examples)\//.test(location.pathname) ? '../privacy.html' : 'privacy.html';
   }
 
   function build() {

@@ -25,7 +25,7 @@
   var housesShown = 0;
 
   function depth() {
-    return /\/(templates|guides)\//.test(location.pathname) ? '../' : '';
+    return /\/(templates|guides|examples)\//.test(location.pathname) ? '../' : '';
   }
 
   /* ---- House promo ----------------------------------------------- */

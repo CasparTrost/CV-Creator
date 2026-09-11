@@ -135,6 +135,7 @@ def head(title, description, path, depth, extra_ld=None, image='assets/og.png',
 
 NAV = [
     ('templates.html', 'Templates'),
+    ('examples/index.html', 'Examples'),
     ('guides/index.html', 'Guides'),
     ('about.html', 'About'),
 ]
@@ -214,7 +215,7 @@ def footer(depth):
     return '\n'.join([
         '<footer>',
         '  <div class="wrap">',
-        '    <div class="cols">',
+        '    <div class="cols five">',
         '      <div>',
         '        <a class="wordmark" href="%sindex.html">Plain<b>Sheet</b></a>' % u,
         '        <p class="fine">A resume editor that runs entirely in your browser. Nothing you',
@@ -223,6 +224,12 @@ def footer(depth):
         '      <div>',
         '        <h3>Templates</h3>',
         '        <ul>%s<li><a href="%stemplates.html">All sixteen</a></li></ul>' % (tiles, u),
+        '      </div>',
+        '      <div>',
+        '        <h3>Examples</h3>',
+        '        <ul>%s<li><a href="%sexamples/index.html">Every example</a></li></ul>'
+        % (''.join('<li><a href="%sexamples/%s.html">%s</a></li>' % (u, e['slug'], e['role'])
+                   for e in content.EXAMPLES[:5]), u),
         '      </div>',
         '      <div>',
         '        <h3>Guides</h3>',
@@ -414,6 +421,19 @@ def page_index():
         '      <li><h3>Save the PDF</h3><p>Print to PDF with margins set to none and background '
         'graphics switched on.</p></li>',
         '    </ol>',
+        '  </div>',
+        '</section>',
+        '',
+        '<section class="band tight">',
+        '  <div class="wrap">',
+        '    <div class="band-head">',
+        '      <h2>See one that is finished</h2>',
+        '      <p>A worked resume for eight occupations, with the reasoning written out: what '
+        'the person hiring checks first, and which lines are worth their space.</p>',
+        '    </div>',
+        '    <div class="cards">%s</div>' % ''.join(
+            example_card(e, depth) for e in content.EXAMPLES[:3]),
+        '    <p style="margin-top:26px"><a href="examples/index.html">All eight examples</a></p>',
         '  </div>',
         '</section>',
         '',
@@ -826,6 +846,190 @@ def page_404():
     ])
 
 
+def example_card(e, depth, prefix='examples/'):
+    href = ('%s%s%s.html' % (up(depth), prefix, e['slug'])) if prefix else '%s.html' % e['slug']
+    return ('<a class="card" href="%s">'
+            '<span class="tag">%s</span>'
+            '<h3>%s</h3>'
+            '<p>%s</p>'
+            '<span class="mins">%d min read</span></a>'
+            % (href, esc(e['field']), esc(e['role']),
+               esc(e['dek'].split('.')[0] + '.'), e['minutes']))
+
+
+def sample_block(s):
+    """The worked resume, marked up so it reads as a document rather than a quote."""
+    jobs = []
+    for job in s['jobs']:
+        jobs.append('<div class="role"><strong>%s</strong><span>%s</span></div>'
+                    '<p class="where">%s</p><ul>%s</ul>'
+                    % (esc(job['title']), esc(job['dates']), esc(job['employer']),
+                       ''.join('<li>%s</li>' % esc(b) for b in job['bullets'])))
+    return ('<div class="sample">'
+            '<div class="who"><h3>%s</h3><p>%s</p></div>'
+            '<h4>Summary</h4><p class="line">%s</p>'
+            '<h4>Experience</h4>%s'
+            '<h4>Skills</h4><p class="line">%s</p>'
+            '<h4>Education</h4><p class="line">%s</p>'
+            '</div>'
+            % (esc(s['name']), esc(s['headline']), esc(s['summary']), ''.join(jobs),
+               esc(s['skills']), s['education']))
+
+
+def page_example(e):
+    depth = 1
+    faq, faq_ld = faq_block(e.get('faq'))
+    ld = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        'headline': '%s resume example' % e['role'],
+        'description': e['description'],
+        'datePublished': e['updated'],
+        'dateModified': e['updated'],
+        'mainEntityOfPage': '%s/examples/%s.html' % (DOMAIN, e['slug']),
+        'image': '%s/assets/og.png' % DOMAIN,
+        'author': {'@type': 'Organization', 'name': BRAND, 'url': DOMAIN + '/about.html'},
+        'publisher': {'@type': 'Organization', 'name': BRAND, 'url': DOMAIN + '/'},
+    }
+    pretty = datetime.date.fromisoformat(e['updated']).strftime('%d %B %Y').lstrip('0')
+    scans = ''.join('<li>%s</li>' % esc(x) for x in e['scans'])
+    pairs = ''.join(
+        '<div class="compare"><div class="bad"><h4>Says little</h4><p>%s</p></div>'
+        '<div class="good"><h4>Says the same thing, usefully</h4><p>%s</p></div></div>'
+        % (esc(weak), esc(strong)) for weak, strong in e['pairs'])
+    layouts = ''.join(
+        '<li><a href="../templates/%s.html">%s</a> — %s</li>'
+        % (BY_ID[tid]['slug'], esc(BY_ID[tid]['name']), esc(why)) for tid, why in e['templates'])
+    guides = [g for g in content.GUIDES if g['slug'] in e['guides']]
+    others = [x for x in content.EXAMPLES if x['slug'] != e['slug']][:3]
+
+    return '\n'.join([
+        head('%s — %s' % (e['title'], BRAND), e['description'],
+             'examples/%s.html' % e['slug'], depth, kind='article',
+             published=e['updated'], modified=e['updated'],
+             extra_ld=[ld] + ([faq_ld] if faq_ld else [])),
+        topbar('examples/index.html', depth),
+        crumbs([('index.html', 'Home'), ('examples/index.html', 'Examples'), (None, e['role'])],
+               depth),
+        '<main id="main">',
+        '<article class="article">',
+        '  <div class="wrap">',
+        '    <div class="article-head">',
+        '      <p class="kicker">%s · Resume example</p>' % esc(e['field']),
+        '      <h1>%s</h1>' % esc(e['role']),
+        '      <p class="lead">%s</p>' % esc(e['dek']),
+        '      <p class="article-meta"><span>%d min read</span><span>Updated %s</span>'
+        '<span>Written by the %s team</span></p>' % (e['minutes'], pretty, BRAND),
+        '    </div>',
+        ad('example-top', wrapped=False),
+        '    <div class="article-cols">',
+        '      <div class="article-body">',
+        '<h2 id="scans">What gets looked at first</h2>',
+        '<p>Before anyone reads a sentence, they check whether you clear the bar. For this '
+        'role that means:</p>',
+        '<ul>%s</ul>' % scans,
+        '<p>Everything on the page below is there to answer one of those, or it is not there.</p>',
+        '',
+        '<h2 id="example">The example</h2>',
+        '<p>Invented, but built the way a good one is. Read it once for the shape, then read '
+        'the notes underneath.</p>',
+        sample_block(e['sample']),
+        ad('example-mid', wrapped=False),
+        '',
+        '<h2 id="lines">Why those lines and not the usual ones</h2>',
+        '<p>Every weak version below is a real sentence that appears on thousands of resumes. '
+        'Nothing was invented to fix them — the same facts are simply stated.</p>',
+        pairs,
+        '<p>The pattern is the one from <a href="../guides/resume-bullet-points.html">the '
+        'bullet points guide</a>: what you did, how you did it, and what changed as a '
+        'result.</p>',
+        '',
+        '<h2 id="layout">Which layout suits it</h2>',
+        '<ul>%s</ul>' % layouts,
+        '<p>Either opens in the editor with the sample text in place, which you then type '
+        'over. Nothing is uploaded and the PDF costs nothing.</p>',
+        cta(depth, heading='Start from this example',
+            text='Open the editor, replace the sample text with yours, and print to PDF. '
+                 'Sixteen layouts, no account, nothing leaves your browser.'),
+        ad('example-foot', wrapped=False),
+        ('<h2 id="faq">Common questions</h2>\n' + faq) if faq else '',
+        '        <div class="nextprev">%s</div>' % ''.join(
+            '<a href="%s.html"><span>Another example</span><strong>%s</strong></a>'
+            % (x['slug'], esc(x['role'])) for x in others[:2]),
+        '      </div>',
+        toc('<h2 id="scans">What gets looked at first</h2>'
+            '<h2 id="example">The example</h2>'
+            '<h2 id="lines">Why those lines and not the usual ones</h2>'
+            '<h2 id="layout">Which layout suits it</h2>'
+            '<h2 id="faq">Common questions</h2>'),
+        '    </div>',
+        '  </div>',
+        '</article>',
+        '<section class="band tight">',
+        '  <div class="wrap">',
+        '    <div class="band-head"><h2>Read next</h2></div>',
+        '    <div class="cards">%s</div>' % ''.join(
+            guide_card(g, depth, prefix='guides/') for g in guides),
+        '  </div>',
+        '</section>',
+        '</main>',
+        footer(depth),
+    ])
+
+
+def page_examples_index():
+    depth = 1
+    ld = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        'name': 'Resume examples by occupation',
+        'itemListElement': [
+            {'@type': 'ListItem', 'position': i + 1, 'name': '%s resume example' % e['role'],
+             'url': '%s/examples/%s.html' % (DOMAIN, e['slug'])}
+            for i, e in enumerate(content.EXAMPLES)],
+    }
+    fields = []
+    for e in content.EXAMPLES:
+        if e['field'] not in fields:
+            fields.append(e['field'])
+    body = []
+    for i, field in enumerate(fields):
+        members = [e for e in content.EXAMPLES if e['field'] == field]
+        body.append('    <h2 style="margin:%s 0 20px">%s</h2>'
+                    % ('0' if i == 0 else '54px', esc(field)))
+        body.append('    <div class="cards">%s</div>'
+                    % ''.join(example_card(e, depth, prefix='') for e in members))
+        if i == 1:
+            body.append(ad('examples-mid', wrapped=False))
+    return '\n'.join([
+        head('Resume examples by occupation — %s' % BRAND,
+             'Worked resume examples for eight occupations, each with the reasoning: what '
+             'gets scanned for first and which lines earn their space.',
+             'examples/index.html', depth, extra_ld=[ld]),
+        topbar('examples/index.html', depth),
+        crumbs([('index.html', 'Home'), (None, 'Examples')], depth),
+        '<main id="main">',
+        '<section class="band">',
+        '  <div class="wrap">',
+        '    <div class="band-head">',
+        '      <h1 style="font-size:clamp(2rem,4vw,2.9rem)">Examples</h1>',
+        '      <p>A finished resume for eight occupations, with the reasoning written out: '
+        'what the person hiring checks before reading a sentence, which lines carry weight, '
+        'and the usual phrasing they replace. Invented people, real structure.</p>',
+        '    </div>',
+        '\n'.join(body),
+        '  </div>',
+        '</section>',
+        '<section class="band tight">',
+        '  <div class="wrap">',
+        cta(depth),
+        '  </div>',
+        '</section>',
+        '</main>',
+        footer(depth),
+    ])
+
+
 def page_privacy():
     depth = 0
     return '\n'.join([
@@ -1009,6 +1213,9 @@ def main():
     written.append(write('templates.html', page_templates()))
     for t in TEMPLATES:
         written.append(write('templates/%s.html' % t['slug'], page_template(t)))
+    written.append(write('examples/index.html', page_examples_index()))
+    for e in content.EXAMPLES:
+        written.append(write('examples/%s.html' % e['slug'], page_example(e)))
     written.append(write('guides/index.html', page_guides_index()))
     for g in content.GUIDES:
         written.append(write('guides/%s.html' % g['slug'], page_guide(g)))
