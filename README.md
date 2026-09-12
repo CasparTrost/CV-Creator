@@ -209,6 +209,27 @@ Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 
 ## How the editor is built
 
+The window is split in two: the **whole left side is the control panel**, the
+**whole right side is the sheet**. The panel takes 40vw (with a 430px floor
+and a 700px ceiling so it neither collapses on a laptop nor sprawls on a
+28-inch screen) and the stage takes what is left. 40/60 rather than 50/50
+because the panel is a grid of small controls that fits comfortably in the
+narrower half, while the sheet is a fixed-aspect A4 page that turns every
+extra millimetre into legibility.
+
+The point of the split is that nothing is hidden behind a scroll. The panel
+is a two-column grid of cards: the sixteen layouts sit at the top as a strip
+of page-shaped tiles (eight per row, named in their tooltip and in the panel
+header), then text, then colours beside typeface and photo beside view, then
+the export row. At 1600×1000 and at 1440×900 the panel needs no scrolling at
+all.
+
+The sheet fits itself to whatever the stage has left: `zoomAnpassen()` divides
+the available width by 793.7px (210mm at 96dpi) and snaps the result to the
+nearest 5%. It steps aside permanently the moment the zoom slider is touched,
+because an automatic value that overrides a deliberate one is a bug. Below
+1150px the two panes stack instead, panel first.
+
 The sheet has two columns, and they are **tracks of a grid** rather than
 absolutely positioned boxes. That is what guarantees they begin at the same
 height and cannot drift against each other, which is what went wrong before.
@@ -244,7 +265,7 @@ knowing about: render all sixteen layouts, measure where each column starts
 and ends, and compare those numbers against the previous commit. That is how
 a 4.5mm gutter that had quietly vanished from seven layouts was found.
 
-## The landing page## The landing page
+## The landing page
 
 It answers one question above anything else: *what is this?* Headline, one
 sentence, one button, then a photograph of the editor itself — taken by

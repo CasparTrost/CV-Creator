@@ -539,7 +539,7 @@ def page_index():
         '    </div>',
         '    <p class="under"><b>Free</b> · no sign-up · works on any browser</p>',
         '    <div class="shot">',
-        '      <img src="assets/hero-en.png" width="1360" height="720" alt="The editor: '
+        '      <img src="assets/hero-en.png" width="1500" height="827" alt="The editor: '
         'controls on the left, a live A4 page on the right." loading="eager">',
         '    </div>',
         '  </div>',
@@ -1333,7 +1333,7 @@ def page_index_de():
         '    </div>',
         '    <p class="under"><b>Kostenlos</b> · keine Anmeldung · läuft in jedem Browser</p>',
         '    <div class="shot">',
-        '      <img src="../assets/hero-de.png" width="1360" height="720" alt="Der Editor: '
+        '      <img src="../assets/hero-de.png" width="1500" height="827" alt="Der Editor: '
         'links die Bedienung, rechts die A4-Seite." loading="eager">',
         '    </div>',
         '  </div>',

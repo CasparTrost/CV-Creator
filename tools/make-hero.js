@@ -19,7 +19,7 @@ const OUT = require('path').join(__dirname, '..', 'assets');
   const browser = await chromium.launch();
   for (const [lang, file] of [['en', 'hero-en.png'], ['de', 'hero-de.png']]) {
     const ctx = await browser.newContext({
-      viewport: { width: 1360, height: 900 },
+      viewport: { width: 1500, height: 940 },
       deviceScaleFactor: 2,
     });
     const page = await ctx.newPage();
@@ -29,9 +29,7 @@ const OUT = require('path').join(__dirname, '..', 'assets');
       // The transient notices and the drag handles are not part of the product.
       const hint = document.getElementById('hint');
       if (hint) hint.style.display = 'none';
-      document.documentElement.style.setProperty('--zoom', 0.62);
       document.body.style.background = '#eceae8';
-      document.getElementById('blaetter').style.paddingTop = '10px';
     });
     await page.waitForTimeout(500);
     await page.screenshot({ path: require('path').join(OUT, file) });
