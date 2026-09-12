@@ -209,29 +209,36 @@ Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 
 ## How the editor is built
 
-The sheet is a **grid of rows**, and each row holds two **slots**. A section
-lives in a slot. Because both slots of a row are cells of the same small
-grid, they necessarily begin at the same height — which is the one thing
-absolutely positioned columns could not guarantee, and the reason sections
-used to drift apart as soon as one was taller than its neighbour.
+The sheet has two columns, and they are **tracks of a grid** rather than
+absolutely positioned boxes. That is what guarantees they begin at the same
+height and cannot drift against each other, which is what went wrong before.
+Inside a column the sections flow.
 
-- An empty slot is visible, dashed, and clicking it puts a section exactly
-  there.
-- **+ Row** adds a row with two fresh slots; a trailing row nobody filled
-  is collected again.
-- Dragging a section by its handle drops it into another slot.
-- Single-column layouts are the same grid with one column, so the slots
-  stack and the reading order falls out by itself: contact, experience,
-  education, further training.
+They flow rather than sitting in a strict row-by-row grid for a measured
+reason. Aligning every section with its neighbour across both columns sounds
+tidier, and it was the first thing tried here — but a row is as tall as its
+taller side, so the page loses around 90mm of usable height. On this sample
+that is the difference between a one-page and a two-page resume, and it
+pushed the skills and languages sections off page one entirely. Columns that
+start together and then flow independently is the right trade.
 
-Two things worth knowing about the slots. They are interface, not document:
-`.platz` is hidden in print, so it never reaches the PDF. And because of
-that, every measurement of what still fits on a page happens inside
-`inDruckmass()`, which hides the slots first — otherwise the editor would
-distribute content against a page that is fuller than the one that prints,
-and the whole promise of the tool is that both are identical.
+- Each column ends in a visible slot. Clicking it adds a section exactly
+  there; dragging a section by its handle drops it into either column.
+- Single-column layouts are the same grid with one track: the main column
+  first, the sidebar's sections below it, and the contact block lifted to the
+  front so the address is under the header rather than behind the job history.
+- The slots are interface, not document: `.platz` is hidden in print. Because
+  of that, every measurement of what still fits on a page runs inside
+  `inDruckmass()`, which hides them first — otherwise the editor distributes
+  content against a fuller page than the one that prints, and the promise of
+  the tool is that the two are identical.
 
-## The landing page
+`tools/` has no test runner, but the checks used while building this are worth
+knowing about: render all sixteen layouts, measure where each column starts
+and ends, and compare those numbers against the previous commit. That is how
+a 4.5mm gutter that had quietly vanished from seven layouts was found.
+
+## The landing page## The landing page
 
 It answers one question above anything else: *what is this?* Headline, one
 sentence, one button, then a photograph of the editor itself — taken by
