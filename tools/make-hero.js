@@ -12,7 +12,7 @@
 const { chromium } = require(process.env.PLAYWRIGHT ||
   '/opt/node22/lib/node_modules/playwright');
 
-const BASE = process.env.BASE || 'http://localhost:8767';
+const BASE = process.env.BASE || "http://localhost:8767";
 const OUT = require('path').join(__dirname, '..', 'assets');
 
 (async () => {

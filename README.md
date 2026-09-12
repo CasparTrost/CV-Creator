@@ -207,6 +207,30 @@ Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 `EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
 `tools/data/templates.json`.
 
+## How the editor is built
+
+The sheet is a **grid of rows**, and each row holds two **slots**. A section
+lives in a slot. Because both slots of a row are cells of the same small
+grid, they necessarily begin at the same height — which is the one thing
+absolutely positioned columns could not guarantee, and the reason sections
+used to drift apart as soon as one was taller than its neighbour.
+
+- An empty slot is visible, dashed, and clicking it puts a section exactly
+  there.
+- **+ Row** adds a row with two fresh slots; a trailing row nobody filled
+  is collected again.
+- Dragging a section by its handle drops it into another slot.
+- Single-column layouts are the same grid with one column, so the slots
+  stack and the reading order falls out by itself: contact, experience,
+  education, further training.
+
+Two things worth knowing about the slots. They are interface, not document:
+`.platz` is hidden in print, so it never reaches the PDF. And because of
+that, every measurement of what still fits on a page happens inside
+`inDruckmass()`, which hides the slots first — otherwise the editor would
+distribute content against a page that is fuller than the one that prints,
+and the whole promise of the tool is that both are identical.
+
 ## The landing page
 
 It answers one question above anything else: *what is this?* Headline, one
