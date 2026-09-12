@@ -206,13 +206,20 @@ body{display:flex;align-items:flex-start;background:#eceae8}
    auf. Gedruckt wird er nie. */
 .platz{
   display:flex;width:100%;align-items:center;justify-content:center;gap:1.5mm;
-  min-height:11mm;margin-top:7mm;border:.4mm dashed #cfc6c1;border-radius:1.5mm;
+  min-height:9mm;margin-top:5mm;border:.4mm dashed #cfc6c1;border-radius:1.5mm;
   color:#a2968f;font:600 3mm/1 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   letter-spacing:.2mm;cursor:pointer;background:rgba(255,255,255,.45);
   transition:border-color .12s,color .12s,background .12s;
 }
 .platz:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,255,255,.8)}
+/* Auf einer gut gefüllten Seite bleibt nur wenig Luft: dort wird der
+   Platz flacher, statt zu verschwinden. */
+.platz.knapp{min-height:6mm;margin-top:3mm}
 #blaetter.messen .platz{display:none}
+/* Gemessen wird immer in Druckgröße. Bei 90 % Zoom bricht eine Zeile
+   anders um als bei 110 %, und dann hing es am Zoom, ob der letzte
+   Abschnitt noch auf Seite 1 passt — das PDF sah bei jedem anders aus. */
+#blaetter.messen{zoom:1}
 /* Einspaltig steht die Seitenspalte unter der Hauptspalte. Ein Platz am
    Ende der Hauptspalte läge damit mitten im Dokument und würde alles
    darunter nach unten schieben — dort gibt es nur den Platz am Ende. */
@@ -529,6 +536,27 @@ h2.sec{margin:0 0 2.5mm;padding-bottom:1.2mm;font-size:1.4em;font-weight:700;let
 .t13 .side .contact,.t14 .side .contact,.t16 .side .contact{display:inline-flex;margin:0 8mm 1.8mm 0}
 
 /* ==================================================================
+   Das Blatt folgt dem Inhalt
+   Diese Regeln stehen absichtlich hinter allen Varianten: sie sollen
+   deren Geometrie überschreiben, sobald der Inhalt es verlangt.
+   ================================================================== */
+/* Eine Seitenspalte ohne Abschnitte trägt keine getönte Fläche. Ein
+   leerer Farbstreifen sieht nach Fehler aus, nicht nach Gestaltung. */
+.page.leiste-leer .sidebg{display:none}
+/* Beim Akzentstreifen ist die Fläche Blattschmuck und keine Spalte. */
+.page.leiste-leer.t16 .sidebg{display:block}
+
+/* Nutzt das Dokument die Seitenspalte gar nicht mehr, nimmt die
+   Hauptspalte die ganze Breite. Der Platz für die Seitenspalte bleibt
+   darunter stehen, damit sie sich zurückholen lässt. */
+.page.ohne-leiste .raster{grid-template-columns:1fr}
+.page.ohne-leiste .spalte.main{grid-column:1;grid-row:1;padding:0 15mm}
+.page.ohne-leiste .spalte.side{grid-column:1;grid-row:2;padding:0 15mm}
+.page.ohne-leiste.t6 .bandbg{display:none}
+.page.ohne-leiste.t12 .sidebg{display:none}
+.page.ohne-leiste.t15 .bandtext{left:86mm}
+
+/* ==================================================================
    Druck
    ================================================================== */
 @page{size:A4;margin:0}
@@ -586,8 +614,12 @@ h2.sec{margin:0 0 2.5mm;padding-bottom:1.2mm;font-size:1.4em;font-weight:700;let
         <button class="icon" onclick="cmd('undo')" title="Rückgängig">&#8630;</button>
         <button class="icon" onclick="cmd('redo')" title="Wiederholen">&#8631;</button>
       </div>
+      <div class="reihe">
         <button data-t="format" onclick="cmd('removeFormat')">Format entfernen</button>
         <button data-t="abschnitt" onclick="abschnittNeu()">+ Abschnitt</button>
+        <button id="knopfLeiste" data-t="abschnittLeiste"
+                onclick="abschnittNeu(leisteSpalte())">+ in Seitenleiste</button>
+      </div>
     </div>
 
 
@@ -663,8 +695,8 @@ h2.sec{margin:0 0 2.5mm;padding-bottom:1.2mm;font-size:1.4em;font-weight:700;let
         <input type="range" id="fZoom" min="45" max="110" step="5" value="85">
         <span class="wert" id="fZoomTxt">85 %</span></div>
       <div class="reihe">
-        <button data-t="seite2" onclick="seite2()">Seite 2 ein / aus</button>
         <button data-t="pruefen" onclick="checkFit(true)">Prüfen</button>
+        <button data-t="neuOrdnen" onclick="neuOrdnen(true)">Neu ordnen</button>
         <button class="leise breit" data-t="reset" onclick="zuruecksetzen()">Farben &amp; Schrift zurücksetzen</button>
       </div>
     </div>
@@ -855,8 +887,8 @@ const VARS = [
 ];
 const EINSPALTIG = ['t7','t8','t9','t10','t11','t13','t14','t16'];
 const INHALT = {"en": {"p1kopf": "<h1>John Doe</h1><div class=\"role\">Digital Transformation Project Manager</div><p>Project manager, eight years, taking IT initiatives from first concept to rollout. Focus on process analysis, requirements management and steering external suppliers.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Personal details</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>12 Sample Street, 90402 Nuremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>john.doe@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14 May 1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Education</h2><div class=\"edu\"><div class=\"degree\">Master of Science</div><div>Business Information Systems</div><div><strong>Sample University</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Final grade 1.7 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachelor of Arts</div><div>Business Administration</div><div><strong>Example University of Applied Sciences</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Final grade 2.1 (German scale)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Work experience</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Digital Transformation Project Manager</span><span class=\"jobdate\">03/2021 – present</span></div><div class=\"company\"><strong>Example GmbH</strong> – Nuremberg</div><ul><li>Led four parallel digitalisation projects with budgets of up to €500,000</li><li>Gathered and prioritised requirements together with six departments</li><li>Managed external service providers including acceptance testing and invoice review</li><li>Introduced consistent reporting for the management board</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Project Officer</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Sample AG</strong> – Fürth</div><ul><li>Prepared decision papers and cost-benefit analyses</li><li>Coordinated deadlines, milestones and project documentation</li><li>Analysed existing workflows and proposed improvements</li><li>Point of contact for user questions during two system rollouts</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Working Student, Process Management</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Example Trading KG</strong> – Erlangen</div><ul><li>Documented and visualised core business processes</li><li>Produced analyses and reports for the division head</li><li>Supported the introduction of a ticketing system</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Skills</h2><ul><li>Project management, agile and traditional</li><li>Requirements and process analysis</li><li>Jira &amp; Confluence – confident daily use</li><li>SAP – working knowledge</li><li>Microsoft Office – advanced</li><li>Presenting and facilitating</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Languages</h2><div class=\"lang\"><strong>English</strong>: native speaker</div><div class=\"lang\"><strong>German</strong>: C1</div><div class=\"lang\"><strong>Spanish</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Intern, Management Consulting</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Munich</div><ul><li>Supported a procurement process review at an industrial client</li><li>Produced presentations and result documentation</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Further training</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">IPMA Level D Project Management</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>German Association for Project Management</strong></div></div></div></section>"}, "es": {"p1kopf": "<h1>Juan Pérez</h1><div class=\"role\">Jefe de proyecto de digitalización</div><p>Jefe de proyecto con ocho años de experiencia en iniciativas de TI, del concepto a la implantación. Especializado en análisis de procesos y gestión de proveedores.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Datos personales</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>Calle Ejemplo 12, 90402 Núremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>juan.perez@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14/05/1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación</h2><div class=\"edu\"><div class=\"degree\">Máster</div><div>Sistemas de Información Empresarial</div><div><strong>Universidad de Ejemplo</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Nota final 1,7 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Grado</div><div>Administración de Empresas</div><div><strong>Escuela Superior de Ejemplo</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Nota final 2,1 (escala alemana)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Experiencia profesional</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Jefe de proyecto de digitalización</span><span class=\"jobdate\">03/2021 – actualidad</span></div><div class=\"company\"><strong>Ejemplo GmbH</strong> – Núremberg</div><ul><li>Dirección de cuatro proyectos de digitalización simultáneos con presupuestos de hasta 500.000 €</li><li>Recogida y priorización de requisitos junto a seis departamentos</li><li>Gestión de proveedores externos, incluidas recepción y revisión de facturas</li><li>Implantación de un sistema de informes unificado para la dirección</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Técnico de proyectos</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Empresa Ejemplo AG</strong> – Fürth</div><ul><li>Elaboración de propuestas de decisión y análisis de rentabilidad</li><li>Coordinación de plazos, hitos y documentación del proyecto</li><li>Análisis de procesos existentes y propuestas de mejora</li><li>Persona de contacto para los usuarios durante dos implantaciones de sistemas</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Estudiante en prácticas, gestión de procesos</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Comercial Ejemplo KG</strong> – Erlangen</div><ul><li>Documentación y representación gráfica de los procesos clave</li><li>Análisis e informes para la dirección de área</li><li>Apoyo en la implantación de un sistema de tickets</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Competencias</h2><ul><li>Gestión de proyectos, ágil y clásica</li><li>Análisis de requisitos y de procesos</li><li>Jira &amp; Confluence – uso habitual</li><li>SAP – conocimientos básicos</li><li>Microsoft Office – nivel avanzado</li><li>Presentación y moderación</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Idiomas</h2><div class=\"lang\"><strong>Español</strong>: lengua materna</div><div class=\"lang\"><strong>Inglés</strong>: C1</div><div class=\"lang\"><strong>Alemán</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Prácticas en consultoría</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Múnich</div><ul><li>Colaboración en un análisis de procesos de compras en un cliente industrial</li><li>Elaboración de presentaciones y documentación de resultados</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación continua</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Gestión de proyectos IPMA nivel D</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>Asociación Alemana de Gestión de Proyectos</strong></div></div></div></section>"}};
-const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Format entfernen", "abschnitt": "+ Abschnitt", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "seite2": "Seite 2 ein / aus", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto", "neuStart": "Von vorn beginnen", "zurueck": "Vorlagen", "ratgeber": "Ratgeber"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "seite2": "Page 2 on / off", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo", "neuStart": "Start over", "zurueck": "Templates", "ratgeber": "Guides"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "seite2": "Página 2 sí / no", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia", "neuStart": "Empezar de nuevo", "zurueck": "Plantillas", "ratgeber": "Guías"}};
-const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel anklicken und überschreiben.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – click the title to rename it.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "entwurfUmgebaut": "Draft carried over and fitted to the new layout."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: haz clic en el título para cambiarlo.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño."}};
+const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Format entfernen", "abschnitt": "+ Abschnitt", "abschnittLeiste": "+ in Seitenleiste", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "neuOrdnen": "Neu ordnen", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto", "neuStart": "Von vorn beginnen", "zurueck": "Vorlagen", "ratgeber": "Ratgeber"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "abschnittLeiste": "+ in sidebar", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "neuOrdnen": "Rearrange", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo", "neuStart": "Start over", "zurueck": "Templates", "ratgeber": "Guides"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "abschnittLeiste": "+ en barra lateral", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "neuOrdnen": "Reordenar", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia", "neuStart": "Empezar de nuevo", "zurueck": "Plantillas", "ratgeber": "Guías"}};
+const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel anklicken und überschreiben.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "platzLeiste": "Abschnitt in der Seitenleiste", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – click the title to rename it.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "platzLeiste": "Section in the sidebar", "entwurfUmgebaut": "Draft carried over and fitted to the new layout."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: haz clic en el título para cambiarlo.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "platzLeiste": "Sección en la barra lateral", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño."}};
 const VARNAMEN = {"de": [["Diagonale links", "Original"], ["Diagonale rechts", "gespiegelt"], ["Gerades Band", "ohne Diagonale"], ["Ruhiger Kopf", "ohne Farbband"], ["Dunkler Kopf", "kräftig"], ["Farbige Leiste", "Leiste in Akzentfarbe"], ["Einspaltig", "ATS-sicher"], ["Datumsspalte", "klassisch tabellarisch"], ["Zeitstrahl", "Stationen an einer Linie"], ["Kopfblock", "dunkler Kopf"], ["Zentriert", "rundes Foto"], ["Feine Trennlinie", "zwei Spalten ohne Tönung"], ["Schlicht", "ohne Foto, ATS-sicher"], ["Kopfkarte", "gerahmter Kopf"], ["Breite Leiste", "viel Platz für Kenntnisse"], ["Akzentstreifen", "Farbkante am Rand"]], "en": [["Diagonal left", "original"], ["Diagonal right", "mirrored"], ["Solid banner", "no diagonal"], ["Quiet header", "no colour band"], ["Dark header", "bold"], ["Coloured sidebar", "accent fill"], ["Single column", "ATS-safe"], ["Date column", "classic tabular"], ["Timeline", "dots on a line"], ["Header block", "dark header"], ["Centred", "round photo"], ["Fine divider", "two columns, no tint"], ["Plain", "no photo, ATS-safe"], ["Header card", "framed header"], ["Wide sidebar", "room for skills"], ["Accent edge", "colour bar at the margin"]], "es": [["Diagonal izquierda", "original"], ["Diagonal derecha", "invertido"], ["Banda plana", "sin diagonal"], ["Cabecera sobria", "sin franja de color"], ["Cabecera oscura", "contrastada"], ["Barra en color", "barra con acento"], ["Una columna", "apto para ATS"], ["Columna de fechas", "tabular clásico"], ["Línea de tiempo", "puntos en una línea"], ["Bloque de cabecera", "cabecera oscura"], ["Centrado", "foto redonda"], ["Separador fino", "dos columnas sin fondo"], ["Sobrio", "sin foto, apto para ATS"], ["Cabecera enmarcada", "cabecera con marco"], ["Barra ancha", "espacio para competencias"], ["Borde de acento", "franja en el margen"]]};
 
 let sprache = 'de';
@@ -901,7 +933,7 @@ function grenzeVon(p){
    leeren Plätze, die nur der Bedienung dienen. */
 function inDruckmass(fn){
   const b = document.getElementById('blaetter');
-  b.classList.add('messen');
+  b.classList.add('messen');                 /* Plätze weg, Zoom auf 1 */
   void b.offsetHeight;                       /* Layout erzwingen */
   try { return fn(); } finally { b.classList.remove('messen'); }
 }
@@ -931,20 +963,102 @@ function zelleFuer(p, art){ return zielZelle(p, art); }
 
 /* Am Ende jeder Spalte steht ein freier Platz: dort lässt sich ein
    Abschnitt ablegen oder mit einem Klick anlegen. Gedruckt wird er nie. */
+function platzNeu(){
+  const platz = document.createElement('button');
+  platz.type = 'button';
+  platz.className = 'platz ui';
+  platz.setAttribute('contenteditable', 'false');
+  platz.innerHTML = '<b>+</b><span></span>';
+  /* Die Spalte wird erst beim Klick gelesen: ein Platz kann inzwischen
+     auf einer anderen Seite stehen. */
+  platz.addEventListener('click', () => abschnittNeu(platz.closest('.spalte')));
+  return platz;
+}
+
+/* Ein Platz jenseits der Blattkante wäre abgeschnitten und nicht mehr
+   anklickbar — genau das ließ die Knöpfe wirkungslos erscheinen. Er darf
+   dabei in den unteren Blattrand hineinragen: gedruckt wird er nie, und
+   sonst hätte eine gut gefüllte Seite überhaupt keinen mehr. */
+function platzPasst(seite, platz){
+  if (platz.offsetParent === null) return true;          /* ausgeblendet */
+  const r = seite.getBoundingClientRect();
+  const mm = r.height / 297;
+  return platz.getBoundingClientRect().bottom <= r.bottom - 2 * mm;
+}
+
 function plaetzeZeichnen(){
   document.querySelectorAll('#blaetter .spalte').forEach(sp => {
-    let platz = sp.querySelector(':scope > .platz');
-    if (!platz){
-      platz = document.createElement('button');
-      platz.type = 'button';
-      platz.className = 'platz ui';
-      platz.setAttribute('contenteditable', 'false');
-      platz.innerHTML = '<b>+</b><span></span>';
-      platz.addEventListener('click', () => abschnittNeu(sp));
-    }
+    const seite = sp.closest('.page');
+    const platz = sp.querySelector(':scope > .platz') || platzNeu();
     sp.appendChild(platz);                       /* immer als Letztes */
-    platz.querySelector('span').textContent = T('platzLeer');
+    /* Steht die Seitenspalte als einzige Spur unter der Hauptspalte, ist
+       nicht mehr zu sehen, wohin der Abschnitt geht — dann sagt es der
+       Platz selbst. */
+    const leiste = sp.classList.contains('side') && seite.classList.contains('ohne-leiste');
+    platz.querySelector('span').textContent = leiste ? T('platzLeiste') : T('platzLeer');
+    platz.classList.remove('knapp');
+    if (!platzPasst(seite, platz)){
+      platz.classList.add('knapp');                /* zweiter Versuch, flacher */
+      if (!platzPasst(seite, platz)) platz.remove();
+    }
   });
+}
+
+/* ==================================================================
+   Das Blatt folgt dem Inhalt
+   Wer einen Abschnitt hinzufügt oder entfernt, ändert damit auch die
+   Fläche, die er braucht. Farbflächen, Spaltenbreiten und die zweite
+   Seite richten sich deshalb nach dem Inhalt und nicht nach der Vorlage
+   allein.
+   ================================================================== */
+function hatLeisteninhalt(p){
+  const sp = spalte(p, 'side');
+  return !!(sp && sp.querySelector(':scope > .blk'));
+}
+
+/* Einspaltige Layouts haben keine Seitenleiste — dann fehlt auch der
+   Knopf dafür, statt ins Nichts zu zeigen. */
+function leisteKnopf(){
+  const k = document.getElementById('knopfLeiste');
+  if (!k) return;
+  const p1 = [...seiten()][0];
+  k.hidden = !p1 || p1.classList.contains('einspaltig');
+}
+
+function flaechenAnpassen(){
+  const alle = [...seiten()];
+  const sichtbar = alle.filter(p => p.style.display !== 'none');
+  /* Nutzt das ganze Dokument die Seitenspalte nicht mehr, wird aus dem
+     Blatt ein einspaltiges. Einspaltige Vorlagen haben ohnehin keine. */
+  const genutzt = sichtbar.some(hatLeisteninhalt);
+  alle.forEach(p => {
+    p.classList.toggle('leiste-leer', !hatLeisteninhalt(p));
+    p.classList.toggle('ohne-leiste', !genutzt && !p.classList.contains('einspaltig'));
+  });
+  leisteKnopf();
+}
+
+/* Seite 2 erscheint, wenn Seite 1 überläuft, und verschwindet, sobald
+   nichts mehr darauf steht: ein leeres Blatt im PDF will niemand. */
+function seite2Anpassen(endgueltig){
+  const alle = [...seiten()];
+  const p1 = alle[0], p2 = alle[1];
+  if (!p1 || !p2) return;
+  if (p2.querySelector('.blk')){ p2.style.display = ''; return; }
+  p2.style.display = (!endgueltig && laeuftUeber(p1)) ? '' : 'none';
+}
+
+/* Ein Durchlauf nach jeder Änderung am Aufbau. Zwei Runden, weil das
+   Verteilen eine Spalte leeren kann und die Geometrie dann anders
+   ausfällt. */
+function neuOrdnen(laut){
+  bandAnpassen();
+  for (let i = 0; i < 2; i++){ flaechenAnpassen(); seite2Anpassen(false); verteilen(); }
+  seite2Anpassen(true);
+  flaechenAnpassen();
+  plaetzeZeichnen();
+  checkFit(laut === true);
+  vorschauen();
 }
 
 /* Schiebt überzählige Abschnitte auf Seite 2 und holt zurück, was wieder passt. */
@@ -1043,7 +1157,7 @@ function setVar(k){
   });
   markiere();
   fotoZuruecksetzen(true);
-  setTimeout(() => { bandAnpassen(); verteilen(); checkFit(false); vorschauen(); }, 80);
+  setTimeout(() => neuOrdnen(), 80);
 }
 
 /* ---------------- Text ---------------- */
@@ -1116,10 +1230,12 @@ function checkFit(laut){
 document.addEventListener('input', e => {
   if (e.target.closest && e.target.closest('.bandtext')) bandAnpassen();
 });
+/* Beim Tippen wird nichts verschoben — der Schreibfluss ginge verloren.
+   Die Farbflächen dürfen aber schon folgen. */
 document.addEventListener('input', () => { clearTimeout(window._t);
-  window._t = setTimeout(() => { checkFit(); vorschauen(); }, 600); });
+  window._t = setTimeout(() => { flaechenAnpassen(); checkFit(); vorschauen(); }, 600); });
 document.documentElement.style.setProperty('--zoom', .85);
-window.addEventListener('load', () => { zoomAnpassen(); bandAnpassen(); verteilen(); checkFit(false); vorschauen(); });
+window.addEventListener('load', () => { zoomAnpassen(); neuOrdnen(); });
 
 /* ---------------- Abschnitte verschieben ---------------- */
 let gezogen = null;
@@ -1176,24 +1292,59 @@ document.addEventListener('drop', e => {
   e.preventDefault();
   const ziel = zielBlock(zone, e.clientY);
   if (ziel) zone.insertBefore(gezogen, ziel); else zone.appendChild(gezogen);
-  saubermachen(); checkFit(false); vorschauen();
+  saubermachen(); neuOrdnen();
 });
 
 function blockWeg(el){
   const b = el.closest('.blk');
   const titel = b.querySelector('h2') ? b.querySelector('h2').textContent.trim() : 'diesen Abschnitt';
   if (confirm(T('weg').replace('{t}', titel))) {
-    b.remove(); plaetzeZeichnen(); verteilen(); checkFit(false);
+    b.remove(); neuOrdnen();
   }
 }
 
-/* Ohne Angabe landet der neue Abschnitt im ersten freien Platz;
-   über einen leeren Platz angeklickt, landet er genau dort. */
+/* Die Plätze, die gerade wirklich zu sehen sind. */
+function freiePlaetze(){
+  return [...document.querySelectorAll('#blaetter .platz')]
+    .filter(x => x.offsetParent !== null && x.closest('.page').style.display !== 'none');
+}
+
+/* Ohne Angabe nimmt der Knopf in der Leiste den nächsten freien Platz:
+   in zweispaltigen Layouts das Ende der Hauptspalte, in einspaltigen das
+   Ende des Dokuments. Ist auf Seite 1 nichts mehr frei, kommt Seite 2. */
+function zielSpalte(){
+  let liste = freiePlaetze();
+  if (!liste.length){
+    const p2 = [...seiten()][1];
+    if (p2 && p2.style.display === 'none'){
+      p2.style.display = '';
+      plaetzeZeichnen();
+      liste = freiePlaetze();
+    }
+  }
+  if (!liste.length) return null;
+  const haupt = liste.find(x => x.closest('.spalte').classList.contains('main'));
+  return (haupt || liste[liste.length - 1]).closest('.spalte');
+}
+
+/* Der Knopf für die Seitenleiste braucht ein Ziel, auch wenn die Spalte
+   bis zum Seitenrand voll ist und darum keinen Platz mehr zeigt. */
+function leisteSpalte(){
+  const sichtbar = [...seiten()].filter(p => p.style.display !== 'none');
+  for (const p of sichtbar){
+    const sp = spalte(p, 'side');
+    const platz = sp && sp.querySelector(':scope > .platz');
+    if (sp && platz && platz.offsetParent !== null) return sp;
+  }
+  return sichtbar.length ? spalte(sichtbar[0], 'side') : null;
+}
+
+/* Über einen Platz angeklickt, landet der Abschnitt genau in dessen
+   Spalte — vorher nahm er wegen eines Namens aus der Zwischenfassung
+   immer die Hauptspalte, gleich wohin man geklickt hatte. */
 function abschnittNeu(zelle){
-  const p = [...seiten()].find(x => x.style.display !== 'none') || seiten()[0];
-  const ziel = (zelle && zelle.classList.contains('zelle'))
-    ? zelle
-    : (zelleFuer(p, 'main', false) || zelleFuer(p, 'side', false));
+  const ziel = (zelle && zelle.classList && zelle.classList.contains('spalte'))
+    ? zelle : zielSpalte();
   if (!ziel) return;
   const b = document.createElement('section');
   b.className = 'blk';
@@ -1203,9 +1354,8 @@ function abschnittNeu(zelle){
     '<div class="inhalt" contenteditable="true"><h2 class="sec">' + T('neuerTitel') + '</h2>' +
     '<ul><li>' + T('neuerPunkt') + '</li></ul></div>';
   const platz = ziel.querySelector(':scope > .platz');
-  if (platz) platz.remove();
-  ziel.appendChild(b);
-  plaetzeZeichnen();
+  if (platz) ziel.insertBefore(b, platz); else ziel.appendChild(b);
+  neuOrdnen();
   b.scrollIntoView({block:'center'});
   melde(T('neu'), 5000);
 }
@@ -1336,7 +1486,7 @@ document.getElementById('fFotoSize').addEventListener('input', e => {
 });
 
 function fotoZeigen(){ const f = foto(); f.style.display = f.style.display === 'none' ? '' : 'none'; }
-function seite2(){ const p = document.querySelector('#blaetter > .page.p2'); p.style.display = p.style.display === 'none' ? '' : 'none'; }
+
 function zuruecksetzen(){
   ['--accent','--sidebar','--dark','--onaccent','--font','--fs'].forEach(v => wurzel.style.removeProperty(v));
   palette('#B3988D','#EEE4E3','#3B3B3B');
@@ -1649,7 +1799,7 @@ function entwurfHerstellen(){
   }
   markiere();
   kopfNameSetzen();
-  setTimeout(() => { bandAnpassen(); verteilen(); checkFit(false); vorschauen(); }, 60);
+  setTimeout(() => neuOrdnen(), 60);
   return true;
 }
 

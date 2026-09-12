@@ -243,16 +243,40 @@ that is the difference between a one-page and a two-page resume, and it
 pushed the skills and languages sections off page one entirely. Columns that
 start together and then flow independently is the right trade.
 
-- Each column ends in a visible slot. Clicking it adds a section exactly
-  there; dragging a section by its handle drops it into either column.
+- Each column ends in a visible slot, and clicking it adds a section in
+  **that** column — the sidebar slot fills the sidebar, the main slot fills
+  the main column. Dragging a section by its handle drops it into either.
+  A slot is only drawn where it can actually be clicked: it may reach into
+  the sheet's bottom margin (it never prints), it becomes shallower when
+  space is tight, and on a column that is full to the edge it is left out
+  rather than drawn half off the page. Because a full column can therefore
+  have no slot, the panel carries both `+ Section` and `+ in sidebar`, so
+  every column stays reachable however full the page is.
 - Single-column layouts are the same grid with one track: the main column
   first, the sidebar's sections below it, and the contact block lifted to the
   front so the address is under the header rather than behind the job history.
-- The slots are interface, not document: `.platz` is hidden in print. Because
-  of that, every measurement of what still fits on a page runs inside
-  `inDruckmass()`, which hides them first — otherwise the editor distributes
-  content against a fuller page than the one that prints, and the promise of
-  the tool is that the two are identical.
+- The slots are interface, not document: `.platz` is hidden in print. Every
+  measurement of what still fits runs inside `inDruckmass()`, which hides the
+  slots **and sets the zoom back to 100%**. Both matter. Measured at the
+  visitor's zoom, a line wraps differently at 90% than at 110%, and whether
+  the last section still fitted on page one came down to the zoom slider —
+  two people with the same resume got different PDFs. Measuring at print
+  scale is the only way the screen and the PDF can be the same document.
+- **The sheet follows the content.** Adding or removing a section changes how
+  much room the document needs, so the geometry is derived, never fixed:
+  a page whose sidebar holds no sections drops its tinted panel — an empty
+  block of colour reads as a fault, not as design — and if no page uses the
+  sidebar at all, the sheet becomes single-column with the main column at
+  full width and the sidebar's slot waiting underneath, labelled, so it can
+  be brought back. Page two is the same idea: it appears by itself when
+  page one overflows and disappears when nothing is left on it, which is why
+  the manual "page 2 on/off" switch is gone — and why a one-page resume no
+  longer prints a blank second sheet. `neuOrdnen()` is the single pass that
+  does all of it (header height, areas, page two, distribution, slots,
+  overflow warning) and every structural change calls it. Typing does not:
+  moving a section out from under the caret mid-sentence is worse than a
+  late re-flow, so text edits only re-colour and re-check, and `Rearrange`
+  in the panel forces a full pass.
 - A draft in `localStorage` carries the structure it was saved with, so a
   visitor who used an earlier version would get that structure back and see
   something other than the current layout. `strukturReparieren()` lifts the
@@ -263,7 +287,11 @@ start together and then flow independently is the right trade.
 `tools/` has no test runner, but the checks used while building this are worth
 knowing about: render all sixteen layouts, measure where each column starts
 and ends, and compare those numbers against the previous commit. That is how
-a 4.5mm gutter that had quietly vanished from seven layouts was found.
+a 4.5mm gutter that had quietly vanished from seven layouts was found. Two
+more are worth repeating after any change to the editor: click every visible
+slot and assert the section appears in that slot's own column, and print the
+same resume from two different window widths and diff the PDFs — they must
+be byte-for-byte the same story.
 
 ## The landing page
 
