@@ -232,6 +232,12 @@ start together and then flow independently is the right trade.
   `inDruckmass()`, which hides them first — otherwise the editor distributes
   content against a fuller page than the one that prints, and the promise of
   the tool is that the two are identical.
+- A draft in `localStorage` carries the structure it was saved with, so a
+  visitor who used an earlier version would get that structure back and see
+  something other than the current layout. `strukturReparieren()` lifts the
+  sections out of whatever shape it finds — today's columns, the row grid
+  that briefly existed, or the original absolute columns — and puts them into
+  the current one. The draft is never discarded: it is the visitor's work.
 
 `tools/` has no test runner, but the checks used while building this are worth
 knowing about: render all sixteen layouts, measure where each column starts
