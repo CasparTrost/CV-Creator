@@ -247,6 +247,14 @@ a.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:va
 .card p{margin:0;font-size:.94rem;color:var(--muted)}
 .card .mins{margin-top:auto;padding-top:10px;font-size:.82rem;color:var(--muted)}
 
+/* ---------------------------------- Symbole
+   Die Symbole liegen in assets/icons.css als Masken vor: die Form wird aus der
+   Textfarbe geschnitten. Hier steht nur, wo sie wie groß erscheinen. */
+.card .sym,.feature .sym{font-size:1.5rem;color:var(--accent);margin-bottom:2px}
+.feature .sym{font-size:1.75rem}
+.facts .sym{font-size:1.45rem;color:var(--accent);display:block;margin-bottom:9px}
+.article-head .kicker .sym{font-size:1.15rem;margin-right:7px;vertical-align:-.17em}
+
 /* ---------------------------------- Musterlebenslauf */
 .sample{
   background:var(--paper);border:1px solid var(--rule);border-radius:3px;

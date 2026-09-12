@@ -22,6 +22,7 @@ TODAY = datetime.date.today().isoformat()
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import content  # noqa: E402  (guide and page copy)
+import icons  # noqa: E402  (the icon set, one source for site and editor)
 
 
 # ---------------------------------------------------------------- config
@@ -139,6 +140,7 @@ def head(title, description, path, depth, extra_ld=None, image='assets/og.png',
         'href="%sassets/fonts/ibmplexsans-400600-latin.woff2">' % u,
         '<link rel="stylesheet" href="%sassets/fonts-site.css">' % u,
         '<link rel="stylesheet" href="%sassets/site.css">' % u,
+        '<link rel="stylesheet" href="%sassets/icons.css">' % u,
         '',
         '<script src="%sassets/site-config.js"></script>' % u,
         '<script src="%sassets/consent.js"></script>' % u,
@@ -447,16 +449,67 @@ def inject_mid_ad(body, slot):
     return body[:cut] + ad('guide-' + slot, wrapped=False) + '\n\n' + body[cut:]
 
 
+# Welches Symbol zu welcher Seite gehört. Ein Ratgeber über Anschreiben bekommt
+# den Umschlag, ein Muster für die Pflege das Stethoskop — das Symbol sagt schon
+# im Kartenraster, worum es geht, bevor man die Überschrift gelesen hat.
+GUIDE_ICON = {
+    # Englische Ratgeber
+    'how-to-write-a-resume': 'klemmbrett',
+    'resume-summary': 'person',
+    'resume-skills-section': 'zahnrad',
+    'resume-bullet-points': 'stern',
+    'resume-length': 'blatt',
+    'resume-file-format': 'drucker',
+    'ats-friendly-resume': 'lupe',
+    'resume-mistakes': 'schild',
+    'cover-letter': 'umschlag',
+    'career-change-resume': 'aktentasche',
+    'first-resume-no-experience': 'hut',
+    'lebenslauf-german-resume': 'globus',
+    # Deutsche Ratgeber
+    'lebenslauf-schreiben': 'klemmbrett',
+    'anschreiben': 'umschlag',
+    'bewerbungsfoto': 'kamera',
+    'arbeitszeugnis': 'urkunde',
+    'lebenslauf-luecken': 'kalender',
+    'quereinstieg': 'aktentasche',
+    'bewerbung-per-email': 'blatt',
+    'bewerbung-usa-uk': 'globus',
+}
+
+EXAMPLE_ICON = {
+    'nurse': 'stethoskop',
+    'software-developer': 'code',
+    'project-manager': 'klemmbrett',
+    'teacher': 'buch',
+    'accountant': 'rechner',
+    'sales-representative': 'handschlag',
+    'warehouse-logistics': 'karton',
+    'administrative-assistant': 'aktentasche',
+    'pflegefachkraft': 'stethoskop',
+    'softwareentwickler': 'code',
+    'lagerlogistik': 'karton',
+    'bueromanagement': 'aktentasche',
+}
+
+
+def ic(name, extra=''):
+    """One icon. aria-hidden, because it repeats what the heading already says."""
+    return '<span class="sym sym-%s%s" aria-hidden="true"></span>' % (
+        name, (' ' + extra) if extra else '')
+
+
 def guide_card(g, depth, lang='en', sideways=False):
     """sideways=True when the card already sits in the guides folder."""
     href = ('%s.html' % g['slug']) if sideways else (
         up(depth) + LANGS[lang]['guide_dir'] + g['slug'] + '.html')
     return ('<a class="card" href="%s">'
+            '%s'
             '<span class="tag">%s</span>'
             '<h3>%s</h3>'
             '<p>%s</p>'
             '<span class="mins">%s</span></a>'
-            % (href, esc(g['tag']), esc(g['h1']),
+            % (href, ic(GUIDE_ICON.get(g['slug'], 'buch')), esc(g['tag']), esc(g['h1']),
                esc(g['dek'].split('.')[0] + '.'), LANGS[lang]['min_read'] % g['minutes']))
 
 
@@ -547,11 +600,11 @@ def page_index():
         '',
         '<section class="facts">',
         '  <div class="wrap">',
-        '    <div><strong>Nothing to pay</strong><p>The PDF is free at the end, not after a '
+        '    <div>' + ic('blatt') + '<strong>Nothing to pay</strong><p>The PDF is free at the end, not after a '
         'trial. There is no download button to put a price behind.</p></div>',
-        '    <div><strong>Nothing uploaded</strong><p>The editor is one page of code running '
+        '    <div>' + ic('schild') + '<strong>Nothing uploaded</strong><p>The editor is one page of code running '
         'on your machine. No server ever sees your employment history.</p></div>',
-        '    <div><strong>Sixteen layouts, one text</strong><p>Switch the design whenever you '
+        '    <div>' + ic('raster') + '<strong>Sixteen layouts, one text</strong><p>Switch the design whenever you '
         'like. What you wrote stays where it is.</p></div>',
         '  </div>',
         '</section>',
@@ -758,10 +811,10 @@ def page_guides_index(lang='en'):
     }
     lead = guides[0]
     body = ['    <a class="feature" href="%s.html">'
-            '<div><span class="tag">%s</span><h3>%s</h3><p>%s</p></div>'
+            '<div>%s<span class="tag">%s</span><h3>%s</h3><p>%s</p></div>'
             '<span class="mins">%s</span></a>'
-            % (lead['slug'], L['start_here'], esc(lead['h1']), esc(lead['dek']),
-               L['min_read'] % lead['minutes'])]
+            % (lead['slug'], ic(GUIDE_ICON.get(lead['slug'], 'buch')), L['start_here'],
+               esc(lead['h1']), esc(lead['dek']), L['min_read'] % lead['minutes'])]
     first = True
     for tag in tags:
         members = [g for g in guides if g['tag'] == tag and g is not lead]
@@ -852,7 +905,8 @@ def page_guide(g, lang='en'):
         '<article class="article">',
         '  <div class="wrap">',
         '    <div class="article-head">',
-        '      <p class="kicker">%s</p>' % esc(g['tag']),
+        '      <p class="kicker">%s%s</p>' % (ic(GUIDE_ICON.get(g['slug'], 'buch')),
+                                              esc(g['tag'])),
         '      <h1>%s</h1>' % esc(g['h1']),
         '      <p class="lead">%s</p>' % esc(g['dek']),
         '      <p class="article-meta"><span>%s</span><span>%s</span><span>%s</span></p>'
@@ -1033,12 +1087,14 @@ def example_card(e, depth, lang='en', sideways=False):
     href = ('%s.html' % e['slug']) if sideways else (
         up(depth) + LANGS[lang]['example_dir'] + e['slug'] + '.html')
     return ('<a class="card" href="%s">'
+            '%s'
             '<span class="tag">%s</span>'
             '<h3>%s</h3>'
             '<p>%s</p>'
             '<span class="mins">%s</span></a>'
-            % (href, esc(e['field']), esc(e['role']),
-               esc(e['dek'].split('.')[0] + '.'), LANGS[lang]['min_read'] % e['minutes']))
+            % (href, ic(EXAMPLE_ICON.get(e['slug'], 'aktentasche')), esc(e['field']),
+               esc(e['role']), esc(e['dek'].split('.')[0] + '.'),
+               LANGS[lang]['min_read'] % e['minutes']))
 
 
 SAMPLE_LABELS = {
@@ -1122,8 +1178,9 @@ def page_example(e, lang='en'):
         '<article class="article">',
         '  <div class="wrap">',
         '    <div class="article-head">',
-        '      <p class="kicker">%s · %s</p>'
-        % (esc(e['field']), 'Muster-Lebenslauf' if de else 'Resume example'),
+        '      <p class="kicker">%s%s · %s</p>'
+        % (ic(EXAMPLE_ICON.get(e['slug'], 'aktentasche')), esc(e['field']),
+           'Muster-Lebenslauf' if de else 'Resume example'),
         '      <h1>%s</h1>' % esc(e['role']),
         '      <p class="lead">%s</p>' % esc(e['dek']),
         '      <p class="article-meta"><span>%s</span><span>%s</span><span>%s</span></p>'
@@ -1341,12 +1398,12 @@ def page_index_de():
         '',
         '<section class="facts">',
         '  <div class="wrap">',
-        '    <div><strong>Nichts zu bezahlen</strong><p>Das PDF ist am Ende kostenlos, nicht '
+        '    <div>' + ic('blatt') + '<strong>Nichts zu bezahlen</strong><p>Das PDF ist am Ende kostenlos, nicht '
         'nach einer Testphase. Es gibt keinen Download-Knopf, hinter den ein Preis passt.</p>'
         '</div>',
-        '    <div><strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, '
+        '    <div>' + ic('schild') + '<strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, '
         'die auf Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang.</p></div>',
-        '    <div><strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, wann '
+        '    <div>' + ic('raster') + '<strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, wann '
         'Sie wollen. Was Sie geschrieben haben, bleibt stehen.</p></div>',
         '  </div>',
         '</section>',
@@ -1933,11 +1990,43 @@ def ads_txt():
             'google.com, %s, DIRECT, f08c47fec0942fa0\n' % publisher)
 
 
+def icons_css():
+    """The icon set as one small stylesheet for the site pages.
+
+    Each icon becomes a CSS variable and a class. They are masks, not images:
+    the shape is cut out of the current text colour, so an icon in a heading is
+    the colour of that heading and needs no second file for a dark background.
+    """
+    lines = [
+        '/* Symbole. Erzeugt aus tools/icons.py — nicht von Hand ändern. */',
+        ':root{',
+        icons.css_variables(),
+        '}',
+        '/* .sym, nicht .ic: .ad-house .ic ist seit der ersten Fassung ein',
+        '   Farbfeld und würde sonst zu einer vollen Fläche. */',
+        '.sym{display:inline-block;width:1em;height:1em;flex:0 0 auto;'
+        'background:currentColor;vertical-align:-.14em;',
+        '  -webkit-mask:var(--sym) no-repeat center/contain;'
+        'mask:var(--sym) no-repeat center/contain}',
+    ]
+    for name in icons.ICONS:
+        lines.append('.sym-%s{--sym:var(--i-%s)}' % (name, name))
+    return '\n'.join(lines) + '\n'
+
+
+def patch_editor_icons(src):
+    """Writes the icon variables into the editor, between its two marks."""
+    anfang, ende = '/* symbole:anfang */', '/* symbole:ende */'
+    i, j = src.index(anfang), src.index(ende)
+    return src[:i + len(anfang)] + '\n' + icons.css_variables() + '\n  ' + src[j:]
+
+
 def patch_editor():
     """The editor is hand-written, so only its canonical and og: URLs are stamped."""
     path = os.path.join(ROOT, 'editor.html')
     src = open(path).read()
-    fixed = re.sub(r'https://[A-Za-z0-9.\-]*YOUR-DOMAIN\.example', DOMAIN, src)
+    fixed = patch_editor_icons(src)
+    fixed = re.sub(r'https://[A-Za-z0-9.\-]*YOUR-DOMAIN\.example', DOMAIN, fixed)
     fixed = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',
                    r'\g<1>%s/editor.html\g<2>' % DOMAIN, fixed)
     fixed = re.sub(r'(<meta property="og:url" content=")[^"]*(">)',
@@ -1949,6 +2038,7 @@ def patch_editor():
 
 def main():
     written = []
+    write('assets/icons.css', icons_css())      # Stilblatt, gehört nicht in die Sitemap
 
     # ---- English, at the root ----------------------------------------
     written.append(write('index.html', page_index()))

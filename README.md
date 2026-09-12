@@ -26,7 +26,9 @@ de/                     The German site, with German slugs
 
 editor.html             The editor. Accepts ?t=t1 … ?t=t16 and ?lang=de
 assets/                 Stylesheet, scripts, self-hosted fonts, icons
+  icons.css             The icon set, generated from tools/icons.py
 tools/                  Generators. Not served, not needed to run the site.
+  icons.py              The 28 icons, as SVG. One source for site and editor.
 ```
 
 ## Two languages, one codebase
@@ -292,6 +294,37 @@ more are worth repeating after any change to the editor: click every visible
 slot and assert the section appears in that slot's own column, and print the
 same resume from two different window widths and diff the PDFs — they must
 be byte-for-byte the same story.
+
+## The icon set
+
+Twenty-eight line icons live in `tools/icons.py`, each one the inside of a
+24x24 SVG drawn with 2px strokes and nothing else. `python3 tools/build.py`
+turns that table into two things: `assets/icons.css` for the site pages, and
+the variable block between the two marks in `editor.html` for the resume
+itself. Edit an icon in the table and both follow; edit them anywhere else and
+the next build overwrites you.
+
+They are **masks, not images**. The shape is cut out of a colour the page
+already has, so one definition covers every situation: a section heading takes
+the accent colour, the same icon in a dark sidebar takes the white of the text
+around it, and nothing needs a second file for a dark background. It is also
+why they cost about 400 bytes each and stay sharp at any zoom, which a
+generated PNG sheet of the same 28 icons would not.
+
+In the resume, **the heading decides its own icon.** `rubrikSymbole()` matches
+the text against a list of patterns, so renaming *Kompetenzen* to
+*IT-Kenntnisse* swaps the gear for the code window, in German, English or
+Spanish, and a heading nobody recognises simply has no icon rather than a
+wrong one. The contact block is deliberately left out: every line there
+already carries its own. `Symbole ein / aus` in the panel switches the lot off
+for anyone who wants the plain sheet, and because the class sits on the page it
+survives a reload with the draft.
+
+On the site the mapping is by slug — `GUIDE_ICON` and `EXAMPLE_ICON` in
+`tools/build.py` — so the guide about cover letters gets the envelope and the
+nursing example gets the stethoscope. The class is `.sym`, not `.ic`: the house
+promo has used `.ic` for its colour block since the first version, and a mask
+rule on that name turned it into a solid square.
 
 ## The landing page
 
