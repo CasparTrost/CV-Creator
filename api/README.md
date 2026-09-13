@@ -22,6 +22,11 @@ npx wrangler secret put COMETAPI_KEY      # der Schlüssel von cometapi.com
 npx wrangler deploy
 ```
 
+**Zum bloßen Anschauen braucht es das alles nicht:** `python3 tools/serve.py`
+beantwortet dieselben Wege selbst mit erfundenen Antworten, und der Editor
+findet sie auf localhost von allein — erkennbar am Vermerk „Testbetrieb“ in
+der Leiste. Erst wenn echte Antworten kommen sollen, gilt das hier.
+
 Zum Ausprobieren auf dem eigenen Rechner liest `wrangler dev` den Schlüssel
 aus `api/.dev.vars`. Diese Datei steht in `.gitignore` und darf dort bleiben —
 ein Schlüssel im Repository ist ein veröffentlichter Schlüssel. Für den

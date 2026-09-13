@@ -33,8 +33,9 @@ api/                    The only server: a Cloudflare Worker for the AI features
   pdf.js                Text out of a PDF, without a library
 tools/                  Generators. Not served, not needed to run the site.
   icons.py              The 32 icons, as SVG. One source for site and editor.
-  mock-ki.py            Stands in for the AI worker, so the interface can be
-                        tried without a key and without cost.
+  mock-ki.py            The canned AI replies. tools/serve.py serves them
+                        itself, so the features can be clicked through
+                        without a key, a deployment or a cent.
 ```
 
 ## Two languages, one codebase
@@ -205,7 +206,7 @@ advertisers pay for.
 | `python3 tools/fetch-fonts.py` | Re-downloads the self-hosted webfonts |
 | `python3 tools/make-images.py` | Regenerates the favicons and `assets/og.png` (needs Pillow) |
 | `node tools/make-hero.js` | Re-photographs the editor for the landing pages (needs Playwright and a running server) |
-| `python3 tools/serve.py [port]` | Serves the site locally with 404 handling and no caching |
+| `python3 tools/serve.py [port]` | Serves the site locally: 404 handling, no caching, and the AI test mode under `/api` |
 | `tools\serve.cmd [port]` | The same, for Windows |
 
 Python 3.8 or newer is the only requirement, and only for the tools — the
@@ -355,8 +356,10 @@ conceal it — name it in a line and move on.
 (`DecompressionStream`, no library), so only the extracted text is sent. PDFs
 go to the worker, which reads the text out of them directly — page objects,
 font tables, `ToUnicode` maps — and only falls back to handing the file to the
-model when that yields nothing, as with a scan. `tools/mock-ki.py` stands in
-for the whole thing during development.
+model when that yields nothing, as with a scan. During development the dev
+server answers `/api/…` itself with canned replies, and the editor finds them
+on localhost without anything being configured — labelled *Testbetrieb* in the
+panel, because a test mode mistaken for the real thing is worse than none.
 
 **Switching it on changes the site's own claims.** The build reads the config:
 with an AI endpoint set, the privacy pages gain a section on what is sent
