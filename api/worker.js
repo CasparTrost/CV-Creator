@@ -414,6 +414,16 @@ async function abschnittLesen(bereich, umgebung) {
              eintraege: fliesstextAus(bereich) };
   }
 
+  /* Eine Aufzählung genauso: Sie hat keine Struktur, die zu erkennen wäre.
+     „Generative AI“, „LLM“, „Prompt Engineering“ — das sind die Einträge, und
+     zwar genau so viele, wie Zeilen dastehen. Ein Modell hat aus neun
+     Kompetenzen einen Eintrag gemacht und aus einem anderen Lebenslauf drei
+     stillschweigend gestrichen. Beides kann hier nicht mehr passieren. */
+  if (bereich.art === 'liste') {
+    return { titel: bereich.titel, art: bereich.art, nachgetragen: 0,
+             eintraege: listeAus(bereich) };
+  }
+
   let eintraege = [];
   try {
     const antwort = await fragen(umgebung, ABSCHNITT,
@@ -451,6 +461,47 @@ function fliesstextAus(bereich) {
     else absaetze.push(z);
   });
   return absaetze;
+}
+
+/* Die Einträge einer Aufzählung, Zeile für Zeile.
+ *
+ * Zwei Dinge muss sie können, die eine reine Zeilenliste nicht kann. Erstens:
+ * Ein Punkt, der über zwei Zeilen lief („Deutsch & Englisch“ /
+ * „(verhandlungssicher)“), ist einer. Erkennbar ist das daran, dass vor der
+ * zweiten Zeile kein Aufzählungszeichen steht, wo die meisten anderen eines
+ * haben. Zweitens: Ohne Aufzählungszeichen schreiben viele ihre Kenntnisse in
+ * eine Reihe — „Python, SQL, Docker“. Getrennt wird dabei nur, wenn lauter
+ * kurze Stücke herauskommen; ein Satz mit Kommas bleibt ein Satz.
+ */
+const MARKE = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*\u2013\u2014-]\s*/;
+
+function listeAus(bereich) {
+  const zeilen = bereich.zeilen
+    .map(z => z.trim())
+    .filter(z => z && !NEBENSACHE.test(z) && !gleicheWorte(z, bereich.titel));
+  const mitMarke = zeilen.filter(z => MARKE.test(z)).length;
+
+  const punkte = [];
+  zeilen.forEach(z => {
+    const marke = MARKE.test(z);
+    const text = z.replace(MARKE, '').trim();
+    if (!text) return;
+    if (!marke && punkte.length && mitMarke >= zeilen.length / 2) {
+      punkte[punkte.length - 1] += ' ' + text;
+      return;
+    }
+    punkte.push(text);
+  });
+  if (mitMarke) return punkte.slice(0, 60);
+
+  const aus = [];
+  punkte.forEach(p => {
+    const teile = p.split(/\s*[,;|]\s*/).map(t => t.trim()).filter(Boolean);
+    const kurz = teile.every(t => t.length <= 40 && t.split(/\s+/).length <= 5);
+    if (teile.length >= 2 && p.length <= 140 && kurz) aus.push(...teile);
+    else aus.push(p);
+  });
+  return aus.slice(0, 60);
 }
 
 const PUNKTFELDER = ['punkte', 'aufgaben', 'taetigkeiten', 'tätigkeiten',
@@ -498,9 +549,28 @@ function eintraegeSaeubern(art, eintraege) {
       }
     });
     if (art === 'kontakt' && KONTAKTARTEN.indexOf(aus.art) < 0) aus.art = 'sonst';
+    if (art === 'ausbildung' && istNote(aus.abschluss)) {
+      /* „Abschluss“ heißt im Lebenslauf zweierlei: der Grad und die Note.
+         Steht eine Zahl in dem Feld, war der Grad gemeint und die Note
+         gefunden — dann lieber kein Grad als ein falscher, und die Note
+         dorthin, wo sie hingehört. Sonst stand sie am Ende zweimal auf dem
+         Blatt: einmal als Abschluss, einmal als nachgetragene Zeile. */
+      const note = aus.abschluss;
+      aus.abschluss = '';
+      aus.punkte = aus.punkte || [];
+      if (!aus.punkte.some(p => gleicheWorte(p, note))) aus.punkte.unshift(note);
+    }
     const inhalt = felder.some(f => f !== 'punkte' && aus[f]) || (aus.punkte || []).length;
     return inhalt ? aus : null;
   }).filter(Boolean);
+}
+
+/* Eine Note ist eine Zahl, mit oder ohne das Wort davor. Ein Jahr nicht:
+   „2018“ bleibt stehen, wo es steht. */
+function istNote(wert) {
+  const t = String(wert || '').trim();
+  if (!t || /^(19|20)\d{2}$/.test(t)) return false;
+  return /^(abschluss|note|notendurchschnitt|durchschnitt|grade|gpa)?\s*[:\-\u2013]?\s*\d[\d.,]*\s*(\/\s*\d[\d.,]*)?$/i.test(t);
 }
 
 function ersatzEintrag(art, text) {

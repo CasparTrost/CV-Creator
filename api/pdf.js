@@ -43,13 +43,55 @@ export async function pdfText(bytes) {
      Strom einzeln versucht, ohne Schriftzuordnung. */
   if (!seiten.length) return await ohneSeiten(roh, bytes, objekte);
 
-  const stuecke = [];
+  const teile = [];
   for (const seite of seiten) {
     const laeufe = await laeufeAus(roh, bytes, objekte,
       inhaltsNummern(seite.koerper, roh, objekte), seite.koerper, 0, new Set());
-    if (laeufe.length) stuecke.push(seiteZuText(laeufe).join('\n'));
+    if (laeufe.length) teile.push(seiteTeile(laeufe));
   }
-  return saeubern(stuecke.join('\n'));
+  return saeubern(seitenZusammen(teile).join('\n'));
+}
+
+/* Eine Spalte hört am Seitenende nicht auf.
+ *
+ * Eine Seitenleiste, die über zwei Seiten läuft, ist ein Text, kein zwei.
+ * Wer Seite für Seite liest, schiebt die zweite Hälfte der Leiste mitten in
+ * die breite Spalte der ersten Seite — „Sprachen: Deutsch, Muttersprache“
+ * steht dann als Aufgabe unter der zuletzt genannten Stelle. Genau das hat
+ * ein echter Lebenslauf gezeigt.
+ *
+ * Zusammengefasst wird deshalb über Seiten hinweg, aber nur, solange die
+ * Seiten wirklich dasselbe Raster haben: unmittelbar aufeinanderfolgend und
+ * mit einem Graben an fast derselben Stelle. Wechselt das Raster, beginnt ein
+ * neuer Lauf, und was danach kommt, bleibt an seinem Platz. Eine einzelne
+ * zweispaltige Seite zwischen einspaltigen wird nicht angefasst.
+ *
+ * Innerhalb eines Laufs steht zuerst alles über die volle Breite (in
+ * Seitenfolge), dann die linken Spalten, dann die rechten. Die Zeilen selbst
+ * werden weiter je Seite und je Spalte gebildet: Nur dort stimmt die
+ * Geometrie, mit der entschieden wird, ob zwei Läufe eine Zeile sind. */
+function seitenZusammen(teile) {
+  const stuecke = [];
+  for (let i = 0; i < teile.length; ) {
+    let j = i;
+    if (teile[i].graben !== null) {
+      while (j + 1 < teile.length && gleicherGraben(teile[i], teile[j + 1])) j++;
+    }
+    const lauf = teile.slice(i, j + 1);
+    const zeilen = [];
+    for (const t of lauf) zeilen.push(...t.voll);
+    for (const t of lauf) zeilen.push(...t.links);
+    for (const t of lauf) zeilen.push(...t.rechts);
+    if (zeilen.length) stuecke.push(zeilen.join('\n'));
+    i = j + 1;
+  }
+  return stuecke;
+}
+
+function gleicherGraben(a, b) {
+  if (a.graben === null || b.graben === null) return false;
+  const breite = Math.max(a.breite, b.breite);
+  return breite > 0 && Math.abs(a.graben - b.graben) <= breite * 0.08;
 }
 
 /* Die Textläufe einer Seite — auch die, die in Formularen stecken.
@@ -431,8 +473,9 @@ function zeichenketten(inhalt, schriften, anfang) {
         Spalte gelesen.
    Findet sich kein sauberer Graben, bleibt alles, wie es gesetzt wurde.
    Eine falsch geteilte Seite wäre schlimmer als eine ungeteilte. */
-function seiteZuText(roheLaeufe) {
-  if (roheLaeufe.length < 8) return zeilenAus(roheLaeufe);
+function seiteTeile(roheLaeufe) {
+  const einteilig = (zeilen) => ({ graben: null, breite: 0, voll: zeilen, links: [], rechts: [] });
+  if (roheLaeufe.length < 8) return einteilig(zeilenAus(roheLaeufe));
   const laeufe = nachUntenGedreht(roheLaeufe);
   const graben = grabenFinden(laeufe);
   /* Kein Graben: eine Spalte. Gelesen wird dann von oben nach unten — nicht
@@ -440,17 +483,17 @@ function seiteZuText(roheLaeufe) {
      schreiben erst alle Überschriften und dann alle Aufzählungen; wer das
      so übernimmt, reicht dem Modell einen Lebenslauf, in dem keine Aufgabe
      mehr bei ihrer Station steht. */
-  if (graben === null) return zeilenAus([...laeufe].sort(nachOrt));
+  if (graben === null) return einteilig(zeilenAus([...laeufe].sort(nachOrt)));
 
   const links = laeufe.filter(l => l.x < graben);
   const rechts = laeufe.filter(l => l.x >= graben);
-  if (links.length < 4 || rechts.length < 4) return zeilenAus(laeufe);
+  if (links.length < 4 || rechts.length < 4) return einteilig(zeilenAus(laeufe));
 
   /* Höhen, auf denen beide Seiten Text haben. */
   const band = (l) => Math.round(l.y / 6);
   const rechteBaender = new Set(rechts.map(band));
   const gemeinsam = links.filter(l => rechteBaender.has(band(l))).map(l => l.y);
-  if (gemeinsam.length < 3) return zeilenAus(laeufe);
+  if (gemeinsam.length < 3) return einteilig(zeilenAus(laeufe));
 
   /* Ab der ersten gemeinsamen Höhe ist die Seite zweispaltig — bis unten.
      Eine Spalte, die länger ist als die andere, gehört noch zu ihr; sie
@@ -458,10 +501,22 @@ function seiteZuText(roheLaeufe) {
   const oben = Math.min(...gemeinsam) - 3;
   const davor = laeufe.filter(l => l.y < oben).sort(nachOrt);
   const drin = (l) => l.y >= oben;
+  const xe = laeufe.map(l => l.x);
 
-  return zeilenAus(davor)
-    .concat(zeilenAus(links.filter(drin).sort(nachOrt)))
-    .concat(zeilenAus(rechts.filter(drin).sort(nachOrt)));
+  return {
+    graben,
+    breite: Math.max(...xe) - Math.min(...xe),
+    voll: zeilenAus(davor),
+    links: zeilenAus(links.filter(drin).sort(nachOrt)),
+    rechts: zeilenAus(rechts.filter(drin).sort(nachOrt)),
+  };
+}
+
+/* Eine einzelne Seite als Text — für die Notfälle, in denen es gar keine
+   Seiten gibt und jeder Strom für sich gelesen wird. */
+function seiteZuText(roheLaeufe) {
+  const t = seiteTeile(roheLaeufe);
+  return t.voll.concat(t.links, t.rechts);
 }
 
 /* Im PDF wächst y nach oben, im Browser nach unten, und die Erzeuger
@@ -586,12 +641,21 @@ function zeilenAus(laeufe) {
       letzteY = lauf.y;
       continue;
     }
+    /* Luft zwischen zwei Zeilen ist eine Aussage: Hier endet etwas. Sie wird
+       als Leerzeile festgehalten, damit der spätere Durchgang ohne Geometrie
+       sie nicht überschreibt — er hat sonst die Zeile mit dem nächsten
+       Arbeitgeber an den letzten Stichpunkt der vorigen Station gehängt,
+       weil der Firmenname klein anfing. */
+    if (letzte && zeilenabstand > 0 && lauf.y - letzteY > zeilenabstand * 1.6) aus.push(ABSATZ);
     letzte = { x: lauf.x, y: lauf.y, text: lauf.text };
     letzteY = lauf.y;
     aus.push(letzte);
   }
-  return aus.map(l => l.text);
+  return aus.map(l => (l === ABSATZ ? '' : l.text));
 }
+
+/* Nur eine Marke, kein Text: „hier war Luft“. */
+const ABSATZ = { text: '' };
 
 const HAENGEND = /(^|\s)(und|oder|sowie|mit|f\u00fcr|in|im|am|zur|zum|von|bis|der|die|das|den|des|ein|eine|einer|and|or|with|for|of|the|to|a|an|y|o|con|para|de)$/i;
 
@@ -687,9 +751,10 @@ export function textTaugt(text, mindestens) {
 }
 
 function saeubern(text) {
-  const zeilen = text.replace(/[ \t]+/g, ' ')
-                     .split('\n').map(z => z.trim()).filter(Boolean);
-  return zusammenfuegen(zeilen).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  /* Die Leerzeilen bleiben bis hierher stehen — sie sind das einzige, was der
+     Durchgang ohne Geometrie noch von den Abständen der Seite weiß. */
+  const zeilen = text.replace(/[ \t]+/g, ' ').split('\n').map(z => z.trim());
+  return zusammenfuegen(zeilen).join('\n').replace(/\n{2,}/g, '\n').trim();
 }
 
 /* Ein PDF kennt keine Sätze, nur Zeilen. „Projektsteuerung nach Scrum und“ /
@@ -709,6 +774,7 @@ function zusammenfuegen(zeilen) {
        einer anderen Stelle gesetzt als der Text dahinter. Allein ist es keine
        Zeile, sondern der Anfang der nächsten. */
     if (/^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]$/.test(roh)) { marke = '• '; continue; }
+    if (!roh) { aus.push(''); continue; }          /* Luft trennt, sie steht nicht */
     const zeile = marke + roh;
     marke = '';
     const oben = aus.length ? aus[aus.length - 1] : null;

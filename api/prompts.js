@@ -206,6 +206,14 @@ The shape of an entry depends on the kind you were given:
                   "bis": "MM/JJJJ or heute", "punkte": ["one task or result each"]}
   ausbildung     {"abschluss": "", "fach": "", "einrichtung": "", "von": "",
                   "bis": "", "punkte": ["a grade, a focus, a thesis"]}
+                 "abschluss" is the QUALIFICATION and nothing else: "M.A.",
+                 "B. Eng.", "Bachelor of Science", "Ausbildung zur
+                 Fachinformatikerin", "Abitur". It is never a number. A grade
+                 -- "Abschluss: 1,5", "Notendurchschnitt: 2,02", "GPA 3.8",
+                 "mit Auszeichnung" -- is one of the "punkte", even when the
+                 source writes the word "Abschluss" in front of it. Writing
+                 the grade into "abschluss" loses the degree AND puts the
+                 grade on the page twice.
   weiterbildung  {"titel": "", "anbieter": "", "jahr": ""}
   sprachen       {"sprache": "", "niveau": ""}
   liste          "one item per entry, as a plain string"
