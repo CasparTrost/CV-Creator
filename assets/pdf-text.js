@@ -45,13 +45,60 @@ async function pdfText(bytes) {
      Strom einzeln versucht, ohne Schriftzuordnung. */
   if (!seiten.length) return await ohneSeiten(roh, bytes, objekte);
 
-  const teile = [];
+  const seitenLaeufe = [];
   for (const seite of seiten) {
     const laeufe = await laeufeAus(roh, bytes, objekte,
       inhaltsNummern(seite.koerper, roh, objekte), seite.koerper, 0, new Set());
-    if (laeufe.length) teile.push(seiteTeile(laeufe));
+    if (laeufe.length) seitenLaeufe.push(laeufe);
   }
+  const teile = seitenLaeufe.map(l => seiteTeile(l));
+  grabenUebernehmen(seitenLaeufe, teile);
   return saeubern(seitenZusammen(teile).join('\n'));
+}
+
+/* Ein Raster gilt für das ganze Dokument.
+ *
+ * Auf der zweiten Seite hört die Seitenleiste oft nach einem Viertel auf.
+ * Darunter steht links nichts mehr, der freie Streifen reicht bis an den
+ * Seitenrand, und die Messung findet keinen Graben: Sie sieht eine Seite, die
+ * fast nur aus einer Spalte besteht. Gelesen wird sie danach zeilenweise quer
+ * über beide hinweg — und die letzten Kenntnisse stehen mitten in einer
+ * Stationsbeschreibung, eine Zeile um die andere abwechselnd.
+ *
+ * Was auf einer Seite gemessen wurde, gilt deshalb auch für die übrigen. Aber
+ * nur, wenn es dort aufgeht: Beide Seiten brauchen Text, es muss Höhen geben,
+ * auf denen beide etwas haben, und keine Zeile darf über den Graben
+ * hinweglaufen. Sonst bleibt die Seite, wie sie ist — eine falsch geteilte
+ * wäre schlimmer als eine ungeteilte. */
+function grabenUebernehmen(seitenLaeufe, teile) {
+  const gefunden = teile.map(t => t.graben).filter(g => g !== null).sort((a, b) => a - b);
+  if (!gefunden.length) return;
+  const graben = gefunden[Math.floor(gefunden.length / 2)];
+  teile.forEach((t, i) => {
+    if (t.graben !== null) return;
+    const neu = seiteTeile(seitenLaeufe[i], graben);
+    if (neu.graben !== null) teile[i] = neu;
+  });
+}
+
+/* Läuft Text über den Graben hinweg, ist es keiner — jedenfalls nicht auf
+   dieser Seite. Eine einzelne Überschrift über die volle Breite darf das,
+   ein Zwanzigstel der Zeilen nicht. */
+function kreuztGraben(laeufe, graben) {
+  const proZeichen = zeilenabstandVon(laeufe) * 0.22;
+  const quer = laeufe.filter(l => l.x < graben
+    && l.x + Math.min(l.text.length, 70) * proZeichen > graben + 4).length;
+  return quer > Math.max(1, laeufe.length * 0.05);
+}
+
+function zeilenabstandVon(laeufe) {
+  const abstaende = [];
+  for (let i = 1; i < laeufe.length; i++) {
+    const d = Math.abs(laeufe[i].y - laeufe[i - 1].y);
+    if (d > 1 && d < 60) abstaende.push(d);
+  }
+  abstaende.sort((a, b) => a - b);
+  return abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 12;
 }
 
 /* Eine Spalte hört am Seitenende nicht auf.
@@ -475,17 +522,18 @@ function zeichenketten(inhalt, schriften, anfang) {
         Spalte gelesen.
    Findet sich kein sauberer Graben, bleibt alles, wie es gesetzt wurde.
    Eine falsch geteilte Seite wäre schlimmer als eine ungeteilte. */
-function seiteTeile(roheLaeufe) {
+function seiteTeile(roheLaeufe, vorgabe) {
   const einteilig = (zeilen) => ({ graben: null, breite: 0, voll: zeilen, links: [], rechts: [] });
   if (roheLaeufe.length < 8) return einteilig(zeilenAus(roheLaeufe));
   const laeufe = nachUntenGedreht(roheLaeufe);
-  const graben = grabenFinden(laeufe);
+  const graben = vorgabe === undefined ? grabenFinden(laeufe)
+               : (kreuztGraben(laeufe, vorgabe) ? null : vorgabe);
   /* Kein Graben: eine Spalte. Gelesen wird dann von oben nach unten — nicht
      in der Reihenfolge, in der die Zeichen im Strom stehen. Manche Erzeuger
      schreiben erst alle Überschriften und dann alle Aufzählungen; wer das
      so übernimmt, reicht dem Modell einen Lebenslauf, in dem keine Aufgabe
      mehr bei ihrer Station steht. */
-  if (graben === null) return einteilig(zeilenAus([...laeufe].sort(nachOrt)));
+  if (graben === null) return einteilig(zeilenAus(inLesereihenfolge(laeufe)));
 
   const links = laeufe.filter(l => l.x < graben);
   const rechts = laeufe.filter(l => l.x >= graben);
@@ -501,7 +549,7 @@ function seiteTeile(roheLaeufe) {
      Eine Spalte, die länger ist als die andere, gehört noch zu ihr; sie
      hinten anzuhängen, hat „Englisch: B2“ hinter die Ausbildung gesetzt. */
   const oben = Math.min(...gemeinsam) - 3;
-  const davor = laeufe.filter(l => l.y < oben).sort(nachOrt);
+  const davor = inLesereihenfolge(laeufe.filter(l => l.y < oben));
   const drin = (l) => l.y >= oben;
   const xe = laeufe.map(l => l.x);
 
@@ -509,8 +557,8 @@ function seiteTeile(roheLaeufe) {
     graben,
     breite: Math.max(...xe) - Math.min(...xe),
     voll: zeilenAus(davor),
-    links: zeilenAus(links.filter(drin).sort(nachOrt)),
-    rechts: zeilenAus(rechts.filter(drin).sort(nachOrt)),
+    links: zeilenAus(inLesereihenfolge(links.filter(drin))),
+    rechts: zeilenAus(inLesereihenfolge(rechts.filter(drin))),
   };
 }
 
@@ -609,6 +657,45 @@ function grabenFinden(laeufe) {
 
 function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
 
+/* Läufe in Lesereihenfolge: erst zeilenweise von oben nach unten, innerhalb
+ * einer Zeile von links nach rechts.
+ *
+ * Warum das nicht dasselbe ist wie „nach y sortieren“: Ein
+ * Aufzählungszeichen steht nicht auf der Grundlinie seines Textes, sondern
+ * eine Winzigkeit daneben — und ob darüber oder darunter, entscheidet der
+ * Erzeuger. Bei der einen Datei landet der Punkt vor seinem Text, bei der
+ * nächsten dahinter. Dann steht er vor der zweiten Zeile des vorigen
+ * Stichpunktes, „KOMPETENZEN“ bekommt einen Punkt vorgesetzt und ist keine
+ * Überschrift mehr, und das Modell sieht einen Lebenslauf ohne Gliederung.
+ *
+ * Was eine Zeile ist, sagt der Zeilenabstand: Läufe, die weniger als ein
+ * Drittel davon auseinanderliegen, stehen nebeneinander, nicht untereinander.
+ * Gemessen wird er über die Abstände, die größer sind als so ein Versatz. */
+function inLesereihenfolge(laeufe) {
+  const sortiert = [...laeufe].sort(nachOrt);
+  const abstaende = [];
+  for (let i = 1; i < sortiert.length; i++) {
+    const d = sortiert[i].y - sortiert[i - 1].y;
+    if (d > 2 && d < 60) abstaende.push(d);
+  }
+  abstaende.sort((a, b) => a - b);
+  const zeilenabstand = abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 12;
+  const spielraum = Math.max(1.5, zeilenabstand * 0.4);
+
+  const zeilen = [];
+  for (const lauf of sortiert) {
+    const letzte = zeilen[zeilen.length - 1];
+    if (letzte && lauf.y - letzte.y <= spielraum) letzte.teile.push(lauf);
+    else zeilen.push({ y: lauf.y, teile: [lauf] });
+  }
+  const aus = [];
+  zeilen.forEach(z => {
+    z.teile.sort((a, b) => a.x - b.x);
+    aus.push(...z.teile);
+  });
+  return aus;
+}
+
 /* Aus Läufen werden Zeilen — und aus einer offensichtlich umbrochenen Zeile
    wieder ein Stück des Absatzes, zu dem sie gehört.
 
@@ -644,29 +731,34 @@ function zeilenAus(laeufe) {
      deshalb zieht er nicht zwei Stichpunkte zusammen. */
   const proZeichen = (zeilenabstand || 12) * 0.22;
   const ende = (l) => l.x + Math.min(l.text.length, 200) * proZeichen;
-  const enden = laeufe.map(ende);
-  const weit = Math.max(...enden) * 0.88;
-  const amRand = enden.filter(e => e >= weit).length >= 3 ? weit : Infinity;
 
-  /* Nur bei Stichpunkten, und nur bei solchen mit einem geschriebenen
-     Aufzählungszeichen. Denn dort — und nur dort — fängt ein neuer Punkt mit
-     seinem eigenen Zeichen an, das eine Einrückung weiter links steht: Die
-     Kette reißt von selbst, und „bis an den Rand“ kann gar nichts anderes
-     heißen als „umbrochen“. Wer die Punkte malt statt sie zu schreiben —
-     unsere eigenen PDFs tun das —, gibt diese Sicherheit nicht her; dann
-     bliebe von zwei kurzen Stichpunkten hintereinander einer übrig. */
-  const punktX = [];
+  /* Die Regel gilt nur für Stichpunkte, und nur für solche mit einem
+     geschriebenen Aufzählungszeichen. Denn dort — und nur dort — fängt ein
+     neuer Punkt mit seinem eigenen Zeichen an, das eine Einrückung weiter
+     links steht: Die Kette reißt von selbst, und „bis an den Rand“ kann gar
+     nichts anderes heißen als „umbrochen“. Wer die Punkte malt statt sie zu
+     schreiben — unsere eigenen PDFs tun das —, gibt diese Sicherheit nicht
+     her; dann bliebe von zwei kurzen Stichpunkten hintereinander einer.
+
+     Und gemessen wird der Rand je Einrückung, nicht über die ganze Spalte:
+     Rechtsbündige Datumsangaben stehen weiter außen, als der Fließtext je
+     reicht. Mit ihnen als Maßstab erreichte keine Zeile mehr den Rand. */
+  const einrueckungen = [];
   laeufe.forEach(g => {
     if (!MARKE_ALLEIN.test(g.text)) return;
     const rechts = laeufe.find(l => l !== g && Math.abs(l.y - g.y) <= 2 && l.x > g.x);
-    if (rechts) punktX.push(rechts.x);
+    if (rechts && !einrueckungen.some(x => Math.abs(x - rechts.x) <= 3)) einrueckungen.push(rechts.x);
   });
-  const imPunkt = (x) => punktX.some(p => Math.abs(p - x) <= 3);
+  const raender = einrueckungen.map(px => {
+    const eigene = laeufe.filter(l => Math.abs(l.x - px) <= 3).map(ende);
+    return { px, rand: eigene.length >= 3 ? Math.max(...eigene) * 0.9 : Infinity };
+  });
+  const amRand = (l, e) => raender.some(r => Math.abs(l.x - r.px) <= 3 && e >= r.rand);
 
   const aus = [];
   let letzte = null, letzteY = 0, letztesEnde = 0;
   for (const lauf of laeufe) {
-    const randErreicht = letzte && letztesEnde >= amRand && imPunkt(letzte.x);
+    const randErreicht = !!letzte && amRand(letzte, letztesEnde);
     if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand, randErreicht)) {
       letzte.text = verbinden(letzte.text, lauf.text);
       letzteY = lauf.y;
@@ -689,6 +781,12 @@ function zeilenAus(laeufe) {
 
 /* Nur eine Marke, kein Text: „hier war Luft“. */
 const ABSATZ = { text: '' };
+
+/* Eine Zeile, die auf einem Datum endet, ist eine Kopfzeile und kein halber
+   Satz — der Zeitraum steht rechts außen, und was darunter kommt, ist die
+   nächste Angabe. Ohne das hing der Arbeitgeber am Ende der vorigen Zeile,
+   sobald sein Name klein anfängt — und es gibt genug Firmen, die das tun. */
+const ZEITRAUM = /(\d{1,2}\/\d{2,4}|\b(19|20)\d{2}|heute|today|present|now)\s*$/i;
 
 /* Ein Aufzählungszeichen, das allein auf einer Zeile steht. */
 const MARKE_ALLEIN = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]$/;
@@ -736,6 +834,7 @@ function gehoertDazu(oben, obenY, unten, zeilenabstand, amRand) {
   if (/[.;:!?]$/.test(oben.text)) return false;
   if (/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(unten.text)) return false;
   if (/^\d/.test(unten.text)) return false;
+  if (ZEITRAUM.test(oben.text)) return false;
   return /^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(unten.text)
       || HAENGEND.test(oben.text) || OFFEN.test(oben.text) || amRand === true;
 }
@@ -850,7 +949,7 @@ function zusammenfuegen(zeilen) {
     const passt = oben && oben.length > 20 &&
       !/[.;:!?]$/.test(oben) &&
       !/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(zeile) &&
-      !/^\d/.test(zeile) &&
+      !/^\d/.test(zeile) && !ZEITRAUM.test(oben) &&
       (/^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(zeile) || haengend || OFFEN.test(oben));
     if (!passt) { aus.push(zeile); continue; }
     aus[aus.length - 1] = verbinden(oben, zeile);
