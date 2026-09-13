@@ -176,6 +176,28 @@ function jsonAus(text) {
 const ARTEN = ['kontakt', 'profil', 'beruf', 'ausbildung', 'weiterbildung',
                'sprachen', 'liste', 'text'];
 
+/* Modelle nennen die Arten gern anders, als man sie ihnen genannt hat. Was
+   sich zuordnen lässt, wird zugeordnet — und was übrig bleibt, gilt als
+   Fließtext, nicht als Liste. Ein Absatz, den man als Liste behandelt, wird
+   in Stücke geschnitten; eine Liste, die man als Absatz behandelt, bleibt
+   heil. Der Zweifel gehört auf die Seite, die nichts kaputt macht. */
+const ARTNAMEN = [
+  [/kontakt|contact|adress|persoenlich|persönlich|datos/i, 'kontakt'],
+  [/profil|summary|about|ueber mich|über mich|perfil/i, 'profil'],
+  [/beruf|erfahrung|experience|werdegang|employment|praxis|station/i, 'beruf'],
+  [/ausbildung|bildung|studium|schul|education|academic|formaci/i, 'ausbildung'],
+  [/weiterbild|fortbild|zertifik|training|certific|kurs/i, 'weiterbildung'],
+  [/sprach|language|idioma/i, 'sprachen'],
+  [/liste|list|kenntnis|skill|kompetenz|competenc/i, 'liste'],
+];
+
+function artVon(wert) {
+  const roh = String(wert || '').trim().toLowerCase();
+  if (ARTEN.indexOf(roh) >= 0) return roh;
+  for (const [muster, art] of ARTNAMEN) if (muster.test(roh)) return art;
+  return 'text';
+}
+
 async function lesen(daten, umgebung) {
   let text = (daten.text || '').trim();
 
@@ -301,9 +323,17 @@ function spracheVon(plan) {
   return ['de', 'en', 'es'].indexOf(s) >= 0 ? s : 'de';
 }
 
+/* Gekürzt wird nur als Notbremse gegen ein Modell, das Unsinn ausgibt — und
+   dann an einer Wortgrenze. Ein Satz, der mitten im Wort abbricht, sieht aus
+   wie ein Fehler des Bewerbers. */
 function sauberText(wert, hoechstens) {
-  return String(wert === undefined || wert === null ? '' : wert)
-    .replace(/\s+/g, ' ').trim().slice(0, hoechstens || 400);
+  const text = String(wert === undefined || wert === null ? '' : wert)
+    .replace(/\s+/g, ' ').trim();
+  const grenze = hoechstens || 400;
+  if (text.length <= grenze) return text;
+  const kurz = text.slice(0, grenze);
+  const luecke = kurz.lastIndexOf(' ');
+  return (luecke > grenze * 0.6 ? kurz.slice(0, luecke) : kurz).trim();
 }
 
 /* Die Bereiche des Modells sind Vorschläge, keine Zusicherung: Sie
@@ -313,7 +343,7 @@ function bereicheOrdnen(liste, anzahl) {
   const roh = (Array.isArray(liste) ? liste : [])
     .map(a => ({
       titel: sauberText(a && a.titel, 80),
-      art: ARTEN.indexOf(a && a.art) >= 0 ? a.art : 'liste',
+      art: artVon(a && a.art),
       von: Math.min(anzahl, Math.max(1, parseInt(a && a.von, 10) || 0)),
       bis: Math.min(anzahl, Math.max(1, parseInt(a && a.bis, 10) || 0)),
     }))
@@ -399,7 +429,7 @@ async function abschnittLesen(bereich, umgebung) {
   /* Die Überschrift selbst steht in keinem Eintrag — sie fehlt also nicht. */
   const pruefen = bereich.zeilen.filter(z => !gleicheWorte(z, bereich.titel));
   const fehlt = fehlendeZeilen(pruefen.join('\n'), eintraege);
-  fehlt.slice(0, 20).forEach(z => eintragNachtragen(bereich.art, eintraege, z));
+  nachtragVerteilen(bereich.art, eintraege, pruefen, fehlt.slice(0, 40));
   return { titel: bereich.titel, art: bereich.art, eintraege, nachgetragen: fehlt.length };
 }
 
@@ -423,6 +453,9 @@ function fliesstextAus(bereich) {
   return absaetze;
 }
 
+const PUNKTFELDER = ['punkte', 'aufgaben', 'taetigkeiten', 'tätigkeiten',
+                     'beschreibung', 'details', 'bullets', 'points', 'items'];
+
 const EINTRAG_FELDER = {
   kontakt: ['art', 'wert'],
   beruf: ['titel', 'firma', 'ort', 'von', 'bis', 'punkte'],
@@ -440,7 +473,7 @@ function eintraegeSaeubern(art, eintraege) {
   const liste = eintraege.slice(0, 60);
   if (art === 'liste' || art === 'profil' || art === 'text') {
     return liste
-      .map(e => sauberText(typeof e === 'string' ? e : (e && (e.wert || e.text || e.titel)), 600))
+      .map(e => sauberText(typeof e === 'string' ? e : (e && (e.wert || e.text || e.titel)), 3000))
       .filter(Boolean);
   }
   const felder = EINTRAG_FELDER[art] || EINTRAG_FELDER.weiterbildung;
@@ -452,9 +485,14 @@ function eintraegeSaeubern(art, eintraege) {
     const aus = {};
     felder.forEach(f => {
       if (f === 'punkte') {
-        aus.punkte = (Array.isArray(e.punkte) ? e.punkte : [])
-          .map(p => sauberText(typeof p === 'string' ? p : (p && p.text), 600))
-          .filter(Boolean).slice(0, 30);
+        /* „punkte“ heißt bei einem Modell auch mal „aufgaben“ oder
+           „beschreibung“. Die Liste dann zu verwerfen hieße: Station ohne
+           Inhalt, und niemand sieht, dass etwas fehlte. */
+        const roh = PUNKTFELDER.map(f2 => e[f2]).find(x => Array.isArray(x) && x.length)
+          || (typeof e.beschreibung === 'string' && e.beschreibung ? [e.beschreibung] : []);
+        aus.punkte = roh
+          .map(p => sauberText(typeof p === 'string' ? p : (p && (p.text || p.punkt)), 1200))
+          .filter(Boolean).slice(0, 40);
       } else {
         aus[f] = sauberText(e[f], 200);
       }
@@ -476,7 +514,40 @@ function ersatzEintrag(art, text) {
   return { titel: text, anbieter: '', jahr: '' };
 }
 
-/* Eine Zeile, die das Modell übersehen hat, kommt dorthin, wo sie am
+/* Übersehene Zeilen kommen an den Eintrag, unter dem sie im Dokument
+   standen — nicht alle an den letzten. Dafür werden die Zeilen des
+   Abschnitts noch einmal durchgegangen: Wo eine Zeile den Titel oder den
+   Arbeitgeber eines Eintrags nennt, beginnt dieser Eintrag; was danach fehlt,
+   gehört zu ihm. */
+function nachtragVerteilen(art, eintraege, zeilen, fehlt) {
+  if (!fehlt.length) return;
+  if ((art !== 'beruf' && art !== 'ausbildung') || !eintraege.length) {
+    fehlt.forEach(z => eintragNachtragen(art, eintraege, z));
+    return;
+  }
+  const fehlend = new Set(fehlt);
+  let aktuell = eintraege[0];
+  zeilen.forEach(zeile => {
+    const treffer = eintraege.find(e => nenntEintrag(e, zeile));
+    if (treffer) { aktuell = treffer; return; }
+    if (!fehlend.has(zeile)) return;
+    if (!Array.isArray(aktuell.punkte)) aktuell.punkte = [];
+    aktuell.punkte.push(zeile);
+  });
+}
+
+/* Nennt diese Zeile den Eintrag — seinen Titel, seinen Arbeitgeber, seine
+   Einrichtung? Dann fängt hier sein Abschnitt an. */
+function nenntEintrag(eintrag, zeile) {
+  const w = worte(zeile);
+  if (!w.length) return false;
+  const kennung = worte([eintrag.titel, eintrag.abschluss, eintrag.fach,
+                         eintrag.firma, eintrag.einrichtung].filter(Boolean).join(' '));
+  if (!kennung.length) return false;
+  return w.filter(x => kennung.indexOf(x) >= 0).length / w.length >= 0.6;
+}
+
+/* Eine Zeile, die sich nirgends einordnen ließ, kommt dorthin, wo sie am
    wenigsten Schaden anrichtet: an den Eintrag darüber. Sichtbar an der
    falschen Stelle ist besser als unsichtbar an gar keiner. */
 function eintragNachtragen(art, eintraege, zeile) {

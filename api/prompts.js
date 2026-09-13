@@ -140,7 +140,9 @@ THE RANGES
 
 THE TOP OF THE DOCUMENT — where this goes wrong most often
 Only three kinds of line stand outside every section: the person's name, one
-short job title under it, and a photo caption. Everything else at the top is a
+short job title under it, and a photo caption. They need not come first: a
+Word file often yields its sidebar before its heading, so the name can sit in
+the middle of the numbered lines. Find it by what it is, not by where it is. Everything else at the top is a
 section, even without a heading:
 - Contact lines (address, phone, mail, date of birth) are a "kontakt" section
   with an empty "titel".

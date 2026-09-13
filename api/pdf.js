@@ -45,18 +45,61 @@ export async function pdfText(bytes) {
 
   const stuecke = [];
   for (const seite of seiten) {
-    const schriften = await schriftTabellen(roh, bytes, objekte, seite.koerper);
-    /* Der Inhalt einer Seite kann auf viele Ströme verteilt sein — manche
-       Erzeuger schreiben je Textblock einen. Gemessen wird trotzdem die
-       ganze Seite, sonst sieht man die Spalten nicht. */
-    let laeufe = [];
-    for (const nummer of inhaltsNummern(seite.koerper)) {
-      const text = await stromText(roh, bytes, objekte, nummer);
-      if (text) laeufe = laeufe.concat(zeichenketten(text, schriften));
-    }
+    const laeufe = await laeufeAus(roh, bytes, objekte,
+      inhaltsNummern(seite.koerper, roh, objekte), seite.koerper, 0, new Set());
     if (laeufe.length) stuecke.push(seiteZuText(laeufe).join('\n'));
   }
   return saeubern(stuecke.join('\n'));
+}
+
+/* Die Textläufe einer Seite — auch die, die in Formularen stecken.
+ *
+ * Der Inhalt einer Seite kann auf viele Ströme verteilt sein; manche Erzeuger
+ * schreiben je Textblock einen. Und manche — Foxit, Word über „Drucken als
+ * PDF“ — legen den gesamten Seiteninhalt in ein Form-XObject und rufen es mit
+ * einem einzigen „Do“ auf. Im Seitenstrom steht dann kein einziges Zeichen,
+ * und wer nur ihn liest, hält ein ganz normales PDF für einen Scan und
+ * schickt die Datei an ein Sprachmodell, statt sie zu lesen.
+ *
+ * Gemessen wird trotzdem die ganze Seite auf einmal, sonst sieht man die
+ * Spalten nicht. */
+async function laeufeAus(roh, bytes, objekte, nummern, ressourcen, tiefe, gesehen) {
+  if (tiefe > 4) return [];
+  const schriften = await schriftTabellen(roh, bytes, objekte, ressourcen);
+  const formMatrix = matrixAus(ressourcen);
+  let aus = [];
+  for (const nummer of nummern) {
+    if (gesehen.has(nummer)) continue;          /* ein Formular, das sich selbst ruft */
+    gesehen.add(nummer);
+    const text = await stromText(roh, bytes, objekte, nummer);
+    if (!text) continue;
+    aus = aus.concat(zeichenketten(text, schriften, formMatrix));
+    for (const name of [...text.matchAll(/\/([A-Za-z0-9.#+-]+)\s+Do\b/g)].map(t => t[1])) {
+      const form = xobjektNummer(ressourcen, name);
+      if (form === null) continue;
+      const koerper = koerperVon(roh, objekte.get(form));
+      if (!/\/Subtype\s*\/Form/.test(koerper || '')) continue;   /* ein Bild, kein Text */
+      aus = aus.concat(await laeufeAus(roh, bytes, objekte, [form], koerper, tiefe + 1, gesehen));
+    }
+  }
+  return aus;
+}
+
+/* Ein Formular bringt seine eigene Matrix mit — in ihr stehen seine
+   Koordinaten. */
+function matrixAus(koerper) {
+  const t = /\/Matrix\s*\[\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/.exec(koerper || '');
+  if (!t) return null;
+  const m = t.slice(1).map(parseFloat);
+  return m.every(isFinite) ? m : null;
+}
+
+function xobjektNummer(ressourcen, name) {
+  const feld = /\/XObject\s*<<([\s\S]*?)>>/.exec(ressourcen || '');
+  if (!feld) return null;
+  const treffer = new RegExp('\\/' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                             + '\\s+(\\d+)\\s+0\\s+R').exec(feld[1]);
+  return treffer ? parseInt(treffer[1], 10) : null;
 }
 
 /* -------------------------------------------------------------- Objekte */
@@ -116,12 +159,30 @@ function verweis(koerper, name) {
   return t ? parseInt(t[1], 10) : null;
 }
 
-function inhaltsNummern(seite) {
-  const einzeln = verweis(seite, 'Contents');
-  if (einzeln !== null) return [einzeln];
+function nummernAus(text) {
+  return [...String(text).matchAll(/(\d+)\s+0\s+R/g)].map(t => parseInt(t[1], 10));
+}
+
+/* Welche Ströme bilden den Inhalt dieser Seite?
+ *
+ * Drei Schreibweisen kommen vor: das Feld steht direkt im Seitenwörterbuch,
+ * der Verweis zeigt auf einen einzelnen Strom — oder er zeigt auf ein Objekt,
+ * das selbst nur ein Feld von Strömen ist. Den dritten Fall schreiben unter
+ * anderem Foxit und Word; wer ihn nicht kennt, hält die Seite für leer und
+ * schickt am Ende die ganze Datei an ein Sprachmodell, statt sie zu lesen. */
+function inhaltsNummern(seite, roh, objekte) {
   const feld = /\/Contents\s*\[([^\]]*)\]/.exec(seite);
-  if (!feld) return [];
-  return [...feld[1].matchAll(/(\d+)\s+0\s+R/g)].map(t => parseInt(t[1], 10));
+  if (feld) return nummernAus(feld[1]);
+
+  const einzeln = verweis(seite, 'Contents');
+  if (einzeln === null) return [];
+  const koerper = koerperVon(roh, objekte && objekte.get(einzeln));
+  const alsFeld = /^\s*\d+\s+\d+\s+obj\s*\[([^\]]*)\]/.exec(koerper || '');
+  if (alsFeld) {
+    const nummern = nummernAus(alsFeld[1]);
+    if (nummern.length) return nummern;
+  }
+  return [einzeln];
 }
 
 /* --------------------------------------------------------------- Ströme */
@@ -259,12 +320,30 @@ function ausUtf16(hex) {
 
 /* --------------------------------------------------------- Textoperatoren */
 
-function zeichenketten(inhalt, schriften) {
+/* Zwei Matrizen hintereinander ausgeführt. */
+function malnehmen(m, n) {
+  return [
+    m[0] * n[0] + m[1] * n[2],          m[0] * n[1] + m[1] * n[3],
+    m[2] * n[0] + m[3] * n[2],          m[2] * n[1] + m[3] * n[3],
+    m[4] * n[0] + m[5] * n[2] + n[4],   m[4] * n[1] + m[5] * n[3] + n[5],
+  ];
+}
+
+function verwandeln(px, py, m) {
+  return [m[0] * px + m[2] * py + m[4], m[1] * px + m[3] * py + m[5]];
+}
+
+function zeichenketten(inhalt, schriften, anfang) {
   /* Chrome setzt jede Silbe einzeln und schiebt den Cursor dazwischen. Ein
      Zeilenumbruch bei jedem Vorschub ergäbe ein Wort je Zeile — umgebrochen
      wird deshalb nur, wenn sich die Höhe ändert. */
   const laeufe = [];                     /* {x, y, text} je Textlauf */
   let zeile = '', tabelle = null, letzteHoehe = null, x = 0, y = 0, zeileX = 0, zeileY = 0;
+  /* Die Fläche, in die gerade gezeichnet wird. Ein Erzeuger setzt jeden Block
+     mit einer eigenen Matrix — wer sie übergeht, vergleicht Koordinaten aus
+     verschiedenen Welten und findet keine Spalte mehr. */
+  let flaeche = (anfang && anfang.length === 6) ? anfang.slice() : [1, 0, 0, 1, 0, 0];
+  const stapel = [];
 
   const anweisung = new RegExp([
     '\\/([^\\s/]+)\\s+[\\d.]+\\s+Tf',                    /* 1 Schrift */
@@ -274,6 +353,9 @@ function zeichenketten(inhalt, schriften) {
     '(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(?:Td|TD)',             /* 5,6 Vorschub */
     '(?:-?[\\d.]+\\s+){4}(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+Tm',  /* 7,8 Matrix */
     '(T\\*|ET|BT)',                                              /* 9 Zeile/Block */
+    '(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+cm',
+                                                                   /* 10-15 Fläche */
+    '(?:^|[^A-Za-z])(q|Q)(?![A-Za-z])',                            /* 16 Stapel */
   ].join('|'), 'g');
 
   const umbruch = () => {
@@ -284,7 +366,8 @@ function zeichenketten(inhalt, schriften) {
      Höhe heißt gleiche Zeile — dort gehört ein Leerzeichen dazwischen, etwa
      zwischen einer Position und ihrem Zeitraum am rechten Rand. */
   const hoehe = (wertX, wertY) => {
-    const neuY = parseFloat(wertY), neuX = parseFloat(wertX);
+    const ort = verwandeln(parseFloat(wertX), parseFloat(wertY), flaeche);
+    const neuX = ort[0], neuY = ort[1];
     if (!isFinite(neuY)) return;
     if (letzteHoehe === null || Math.abs(neuY - letzteHoehe) > 0.4) umbruch();
     else if (zeile && !/\s$/.test(zeile)) zeile += ' ';
@@ -319,6 +402,12 @@ function zeichenketten(inhalt, schriften) {
       hoehe(treffer[7], treffer[8]);
     } else if (treffer[9] !== undefined) {
       if (treffer[9] === 'T*') umbruch();
+    } else if (treffer[10] !== undefined) {
+      const neu = [10, 11, 12, 13, 14, 15].map(i => parseFloat(treffer[i]));
+      if (neu.every(isFinite)) flaeche = malnehmen(neu, flaeche);
+    } else if (treffer[16] !== undefined) {
+      if (treffer[16] === 'q') stapel.push(flaeche.slice());
+      else if (stapel.length) flaeche = stapel.pop();
     }
   }
   umbruch();
@@ -346,7 +435,12 @@ function seiteZuText(roheLaeufe) {
   if (roheLaeufe.length < 8) return zeilenAus(roheLaeufe);
   const laeufe = nachUntenGedreht(roheLaeufe);
   const graben = grabenFinden(laeufe);
-  if (graben === null) return zeilenAus(laeufe);
+  /* Kein Graben: eine Spalte. Gelesen wird dann von oben nach unten — nicht
+     in der Reihenfolge, in der die Zeichen im Strom stehen. Manche Erzeuger
+     schreiben erst alle Überschriften und dann alle Aufzählungen; wer das
+     so übernimmt, reicht dem Modell einen Lebenslauf, in dem keine Aufgabe
+     mehr bei ihrer Station steht. */
+  if (graben === null) return zeilenAus([...laeufe].sort(nachOrt));
 
   const links = laeufe.filter(l => l.x < graben);
   const rechts = laeufe.filter(l => l.x >= graben);
@@ -385,17 +479,75 @@ function nachUntenGedreht(laeufe) {
 }
 
 /* Die breiteste senkrechte Lücke im mittleren Teil der Seite. */
+/* Ein Graben ist eine senkrechte Bahn, die über fast die ganze Höhe frei
+ * bleibt.
+ *
+ * „Fast“ ist hier das entscheidende Wort. Eine Überschrift oder ein
+ * Kurzprofil läuft über beide Spalten — wer verlangt, dass keine einzige
+ * Zeile die Bahn kreuzt, findet in solchen Lebensläufen nie eine. Gezählt
+ * wird deshalb reihenweise: In wie vielen Zeilen des Blattes ist diese Bahn
+ * frei? Ab vier Fünfteln ist es ein Graben.
+ *
+ * Gebraucht wird dafür das rechte Ende jeder Zeile. Es steht nirgends, aber
+ * es lässt sich schätzen: Der Zeilenabstand verrät den Schriftgrad, der
+ * Schriftgrad die Breite eines Zeichens.
+ *
+ * Bleiben mehrere Bahnen, gewinnt die rechte. Die breite Spalte eines
+ * Lebenslaufs steht rechts; was links davon noch Lücken hat, ist meist das
+ * Innenleben der Seitenleiste und darf nicht auseinandergerissen werden.
+ */
 function grabenFinden(laeufe) {
-  const xs = [...new Set(laeufe.map(l => Math.round(l.x)))].sort((a, b) => a - b);
-  const breite = xs[xs.length - 1] - xs[0];
-  if (breite < 100) return null;
-  let stelle = null, luecke = 0;
-  for (let i = 1; i < xs.length; i++) {
-    const mitte = (xs[i] + xs[i - 1]) / 2;
-    if (mitte < xs[0] + breite * 0.2 || mitte > xs[0] + breite * 0.8) continue;
-    if (xs[i] - xs[i - 1] > luecke) { luecke = xs[i] - xs[i - 1]; stelle = mitte; }
+  const abstaende = [];
+  for (let i = 1; i < laeufe.length; i++) {
+    const d = Math.abs(laeufe[i].y - laeufe[i - 1].y);
+    if (d > 1 && d < 60) abstaende.push(d);
   }
-  return luecke >= breite * 0.12 ? stelle : null;
+  abstaende.sort((a, b) => a - b);
+  const zeilenabstand = abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 12;
+  /* Ein Zeichen ist im Mittel gut ein Fünftel so breit wie der Zeilenabstand
+     hoch. Knapp geschätzt: Überschätzt man, gilt jede Bahn als überquert. */
+  const proZeichen = zeilenabstand * 0.22;
+
+  const spannen = laeufe.map(l => [l.x, l.x + Math.min(l.text.length, 70) * proZeichen]);
+  const links = Math.min(...spannen.map(s => s[0]));
+  const rechts = Math.max(...spannen.map(s => s[1]));
+  const breite = rechts - links;
+  if (breite < 100) return null;
+
+  /* Die Zeilen des Blattes, jede mit den Spannen, die in ihr liegen. */
+  const reihen = new Map();
+  spannen.forEach((spanne, i) => {
+    const schluessel = Math.round(laeufe[i].y / Math.max(4, zeilenabstand));
+    if (!reihen.has(schluessel)) reihen.set(schluessel, []);
+    reihen.get(schluessel).push(spanne);
+  });
+  const alle = [...reihen.values()];
+  if (alle.length < 6) return null;
+
+  const schritt = Math.max(1, breite / 240);
+  const mindestens = Math.max(6, breite * 0.03);
+  let stelle = null, bandVon = null, letzteFrei = false;
+  const pruefen = (bis) => {
+    if (bandVon === null) return;
+    /* Getrennt wird am rechten Rand der freien Bahn, nicht in ihrer Mitte:
+       Die Bahn ist oft breiter als der Zwischenraum — links von ihr endet
+       die Leiste schon früher, rechts von ihr beginnt die Spalte sofort. */
+    const mitte = bis - (bis - bandVon) * 0.15;
+    if (bis - bandVon >= mindestens
+        && mitte > links + breite * 0.15 && mitte < links + breite * 0.85) {
+      const anteil = laeufe.filter(l => l.x >= mitte).length / laeufe.length;
+      if (anteil >= 0.25 && anteil <= 0.8) stelle = mitte;
+    }
+    bandVon = null;
+  };
+  for (let x = links; x <= rechts; x += schritt) {
+    const frei = alle.filter(r => !r.some(([von, bis]) => von < x && bis > x)).length / alle.length;
+    if (frei >= 0.8) { if (!letzteFrei) bandVon = x; }
+    else pruefen(x);
+    letzteFrei = frei >= 0.8;
+  }
+  pruefen(rechts);
+  return stelle;
 }
 
 function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
@@ -551,7 +703,14 @@ function saeubern(text) {
    zusammengezogene Zeile ist schlimmer als eine zu viel. */
 function zusammenfuegen(zeilen) {
   const aus = [];
-  for (const zeile of zeilen) {
+  let marke = '';
+  for (const roh of zeilen) {
+    /* Ein Aufzählungszeichen steht im PDF oft als eigener Lauf — es wird an
+       einer anderen Stelle gesetzt als der Text dahinter. Allein ist es keine
+       Zeile, sondern der Anfang der nächsten. */
+    if (/^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]$/.test(roh)) { marke = '• '; continue; }
+    const zeile = marke + roh;
+    marke = '';
     const oben = aus.length ? aus[aus.length - 1] : null;
     const haengend = HAENGEND.test(oben || '');
     const passt = oben && oben.length > 20 &&
