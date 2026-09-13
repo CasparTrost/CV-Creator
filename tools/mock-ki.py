@@ -30,7 +30,7 @@ RUBRIKEN = [
     ('ausbildung', r'ausbildung|bildungsweg|studium|schul|qualifikation|education|academic|formaci'),
     ('berufserfahrung', r'berufserfahrung|berufliche|werdegang|praxis|experience|employment|experiencia'),
     ('kenntnisse', r'kenntnis|kompetenz|f[äa]higkeit|skills|edv|it-|competenc|tools'),
-    ('kontakt', r'pers[öo]nliche daten|kontakt|personal details|contact|datos'),
+    ('kontakt', r'pers[öo]nliche daten|kontakt|personal (data|details|information)|contact|datos'),
     ('weitere', r'ehrenamt|engagement|interess|hobby|publikation|referenz|auszeichnung|volunteer|award'),
 ]
 
@@ -70,7 +70,45 @@ def rubrik_von(zeile):
     return None
 
 
-def lebenslauf_aus(text):
+def rubriken_gemessen(ueberschriften, anzahl):
+    """Die Ueberschriften, wie der Leser sie im Dokument gemessen hat.
+
+    Geliefert wird je Ueberschrift die erste und letzte Zeile und der
+    Schriftgrad. Der Name ganz oben ist ebenfalls gross gesetzt und meist noch
+    groesser - die Rubriken sind die Gruppe mit den meisten Mitgliedern, alles
+    Groessere faellt heraus. Unter zwei Rubriken lohnt es nicht; dann bleibt es
+    bei den Mustern.
+    """
+    roh = []
+    for u in (ueberschriften or []):
+        try:
+            von = int(u.get('von') or 0)
+            bis = int(u.get('bis') or von)
+            grad = float(u.get('grad') or 0)
+        except (TypeError, ValueError):
+            continue
+        titel = (u.get('titel') or '').strip()
+        if titel and 1 <= von <= anzahl and bis >= von:
+            roh.append((von, bis, titel, round(grad * 2) / 2))
+    if len(roh) < 2:
+        return None
+    haeufig = {}
+    for _, _, _, g in roh:
+        haeufig[g] = haeufig.get(g, 0) + 1
+    rubrik_grad = sorted(haeufig.items(), key=lambda p: (-p[1], p[0]))[0][0]
+    genommen = [r for r in roh if abs(r[3] - rubrik_grad) < 0.1]
+    if len(genommen) < 2:
+        return None
+    aus = {'rubrik': {}, 'titel': {}, 'weiter': set()}
+    for von, bis, titel, _ in genommen:
+        aus['rubrik'][von] = rubrik_von(titel) or 'weitere'
+        aus['titel'][von] = titel
+        for nr in range(von + 1, bis + 1):
+            aus['weiter'].add(nr)
+    return aus
+
+
+def lebenslauf_aus(text, ueberschriften=None):
     """Baut aus dem gelieferten Text einen Lebenslauf — mit einfachen Regeln,
     nicht mit einem Modell.
 
@@ -80,18 +118,22 @@ def lebenslauf_aus(text):
     Auslesen der Datei überhaupt etwas gebracht hat.
     """
     zeilen = [z.strip() for z in (text or '').splitlines() if z.strip()]
+    # Was das Dokument selbst als Ueberschrift setzt, schlaegt jedes Muster.
+    gemessen = rubriken_gemessen(ueberschriften, len(zeilen))
     aus = {'sprache': 'de', 'kopf': {'name': '', 'rolle': '', 'profil': ''}, 'kontakt': [],
            'berufserfahrung': [], 'ausbildung': [], 'kenntnisse': [], 'sprachen': [],
            'weiterbildung': [], 'weitere': [], 'ueberschriften': {},
            'zeichenErhalten': len(text or '')}
 
     # Kopf: die erste Zeile, die wie ein Name aussieht, danach die Rolle.
+    ist_rubrik = (lambda nr, z: (nr + 1) in gemessen['rubrik']) if gemessen is not None \
+                 else (lambda nr, z: bool(rubrik_von(z)))
     for i, z in enumerate(zeilen[:6]):
-        if rubrik_von(z):
+        if ist_rubrik(i, z):
             break            # ab der ersten Überschrift ist der Kopf vorbei
         if not aus['kopf']['name'] and re.match(r"^[^\d@]{4,45}$", z) and 1 <= z.count(' ') <= 3:
             aus['kopf']['name'] = z
-            if i + 1 < len(zeilen) and not rubrik_von(zeilen[i + 1]):
+            if i + 1 < len(zeilen) and not ist_rubrik(i + 1, zeilen[i + 1]):
                 aus['kopf']['rolle'] = zeilen[i + 1][:70]
             break
 
@@ -105,14 +147,18 @@ def lebenslauf_aus(text):
         """Kommt gleich ein Zeitraum? Dann gehört diese Zeile zum nächsten
         Eintrag und nicht als Stichpunkt zum laufenden."""
         for j in range(i + 1, min(i + 1 + weite, len(zeilen))):
-            if rubrik_von(zeilen[j]):
+            if ist_rubrik(j, zeilen[j]):
                 return False        # dazwischen fängt eine neue Rubrik an
             if ZEITRAUM.search(zeilen[j]):
                 return True
         return False
 
     for i, z in enumerate(zeilen):
-        neue = rubrik_von(z)
+        if gemessen is not None and (i + 1) in gemessen.get('weiter', ()):
+            continue                      # zweite Zeile einer Ueberschrift
+        neue = gemessen['rubrik'].get(i + 1) if gemessen is not None else rubrik_von(z)
+        if gemessen is not None and neue:
+            z = gemessen['titel'].get(i + 1, z)
         if neue == 'weitere':
             aus['weitere'].append({'titel': z.strip(' :'), 'punkte': []})
             rubrik, eintrag, wartend = 'weitere', None, []
@@ -327,7 +373,7 @@ def antwort_fuer(weg, daten):
         if daten.get('datei'):
             text = ('Aus Datei: ' + (daten['datei'].get('name') or '') + '\nProjektmanager\n'
                     + 'Base64-Laenge ' + str(len(daten['datei'].get('daten') or '')))
-        flach = lebenslauf_aus(text)
+        flach = lebenslauf_aus(text, daten.get('ueberschriften'))
         lebenslauf = abschnitte_aus_flach(flach)
         # Derselbe Weg wie im Worker: nachzaehlen, was im Ergebnis fehlt, und
         # es hinten anhaengen, statt es verschwinden zu lassen.
