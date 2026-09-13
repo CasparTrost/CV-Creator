@@ -45,6 +45,8 @@ def read_config():
         'operator': field('name', 'operator'),
         'email': field('email', 'operator'),
         'adsense': field('client', 'ads'),
+        'ki': field('endpunkt', 'ki'),
+        'ki_anbieter': field('anbieter', 'ki') or 'an einen KI-Dienst',
     }
 
 
@@ -603,7 +605,9 @@ def page_index():
         '    <div>' + ic('blatt') + '<strong>Nothing to pay</strong><p>The PDF is free at the end, not after a '
         'trial. There is no download button to put a price behind.</p></div>',
         '    <div>' + ic('schild') + '<strong>Nothing uploaded</strong><p>The editor is one page of code running '
-        'on your machine. No server ever sees your employment history.</p></div>',
+        'on your machine. No server sees your employment history'
+        + (', unless you ask the AI features to read or tailor it.' if CFG['ki'] else '.')
+        + '</p></div>',
         '    <div>' + ic('raster') + '<strong>Sixteen layouts, one text</strong><p>Switch the design whenever you '
         'like. What you wrote stays where it is.</p></div>',
         '  </div>',
@@ -1402,7 +1406,9 @@ def page_index_de():
         'nach einer Testphase. Es gibt keinen Download-Knopf, hinter den ein Preis passt.</p>'
         '</div>',
         '    <div>' + ic('schild') + '<strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, '
-        'die auf Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang.</p></div>',
+        'die auf Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang'
+        + (' – außer Sie lassen ihn von der KI einlesen oder zuschneiden.' if CFG['ki'] else '.')
+        + '</p></div>',
         '    <div>' + ic('raster') + '<strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, wann '
         'Sie wollen. Was Sie geschrieben haben, bleibt stehen.</p></div>',
         '  </div>',
@@ -1535,6 +1541,67 @@ def page_templates_de():
     ])
 
 
+def ki_abschnitt(lang):
+    """Steht nur auf der Seite, wenn die KI-Funktionen eingerichtet sind.
+
+    Eine Datenschutzerklärung, die eine Funktion verschweigt, ist schlimmer
+    als keine. Und der Satz „Ihr Lebenslauf verlässt Ihr Gerät nicht“ gilt
+    dann nicht mehr ohne Einschränkung — also steht die Einschränkung da.
+    """
+    if not CFG['ki']:
+        return []
+    dienst = esc(CFG['ki_anbieter'])
+    if lang == 'de':
+        return [
+            '',
+            '    <h2>Die beiden KI-Funktionen</h2>',
+            '    <p>Der Editor bietet zwei Funktionen an, bei denen Text Ihr Gerät verlässt: '
+            'einen vorhandenen Lebenslauf einlesen und einen Lebenslauf auf eine '
+            'Stellenanzeige zuschneiden. Beide laufen nur, wenn Sie sie anklicken, und beim '
+            'ersten Mal werden Sie vorher gefragt. Wer sie nicht benutzt, für den bleibt der '
+            'Editor eine Seite ohne Server.</p>',
+            '    <p><strong>Was gesendet wird:</strong> der Text Ihres Lebenslaufs '
+            '(beziehungsweise die hochgeladene Datei) und, beim Zuschneiden, der Text der '
+            'Stellenanzeige. <strong>Wohin:</strong> an unseren Vermittlungsdienst und von '
+            'dort an %s, der das Sprachmodell betreibt. <strong>Wie lange:</strong> Wir '
+            'speichern nichts davon; die Anfrage wird beantwortet und ist damit erledigt. '
+            'Welche Speicherfristen beim Modellanbieter gelten, steht in dessen '
+            'Datenschutzhinweisen.</p>' % dienst,
+            '    <p>Rechtsgrundlage ist Ihre Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO, '
+            'die Sie mit dem Bestätigen des Hinweises erteilen. Sie können sie jederzeit '
+            'widerrufen, indem Sie die Funktionen nicht mehr benutzen; die Zustimmung selbst '
+            'liegt als Merkposten im <em>local storage</em> Ihres Browsers und verschwindet '
+            'mit Ihren Browserdaten. Eine Übermittlung in Drittländer ist dabei nicht '
+            'ausgeschlossen — prüfen Sie das für den von Ihnen gewählten Anbieter.</p>',
+            '    <p>Bitte laden Sie nichts hoch, was nicht in eine Bewerbung gehört. Ein '
+            'Lebenslauf enthält personenbezogene Daten; besondere Kategorien nach Art. 9 '
+            'DSGVO — etwa Gesundheitsdaten oder die Religionszugehörigkeit — gehören weder in '
+            'eine Bewerbung noch in ein Sprachmodell.</p>',
+        ]
+    return [
+        '',
+        '    <h2>The two AI features</h2>',
+        '    <p>The editor offers two features where text leaves your device: reading in an '
+        'existing CV, and tailoring a CV to a job advert. Both run only when you click them, '
+        'and the first time you are asked beforehand. If you never use them, the editor stays '
+        'a page without a server.</p>',
+        '    <p><strong>What is sent:</strong> the text of your CV (or the file you upload) '
+        'and, when tailoring, the text of the job advert. <strong>Where to:</strong> our own '
+        'relay, and from there to %s, who run the language model. <strong>For how long:</strong> '
+        'we store none of it; the request is answered and that is the end of it. The model '
+        'provider\'s own retention terms are in their privacy notice.</p>' % dienst,
+        '    <p>The legal basis is your consent under Art. 6(1)(a) GDPR, given when you confirm '
+        'the notice. You can withdraw it at any time by not using the features; the consent '
+        'itself is a marker in your browser\'s local storage and disappears with your browser '
+        'data. A transfer outside the EEA is not ruled out — check that for the provider you '
+        'choose.</p>',
+        '    <p>Please do not upload anything that does not belong in a job application. A CV '
+        'contains personal data; special categories under Art. 9 GDPR — health data or '
+        'religious affiliation, say — belong neither in an application nor in a language '
+        'model.</p>',
+    ]
+
+
 def page_privacy():
     depth = 0
     return '\n'.join([
@@ -1548,8 +1615,10 @@ def page_privacy():
         '<section class="band">',
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Privacy and cookies</h1>',
-        '    <p class="lead">The short version: your resume never leaves your device, the site '
-        'sets no cookie until you say yes, and declining costs you nothing but the ads.</p>',
+        '    <p class="lead">The short version: your resume never leaves your device'
+        + (' unless you use one of the two AI features, which ask first' if CFG['ki'] else '')
+        + ', the site sets no cookie until you say yes, and declining costs you nothing but '
+        'the ads.</p>',
         '    <div class="callout warn"><strong>Before you publish this site</strong>',
         '    <p>This is a working draft written for the site as it is built, not legal advice. '
         'Have it checked, and replace the bracketed details — your hosting provider and the '
@@ -1563,6 +1632,7 @@ def page_privacy():
         'closing the tab by accident does not destroy an hour of work. That draft sits on your '
         'own device, is readable only by this site in this browser, and is never sent anywhere. '
         'Clearing your browser data, or using the Clear button in the editor, removes it.</p>',
+        ] + ki_abschnitt('en') + [
         '',
         '    <h2>Cookies and local storage on the rest of the site</h2>',
         '    <div class="scroll-x"><table class="plain">',
@@ -1793,9 +1863,10 @@ def page_privacy_de():
         '<section class="band">',
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Datenschutzerklärung</h1>',
-        '    <p class="lead">Kurz: Ihr Lebenslauf verlässt Ihr Gerät nicht, die Seite setzt '
-        'kein Cookie, bevor Sie zustimmen, und eine Ablehnung kostet Sie nichts außer der '
-        'Werbung.</p>',
+        '    <p class="lead">Kurz: Ihr Lebenslauf verlässt Ihr Gerät nicht'
+        + (' – außer Sie benutzen eine der beiden KI-Funktionen, die vorher fragen' if CFG['ki'] else '')
+        + ', die Seite setzt kein Cookie, bevor Sie zustimmen, und eine Ablehnung kostet Sie '
+        'nichts außer der Werbung.</p>',
         '    <div class="callout warn"><strong>Vor der Veröffentlichung</strong>',
         '    <p>Dies ist ein Arbeitsentwurf für die Seite, wie sie gebaut ist, und keine '
         'Rechtsberatung. Lassen Sie ihn prüfen und ersetzen Sie die Angaben in eckigen '
@@ -1817,6 +1888,8 @@ def page_privacy_de():
         'vernichtet. Dieser Stand liegt auf Ihrem Gerät, ist nur von dieser Seite in diesem '
         'Browser lesbar und wird nirgendwohin gesendet. Ihre Browserdaten zu löschen oder im '
         'Editor „Von vorn beginnen“ zu wählen, entfernt ihn.</p>',
+        '',
+        ] + ki_abschnitt('de') + [
         '',
         '    <h2>3. Cookies und lokaler Speicher</h2>',
         '    <div class="scroll-x"><table class="plain">',

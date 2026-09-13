@@ -27,8 +27,14 @@ de/                     The German site, with German slugs
 editor.html             The editor. Accepts ?t=t1 … ?t=t16 and ?lang=de
 assets/                 Stylesheet, scripts, self-hosted fonts, icons
   icons.css             The icon set, generated from tools/icons.py
+api/                    The only server: a Cloudflare Worker for the AI features
+  prompts.js            The system prompts. The part that decides whether the
+                        AI features are useful or dangerous.
+  pdf.js                Text out of a PDF, without a library
 tools/                  Generators. Not served, not needed to run the site.
-  icons.py              The 28 icons, as SVG. One source for site and editor.
+  icons.py              The 32 icons, as SVG. One source for site and editor.
+  mock-ki.py            Stands in for the AI worker, so the interface can be
+                        tried without a key and without cost.
 ```
 
 ## Two languages, one codebase
@@ -295,9 +301,56 @@ slot and assert the section appears in that slot's own column, and print the
 same resume from two different window widths and diff the PDFs — they must
 be byte-for-byte the same story.
 
+## The two AI features
+
+The editor can read an existing CV into a layout, and it can tailor a CV to
+one job advert. Both are off until `assets/site-config.js` has the address of
+the worker in `api/` — without it the buttons are not rendered at all, and the
+editor is exactly what it was: a page with no server.
+
+**Why there is a server at all.** An API key in the browser is a published
+key. The worker holds it, limits what goes through, and is the only
+server-side code in this repository. Setup, cost and the rate limit are in
+[`api/README.md`](api/README.md).
+
+**The rule the prompts enforce.** The model may rephrase, reorder and
+re-emphasise. It may never add a fact. Every employer, title, date, figure and
+language level is copied character for character; "supported" may not become
+"led"; a vague statement may not be made specific. What the advert asks for
+and the CV does not show is listed back to the applicant as a gap — never
+written into the CV. That is the honest half of the answer and often the
+useful one.
+
+Three things check the result, because one is not enough:
+
+1. The prompt states the rule and gives the test to apply to every sentence:
+   *could this be answered in an interview from what the original says?*
+2. A second, cheap model call compares the rewrite against the original and
+   reports sentences that claim more than the original supports.
+3. The browser itself, independent of any model, collects every number, year
+   and acronym in the new text and flags any that appears nowhere in the old
+   one. A model that invents usually invents exactly there.
+
+Whatever survives all three is still shown as a diff — what was there before,
+what it says now, and why — and the dialog says plainly that the applicant is
+the one signing it.
+
+**Uploads.** DOCX, ODT and XLSX are unpacked in the browser itself
+(`DecompressionStream`, no library), so only the extracted text is sent. PDFs
+go to the worker, which reads the text out of them directly — page objects,
+font tables, `ToUnicode` maps — and only falls back to handing the file to the
+model when that yields nothing, as with a scan. `tools/mock-ki.py` stands in
+for the whole thing during development.
+
+**Switching it on changes the site's own claims.** The build reads the config:
+with an AI endpoint set, the privacy pages gain a section on what is sent
+where and on what legal basis, and the "nothing is uploaded" promise on both
+home pages gains its exception. Both revert if the endpoint is emptied. A
+privacy notice that omits a feature is worse than none.
+
 ## The icon set
 
-Twenty-eight line icons live in `tools/icons.py`, each one the inside of a
+Thirty-two line icons live in `tools/icons.py`, each one the inside of a
 24x24 SVG drawn with 2px strokes and nothing else. `python3 tools/build.py`
 turns that table into two things: `assets/icons.css` for the site pages, and
 the variable block between the two marks in `editor.html` for the resume

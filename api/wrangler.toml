@@ -1,0 +1,22 @@
+# Einrichtung: api/README.md
+name = "plainsheet-ki"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+# Das Modell. Günstig und für Auslesen und Umformulieren ausreichend.
+# Andere Kandidaten: "gpt-5-mini", "claude-haiku-4-5", "deepseek-v3".
+MODELL = "gemini-3.5-flash"
+BASIS = "https://api.cometapi.com/v1"
+# Von welchen Adressen der Browser den Worker rufen darf, mit Komma getrennt.
+HERKUNFT = "https://YOUR-DOMAIN.example"
+
+# Der Schlüssel gehört NICHT hierher, sondern in ein Secret:
+#   npx wrangler secret put COMETAPI_KEY
+
+# Ohne diese Bindung läuft der Worker ungebremst. Mit ihr gilt eine
+# Obergrenze pro IP und Tag — das ist der Unterschied zwischen einer
+# Rechnung und einer Überraschung.
+# [[kv_namespaces]]
+# binding = "LIMITS"
+# id = "hier die ID aus: npx wrangler kv namespace create LIMITS"

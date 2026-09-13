@@ -57,6 +57,16 @@ window.PLAINSHEET = {
     lazyMargin: 500
   },
 
+  /* Die beiden KI-Funktionen im Editor: einen vorhandenen Lebenslauf
+     einlesen und einen Lebenslauf auf eine Stellenanzeige zuschneiden.
+     Sie brauchen den Worker aus api/ — ohne Adresse bleiben die Knöpfe
+     weg, und der Editor ist wie zuvor eine Seite ohne Server.
+     Adresse eintragen, die wrangler deploy ausgegeben hat, mit /api am Ende. */
+  ki: {
+    endpunkt: '',
+    anbieter: 'CometAPI',      /* steht so im Hinweis vor dem ersten Senden */
+  },
+
   analytics: {
     /* 'none' | 'plausible' | 'ga4'
        plausible is cookieless and loads immediately.
