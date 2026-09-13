@@ -209,9 +209,17 @@ advertisers pay for.
 | `python3 tools/serve.py [port]` | Serves the site locally: 404 handling, no caching, and the AI test mode under `/api` |
 | `tools\serve.cmd [port]` | The same, for Windows |
 | `tools\ki-start.cmd` | Starts the AI worker on this machine (asks for the key once, then `wrangler dev`) |
+| `tools\holen.cmd` | Pulls the newest version on Windows, discarding generated files first |
 
 Python 3.8 or newer is the only requirement, and only for the tools — the
 site itself is plain HTML and needs nothing.
+
+`assets/pdf-text.js` and the rendered pages are generated: running
+`build.py` rewrites them, and a `git pull` then refuses to overwrite what
+looks like local work. It is not local work — throw it away
+(`git checkout -- assets/pdf-text.js`) and pull again, or let
+`tools\holen.cmd` do both. Whoever changes `api/pdf.js` runs `build.py`
+before committing, or everyone else inherits exactly that conflict.
 
 Page copy lives in `tools/content.py` and `tools/content_de.py` (`GUIDES` and
 `EXAMPLES`) and in the `page_*` functions of `tools/build.py` (everything else). Template descriptions are in
