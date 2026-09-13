@@ -3099,18 +3099,17 @@ function lebenslaufEinsetzen(daten){
     kopf.innerHTML =
       '<h1>' + fluchten(daten.kopf.name || '') + '</h1>' +
       '<div class="role">' + fluchten(daten.kopf.rolle || '') + '</div>' +
-      (profil && profil.length <= 420 ? '<p>' + fluchten(profil) + '</p>' : '');
+      (profil ? '<p>' + fluchten(profil) + '</p>' : '');
   }
 
   const abschnitte = (daten.abschnitte && daten.abschnitte.length)
     ? daten.abschnitte : abschnitteAusFlach(daten, namen);
 
+  /* Das Kurzprofil steht im Kopf, unter dem Namen. Ob es dort hineinpasst,
+     entscheidet nicht seine Länge, sondern das Layout: bandAnpassen misst
+     nach, und erst wenn das Band an seiner Höhe ist, zieht profilAuslagern
+     es als eigenen Abschnitt nach unten. */
   const leiste = [], haupt = [];
-  /* Ein langes Kurzprofil passt in kein Kopfband. Es wird ein Abschnitt wie
-     jeder andere — einer, nicht zwei. */
-  if (profil && profil.length > 420){
-    haupt.push(blockBauen(namen.profil, '<p>' + fluchten(profil) + '</p>'));
-  }
   abschnitte.forEach(a => {
     const innen = abschnittInhalt(a);
     if (!innen) return;

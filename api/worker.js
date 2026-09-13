@@ -267,13 +267,16 @@ async function nachGliederung(text, umgebung) {
     abschnitte.push({ titel: a.titel, art: a.art, eintraege: a.eintraege });
   });
 
-  /* Jetzt, wo alle Stücke beisammen sind: Ein kurzes Kurzprofil gehört ins
-     Kopfband, ein langes bleibt ein Abschnitt. Beides zusammen wäre es
-     zweimal auf dem Blatt. */
+  /* Jetzt, wo alle Stücke beisammen sind: Das Kurzprofil gehört in den Kopf,
+     unter den Namen — dort sucht es jeder, und die Vorlagen halten den Platz
+     dafür frei. Wie viel dort hineinpasst, weiß der Editor: Er misst das
+     Kopfband und legt das Profil erst dann als eigenen Abschnitt an, wenn es
+     wirklich nicht mehr passt. Eine Zeichenzahl hier wäre geraten.
+     Nur was gar kein Kurzprofil mehr sein kann, bleibt ein Abschnitt. */
   const profil = abschnitte.find(a => a.art === 'profil');
   if (profil) {
     const ganz = profil.eintraege.join(' ').replace(/\s+/g, ' ').trim();
-    if (ganz.length <= 420) {
+    if (ganz.length <= 1400) {
       kopf.profil = ganz;
       abschnitte.splice(abschnitte.indexOf(profil), 1);
     }
@@ -288,9 +291,9 @@ async function nachGliederung(text, umgebung) {
   const offen = fehlendeZeilen(text, lebenslauf).filter(z => !bekannt.some(t => gleicheWorte(z, t)));
   if (offen.length) {
     abschnitte.push({ titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de,
-                      art: 'liste', eintraege: offen.slice(0, 30) });
+                      art: 'liste', eintraege: offen.slice(0, 40) });
   }
-  return { lebenslauf, nachgetragen, offen: offen.length };
+  return { lebenslauf, nachgetragen, offen: offen.length, deckung: deckungVon(text, lebenslauf) };
 }
 
 function spracheVon(plan) {
@@ -322,8 +325,13 @@ function bereicheOrdnen(liste, anzahl) {
   roh.forEach(a => {
     const vor = aus[aus.length - 1];
     if (vor) {
+      /* Ein Abschnitt, den sein Vorgänger ganz verschluckt, verschwände hier
+         samt seiner Überschrift — und mit ihm der Grund, warum er da war.
+         Also bekommt der Vorgänger seine Grenze zurück. */
+      if (a.bis <= vor.bis && a.von > vor.von) vor.bis = a.von - 1;
       if (a.von <= vor.bis) a.von = vor.bis + 1;      /* Überlappung abschneiden */
       else if (a.von > vor.bis + 1) vor.bis = a.von - 1;  /* Loch an den Vorgänger */
+      if (a.bis < a.von) a.bis = a.von;
     }
     if (a.bis >= a.von) aus.push(a);
   });
@@ -484,8 +492,32 @@ function alleTexte(objekt) {
 /* Eine Zeile gilt als übernommen, wenn ihre tragenden Wörter im Ergebnis
    vorkommen. Wortweise, weil ein zweispaltiges PDF Zeilen zerlegt und wieder
    zusammensetzt — ein Vergleich auf Gleichheit fände fast nichts wieder. */
+/* Steht diese Zeile im Ergebnis?
+ *
+ * Die Frage nach einzelnen Wörtern beantwortet sich in einem Lebenslauf zu
+ * leicht mit ja: Das Kurzprofil nennt dieselben Begriffe wie die Stationen
+ * darunter. Ein ganzer Abschnitt konnte so verschwinden und trotzdem als
+ * „angekommen“ gelten, weil seine Wörter anderswo vorkamen.
+ *
+ * Gefragt wird deshalb nach einer Wortfolge: Drei Wörter hintereinander,
+ * irgendwo im Ergebnis. Das steht kaum je zufällig da. Und weil eine zu
+ * streng beantwortete Frage die Zeile ein zweites Mal aufs Blatt brächte,
+ * gilt sie auch dann als vorhanden, wenn fast alle ihre Wörter da sind.
+ */
+function istDrin(zeile, folge, einzeln) {
+  const w = worte(zeile);
+  if (!w.length) return true;
+  const n = Math.min(3, w.length);
+  for (let i = 0; i + n <= w.length; i++) {
+    if (folge.includes(' ' + w.slice(i, i + n).join(' ') + ' ')) return true;
+  }
+  return w.filter(x => einzeln.has(x)).length / w.length >= 0.9;
+}
+
 export function fehlendeZeilen(text, ergebnis, ohneUeberschriften) {
-  const da = new Set(worte(alleTexte(ergebnis)));
+  const alle = worte(alleTexte(ergebnis));
+  const folge = ' ' + alle.join(' ') + ' ';
+  const einzeln = new Set(alle);
   const fehlt = [];
   String(text).split(/\r?\n/).forEach(zeile => {
     const roh = zeile.trim();
@@ -495,10 +527,7 @@ export function fehlendeZeilen(text, ergebnis, ohneUeberschriften) {
        Überschrift steht in keinem Eintrag, ohne dass etwas fehlt. */
     if (ohneUeberschriften && roh.length <= 34 && !/\d/.test(roh)
         && roh.split(/\s+/).length <= 3) return;
-    const w = worte(roh);
-    if (!w.length) return;            /* reine Datums- oder Zahlenzeile */
-    const drin = w.filter(x => da.has(x)).length;
-    if (drin / w.length < 0.6) fehlt.push(roh);
+    if (!istDrin(roh, folge, einzeln)) fehlt.push(roh);
   });
   return fehlt;
 }
@@ -518,13 +547,25 @@ async function amStueck(text, umgebung) {
   const fehlt = fehlendeZeilen(text, lebenslauf, true);
   if (fehlt.length) {
     const rest = { titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de, art: 'liste',
-                   eintraege: fehlt.slice(0, 30) };
+                   eintraege: fehlt.slice(0, 40) };
     lebenslauf.abschnitte.push(rest);
   }
-  return { lebenslauf, nachgetragen: 0, offen: fehlt.length };
+  return { lebenslauf, nachgetragen: 0, offen: fehlt.length,
+           deckung: deckungVon(text, lebenslauf) };
 }
 
 const RESTTITEL = { de: 'Weitere Angaben', en: 'Further details', es: 'Otros datos' };
+
+/* Wie viel von der Datei ist auf dem Blatt wiederzufinden? Die Zahl geht mit
+   nach vorn: Wer seinen eigenen Lebenslauf hochlädt, soll nicht erst beim
+   dritten Lesen merken, dass ein Drittel fehlt. */
+function deckungVon(text, lebenslauf) {
+  const zeilen = String(text).split(/\r?\n/)
+    .map(z => z.trim())
+    .filter(z => z.length >= 8 && !NEBENSACHE.test(z) && worte(z).length);
+  const fehlend = fehlendeZeilen(text, lebenslauf).length;
+  return { zeilen: zeilen.length, fehlend };
+}
 
 const FLACHNAMEN = {
   de: { kontakt: 'Kontakt', beruf: 'Berufserfahrung', ausbildung: 'Ausbildung',
