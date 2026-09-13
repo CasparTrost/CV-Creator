@@ -2741,10 +2741,15 @@ async function pdfFoto(bytes){
   } catch (e){ return null; }
 }
 
+/* Ein DOCX ist XML: Absätze, Zeilenumbrüche, Tabellenzellen. Alles, was im
+   Dokument eine neue Zeile ist, muss hier auch eine werden — sonst kleben
+   Wörter aneinander und aus zwei Tabellenspalten wird ein Wortsalat. */
 function xmlText(xml){
   return xml
     .replace(/<w:tab\/>/g, '\t')
-    .replace(/<\/w:p>/g, '\n')
+    .replace(/<w:(br|cr)\s*\/?>/g, '\n')
+    .replace(/<\/w:(p|tc|tr)>/g, '\n')
+    .replace(/<w:p\s*\/>/g, '\n')
     .replace(/<\/(t|si|r)>/g, m => (m === '</si>' ? '\n' : ''))
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')

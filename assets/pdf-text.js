@@ -128,6 +128,30 @@ function inhaltsNummern(seite) {
 
 /* --------------------------------------------------------------- Ströme */
 
+/* Wo hört ein Strom auf?
+ *
+ * Die ehrliche Antwort steht im Wörterbuch: /Length. Wer stattdessen bis zum
+ * nächsten „endstream“ liest, muss raten, ob die letzten Bytes davor zum
+ * Strom gehören oder nur das Zeilenende sind, das der Erzeuger eingefügt hat.
+ * Rät man falsch, ist der gepackte Strom um ein Byte zu kurz und damit ganz
+ * unlesbar — und auf der Seite fehlt wortlos ein Absatz. Genau so
+ * verschwanden einzelne Zeilen aus hochgeladenen Lebensläufen: Ein Strom, der
+ * zufällig auf 0x0A oder 0x0D endet, wurde abgeschnitten.
+ *
+ * Deshalb: /Length zuerst, und danach beide Lesarten der Grenze als
+ * Rückfall — der erste Versuch, der sich entpacken lässt, gewinnt.
+ */
+function laengeVon(roh, objekte, koerper) {
+  const verweis = /\/Length\s+(\d+)\s+\d+\s+R/.exec(koerper);
+  if (verweis) {
+    const ziel = koerperVon(roh, objekte.get(parseInt(verweis[1], 10)));
+    const zahl = /\bobj\b\s*(\d+)/.exec(ziel || '');
+    return zahl ? parseInt(zahl[1], 10) : null;
+  }
+  const direkt = /\/Length\s+(\d+)(?!\s+\d+\s+R)/.exec(koerper);
+  return direkt ? parseInt(direkt[1], 10) : null;
+}
+
 async function stromBytes(roh, bytes, objekte, nummer) {
   const eintrag = objekte.get(nummer);
   if (!eintrag || eintrag.stelle === undefined) return null;   /* im Objektstrom: nie ein Strom */
@@ -135,22 +159,39 @@ async function stromBytes(roh, bytes, objekte, nummer) {
   const marke = /(?:^|[^A-Za-z])stream\r?\n/.exec(koerper);
   if (!marke) return null;
   const von = eintrag.stelle + marke.index + marke[0].length;
-  const bis = roh.indexOf('endstream', von);
-  if (bis < 0) return null;
-  let ende = bis;
-  while (ende > von && (roh[ende - 1] === '\n' || roh[ende - 1] === '\r')) ende--;
-  return { feld: bytes.subarray(von, ende), gepackt: /\/FlateDecode/.test(koerper) };
+
+  const enden = [];
+  const laenge = laengeVon(roh, objekte, koerper);
+  if (laenge !== null && laenge > 0 && von + laenge <= bytes.length) enden.push(von + laenge);
+  const roheGrenze = roh.indexOf('endstream', von);
+  if (roheGrenze > von) {
+    let getrimmt = roheGrenze;
+    while (getrimmt > von && (roh[getrimmt - 1] === '\n' || roh[getrimmt - 1] === '\r')) getrimmt--;
+    enden.push(getrimmt, roheGrenze);
+  }
+  if (!enden.length) return null;
+  const felder = [...new Set(enden)].map(ende => bytes.subarray(von, ende));
+  return { felder, feld: felder[0], gepackt: /\/FlateDecode/.test(koerper) };
+}
+
+async function entpacken(feld) {
+  for (const art of ['deflate', 'deflate-raw']) {
+    try {
+      const packe = new Blob([feld]).stream().pipeThrough(new DecompressionStream(art));
+      return new Uint8Array(await new Response(packe).arrayBuffer());
+    } catch (e) { /* nächster Versuch */ }
+  }
+  return null;
 }
 
 async function stromText(roh, bytes, objekte, nummer) {
   const strom = await stromBytes(roh, bytes, objekte, nummer);
   if (!strom) return null;
-  if (!strom.gepackt) return new TextDecoder('windows-1252').decode(strom.feld);
-  for (const art of ['deflate', 'deflate-raw']) {
-    try {
-      const packe = new Blob([strom.feld]).stream().pipeThrough(new DecompressionStream(art));
-      return new TextDecoder('windows-1252').decode(await new Response(packe).arrayBuffer());
-    } catch (e) { /* nächster Versuch */ }
+  const lesen = feld => new TextDecoder('windows-1252').decode(feld);
+  if (!strom.gepackt) return lesen(strom.feld);
+  for (const feld of strom.felder) {
+    const offen = await entpacken(feld);
+    if (offen) return lesen(offen);
   }
   return null;
 }
@@ -361,7 +402,61 @@ function grabenFinden(laeufe) {
 
 function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
 
-function zeilenAus(laeufe) { return laeufe.map(l => l.text); }
+/* Aus Läufen werden Zeilen — und aus einer offensichtlich umbrochenen Zeile
+   wieder ein Stück des Absatzes, zu dem sie gehört.
+
+   „Offensichtlich“ heißt hier: die nächste Zeile beginnt klein, oder die
+   vorige endet auf ein Wort, nach dem kein Satz enden kann — und beide stehen
+   eine Zeile auseinander, nicht zwei. Weiter geht die Geometrie nicht.
+
+   Es wäre verlockend, jede Zeile, die bis an den rechten Rand reicht, als
+   umbrochen zu lesen. Das trifft aber genauso auf einen langen
+   Aufzählungspunkt zu, und der wird dann mit dem nächsten verschmolzen: Aus
+   fünf Stationsaufgaben wird eine. Was an einem Zeilenende wirklich passiert,
+   entscheidet die Sprache, nicht der Satzspiegel — und die liest das Modell,
+   das den Abschnitt ohnehin in die Hand bekommt. Es weiß dann auch, ob es
+   eine Liste vor sich hat oder einen Absatz. */
+function zeilenAus(laeufe) {
+  if (laeufe.length < 2) return laeufe.map(l => l.text);
+  const abstaende = [];
+  for (let i = 1; i < laeufe.length; i++) {
+    const d = laeufe[i].y - laeufe[i - 1].y;
+    if (d > 0.5 && d < 60) abstaende.push(d);
+  }
+  abstaende.sort((a, b) => a - b);
+  const zeilenabstand = abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 0;
+
+  const aus = [];
+  let letzte = null, letzteY = 0;
+  for (const lauf of laeufe) {
+    if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand)) {
+      letzte.text = /[\u2010-\u2014-]$/.test(letzte.text)
+        ? letzte.text.slice(0, -1) + lauf.text
+        : letzte.text + ' ' + lauf.text;
+      letzteY = lauf.y;
+      continue;
+    }
+    letzte = { x: lauf.x, y: lauf.y, text: lauf.text };
+    letzteY = lauf.y;
+    aus.push(letzte);
+  }
+  return aus.map(l => l.text);
+}
+
+const HAENGEND = /(^|\s)(und|oder|sowie|mit|f\u00fcr|in|im|am|zur|zum|von|bis|der|die|das|den|des|ein|eine|einer|and|or|with|for|of|the|to|a|an|y|o|con|para|de)$/i;
+
+function gehoertDazu(oben, obenY, unten, zeilenabstand) {
+  const abstand = unten.y - obenY;
+  /* Eine Zeile weiter, nicht zwei — und nicht über das Luftholen hinweg, das
+     eine Liste zwischen ihren Punkten lässt. */
+  if (!(abstand > 0.5 && zeilenabstand > 0 && abstand <= zeilenabstand + 1.5)) return false;
+  if (Math.abs(unten.x - oben.x) > 3) return false;      /* andere Spalte, andere Einrückung */
+  if (oben.text.length <= 20) return false;
+  if (/[.;:!?)\]]$/.test(oben.text)) return false;
+  if (/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(unten.text)) return false;
+  if (/^\d/.test(unten.text)) return false;
+  return /^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(unten.text) || HAENGEND.test(oben.text);
+}
 
 /* Eine Kette aus ( ) ist bei einer Schrift mit Tabelle ebenfalls kodiert. */
 function entziffern(s, tabelle) {
@@ -452,17 +547,18 @@ function saeubern(text) {
    Stichpunkte, von denen einer Unsinn ist. Zusammengefügt wird nur, wo es
    eindeutig ist: die obere Zeile endet ohne Satzzeichen, die untere beginnt
    klein. Trennstriche am Zeilenende werden dabei aufgelöst. */
+/* Der zweite Durchgang, diesmal ohne Geometrie: Er fängt, was über eine
+   Seiten- oder Stromgrenze hinweg zusammengehört. Hier fehlt der senkrechte
+   Abstand als Merkmal, also bleibt es bei den sicheren Fällen — eine falsch
+   zusammengezogene Zeile ist schlimmer als eine zu viel. */
 function zusammenfuegen(zeilen) {
   const aus = [];
   for (const zeile of zeilen) {
     const oben = aus.length ? aus[aus.length - 1] : null;
-    /* Zwei sichere Fälle: die untere Zeile beginnt klein, oder die obere
-       endet auf ein Wort, nach dem kein Satz enden kann. Alles andere bleibt
-       getrennt — eine falsch zusammengezogene Zeile ist schlimmer als eine
-       zu viel, und ein Sprachmodell bringt beides in Ordnung. */
-    const haengend = /(^|\s)(und|oder|sowie|mit|f\u00fcr|in|im|am|zur|zum|von|bis|der|die|das|den|des|ein|eine|einer|and|or|with|for|of|the|to|a|an|y|o|con|para|de)$/i.test(oben || '');
+    const haengend = HAENGEND.test(oben || '');
     const passt = oben && oben.length > 20 &&
       !/[.;:!?)\]]$/.test(oben) &&
+      !/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(zeile) &&
       !/^\d/.test(zeile) &&
       (/^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(zeile) || haengend);
     if (!passt) { aus.push(zeile); continue; }
@@ -471,6 +567,8 @@ function zusammenfuegen(zeilen) {
   }
   return aus;
 }
+
+
 
 /* ------------------------------------------------------------------ Bilder
  *
@@ -540,12 +638,9 @@ async function ausRohbild(koerper, strom) {
   let feld = strom.feld;
   if (strom.gepackt) {
     feld = null;
-    for (const art of ['deflate', 'deflate-raw']) {
-      try {
-        const packe = new Blob([strom.feld]).stream().pipeThrough(new DecompressionStream(art));
-        feld = new Uint8Array(await new Response(packe).arrayBuffer());
-        break;
-      } catch (e) { /* nächster Versuch */ }
+    for (const kandidat of strom.felder) {
+      feld = await entpacken(kandidat);
+      if (feld) break;
     }
     if (!feld) return null;
   }

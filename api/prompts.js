@@ -137,9 +137,23 @@ THE RANGES
   no overlaps. A line that stands under a heading belongs to that section, and
   a line under no heading at all belongs to the section above it.
 - The heading line itself belongs to its section ("von" points at it).
-- The name, the job title and a photo caption at the very top belong to no
-  section: start the first section below them. Contact lines at the top ARE a
-  section — "kontakt" with an empty "titel".
+
+THE TOP OF THE DOCUMENT — where this goes wrong most often
+Only three kinds of line stand outside every section: the person's name, one
+short job title under it, and a photo caption. Everything else at the top is a
+section, even without a heading:
+- Contact lines (address, phone, mail, date of birth) are a "kontakt" section
+  with an empty "titel".
+- A paragraph about the person — what they have done, how long, what they are
+  good at — is a "profil" section with an empty "titel". It is NOT the job
+  title, however closely it follows the name.
+"kopf.rolle" is a title, not a sentence: "Pflegefachkraft", "Projektmanager
+Digitalisierung", "Senior Consultant". At most six words, no full stop, no
+comma-separated clauses. If the line under the name is longer than that, or
+reads like the beginning of a sentence, leave "rolle" empty and let that line
+start the "profil" section. Half a sentence in "rolle" and the other half in a
+section is the worst possible answer: the text is torn in two and the seam is
+invisible.
 
 THE KINDS
   kontakt        address, phone, mail, date of birth, links, nationality
@@ -151,6 +165,12 @@ THE KINDS
   liste          anything that is a list of short items: skills, software,
                  interests, licences, strengths
   text           prose that is none of the above
+
+WRAPPED LINES
+This text was extracted from a page, so a paragraph is broken at the right
+margin and arrives as several numbered lines. Six lines of prose under the
+name are ONE section, not six. Judge a block by what it says, not by how many
+lines it occupies.
 
 RULES
 1. "titel" is copied from the document, letter for letter. Do not translate it,
@@ -204,7 +224,19 @@ ABSOLUTE RULES
 6. Dates keep the granularity of the source: "2019" stays "2019", "03/2019"
    stays "03/2019".
 7. A line you cannot place is still not dropped — put it in the nearest entry's
-   "punkte", or, for "liste" and "text", as an entry of its own.`;
+   "punkte", or, for "liste" and "text", as an entry of its own.
+
+WRAPPED LINES
+The lines come from a page and break at the right margin, not at the end of a
+thought. A line that ends mid-sentence continues on the next one: put them
+back together with a space between them.
+- For "profil" and "text": one entry per PARAGRAPH, not per line. Six lines of
+  one paragraph are one entry.
+- For "liste": one entry per item. An item that ran over two lines is one
+  entry; two items that happen to sit on one line stay two.
+- For "beruf" and "ausbildung": the same for the "punkte".
+Joining is not rewriting: the words, their order and their punctuation stay
+exactly as they are.`;
 
 /* ------------------------------------------------------------ zuschneiden */
 /* Der Zuschnitt schreibt den Lebenslauf nicht neu, er schlägt einzelne

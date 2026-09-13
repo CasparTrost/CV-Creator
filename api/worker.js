@@ -224,16 +224,30 @@ async function nachGliederung(text, umgebung) {
 
   const kopf = {
     name: sauberText(plan.kopf && plan.kopf.name, 120),
-    rolle: sauberText(plan.kopf && plan.kopf.rolle, 120),
+    rolle: sauberText(plan.kopf && plan.kopf.rolle, 200),
     profil: '',
   };
 
-  /* Was über dem ersten Abschnitt steht und nicht Name oder Rolle ist, sind
-     fast immer die Kontaktzeilen. Sie bekommen einen eigenen Abschnitt,
-     statt zwischen Kopf und erstem Abschnitt zu verschwinden. */
+  /* Eine Berufsbezeichnung ist ein Titel, kein Satz. Steht dort ein Satz, hat
+     das Modell den Anfang des Kurzprofils erwischt — und der Rest steht dann
+     als eigener Abschnitt darunter, mit unsichtbarer Naht. Also zurück in den
+     Text damit. */
+  const rolleRoh = kopf.rolle;          /* für den Vergleich weiter unten */
+  const ausRolle = [];
+  if (istFliesstext(kopf.rolle)) { ausRolle.push(kopf.rolle); kopf.rolle = ''; }
+
+  /* Was über dem ersten Abschnitt steht und weder Name noch Rolle ist, darf
+     nicht zwischen Kopf und erstem Abschnitt verschwinden. Kontaktzeilen
+     werden ein Kontaktabschnitt, Fließtext wird Kurzprofil. */
   const stapel = bereiche.map(b => ({ ...b, zeilen: zeilen.slice(b.von - 1, b.bis) }));
-  const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].von - 1), kopf);
-  if (vorspann.length) stapel.unshift({ titel: '', art: 'kontakt', zeilen: vorspann });
+  /* Verglichen wird mit dem, was oben stand, bevor die Rolle in den Text
+     zurückgegeben wurde — sonst stünde dieselbe Zeile zweimal da. */
+  const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].von - 1),
+                                    { name: kopf.name, rolle: rolleRoh });
+  const vorText = ohneDoppel(ausRolle.concat(vorspann.filter(istFliesstext)));
+  const vorDaten = vorspann.filter(z => !istFliesstext(z));
+  if (vorDaten.length) stapel.unshift({ titel: '', art: 'kontakt', zeilen: vorDaten });
+  if (vorText.length) stapel.unshift({ titel: '', art: 'profil', zeilen: vorText });
 
   const gelesen = await Promise.all(stapel.map(b => abschnittLesen(b, umgebung)));
 
@@ -244,15 +258,39 @@ async function nachGliederung(text, umgebung) {
     if (!a.eintraege.length) return;
     /* Ein kurzes Kurzprofil gehört in den Kopf — aber nur dorthin. Beides
        zu setzen war der Grund, warum es zweimal auf dem Blatt stand. */
-    if (a.art === 'profil' && !kopf.profil) {
-      const ganz = a.eintraege.join(' ').trim();
-      if (ganz.length <= 420) { kopf.profil = ganz; return; }
+    if (a.art === 'profil') {
+      /* Ein Kurzprofil gibt es einmal. Findet das Modell es in zwei Stücken —
+         etwa weil es über einer Überschrift anfängt —, werden sie eines. */
+      const schon = abschnitte.find(x => x.art === 'profil');
+      if (schon){ schon.eintraege = schon.eintraege.concat(a.eintraege); return; }
     }
     abschnitte.push({ titel: a.titel, art: a.art, eintraege: a.eintraege });
   });
 
+  /* Jetzt, wo alle Stücke beisammen sind: Ein kurzes Kurzprofil gehört ins
+     Kopfband, ein langes bleibt ein Abschnitt. Beides zusammen wäre es
+     zweimal auf dem Blatt. */
+  const profil = abschnitte.find(a => a.art === 'profil');
+  if (profil) {
+    const ganz = profil.eintraege.join(' ').replace(/\s+/g, ' ').trim();
+    if (ganz.length <= 420) {
+      kopf.profil = ganz;
+      abschnitte.splice(abschnitte.indexOf(profil), 1);
+    }
+  }
   if (!abschnitte.length && !kopf.profil) return await amStueck(text, umgebung);
-  return { lebenslauf: { sprache: spracheVon(plan), kopf, abschnitte }, nachgetragen, offen: 0 };
+
+  const lebenslauf = { sprache: spracheVon(plan), kopf, abschnitte };
+  /* Das letzte Netz: Was trotz allem nirgends angekommen ist, steht am Ende
+     des Blattes statt nirgends. Die Überschriften selbst zählen nicht mit —
+     sie stehen in keinem Eintrag, ohne dass etwas fehlt. */
+  const bekannt = abschnitte.map(a => a.titel).filter(Boolean);
+  const offen = fehlendeZeilen(text, lebenslauf).filter(z => !bekannt.some(t => gleicheWorte(z, t)));
+  if (offen.length) {
+    abschnitte.push({ titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de,
+                      art: 'liste', eintraege: offen.slice(0, 30) });
+  }
+  return { lebenslauf, nachgetragen, offen: offen.length };
 }
 
 function spracheVon(plan) {
@@ -291,6 +329,26 @@ function bereicheOrdnen(liste, anzahl) {
   });
   if (aus.length) aus[aus.length - 1].bis = anzahl;   /* bis zur letzten Zeile */
   return aus;
+}
+
+/* Satz oder Angabe? Ein Kurzprofil besteht aus Sätzen, eine Kontaktzeile aus
+   einer Adresse, einer Nummer, einem Datum. Entschieden wird an der Länge und
+   daran, ob mehrere Wörter aufeinanderfolgen — nicht am Inhalt. */
+function istFliesstext(zeile) {
+  const text = String(zeile || '').trim();
+  if (text.length < 60) return false;
+  if (/@|^\+?[\d\s()/-]{7,}$/.test(text)) return false;
+  return text.split(/\s+/).length >= 9;
+}
+
+function ohneDoppel(zeilen) {
+  const gesehen = new Set();
+  return zeilen.filter(z => {
+    const schluessel = worte(z).join(' ');
+    if (!schluessel || gesehen.has(schluessel)) return false;
+    gesehen.add(schluessel);
+    return true;
+  });
 }
 
 function uebrigerVorspann(zeilen, kopf) {
