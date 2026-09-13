@@ -22,7 +22,14 @@ npx wrangler secret put COMETAPI_KEY      # der Schlüssel von cometapi.com
 npx wrangler deploy
 ```
 
-**Zum bloßen Anschauen braucht es das alles nicht:** `python3 tools/serve.py`
+**Der kürzeste Weg zum echten Modell** führt nicht über das Deployment:
+`tools\ki-start.cmd` (Windows) fragt einmal nach dem Schlüssel, legt ihn in
+`api/.dev.vars` ab und startet `npx wrangler dev`. Der Editor findet den
+Dienst auf `localhost:8787` von selbst und schaltet den Testbetrieb ab — ohne
+Cloudflare-Konto, ohne Veröffentlichung, ohne dass irgendwo etwas einzutragen
+wäre. Auf anderen Systemen ist es `cd api && npx wrangler dev`.
+
+**Zum bloßen Anschauen braucht es auch das nicht:** `python3 tools/serve.py`
 beantwortet dieselben Wege selbst mit erfundenen Antworten, und der Editor
 findet sie auf localhost von allein — erkennbar am Vermerk „Testbetrieb“ in
 der Leiste. Erst wenn echte Antworten kommen sollen, gilt das hier.

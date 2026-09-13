@@ -208,6 +208,7 @@ advertisers pay for.
 | `node tools/make-hero.js` | Re-photographs the editor for the landing pages (needs Playwright and a running server) |
 | `python3 tools/serve.py [port]` | Serves the site locally: 404 handling, no caching, and the AI test mode under `/api` |
 | `tools\serve.cmd [port]` | The same, for Windows |
+| `tools\ki-start.cmd` | Starts the AI worker on this machine (asks for the key once, then `wrangler dev`) |
 
 Python 3.8 or newer is the only requirement, and only for the tools — the
 site itself is plain HTML and needs nothing.
@@ -364,6 +365,12 @@ failed read is visible rather than silent. During development the dev
 server answers `/api/…` itself with canned replies, and the editor finds them
 on localhost without anything being configured — labelled *Testbetrieb* in the
 panel, because a test mode mistaken for the real thing is worse than none.
+
+A real worker running next to it wins that competition automatically: the
+editor asks `localhost:8787` once at startup, and if something answers, it
+uses that and drops the badge. So `tools\ki-start.cmd` (or `npx wrangler dev`
+in `api/`) is the whole step from canned replies to a real model — nothing to
+edit, nothing to undo afterwards.
 
 **Switching it on changes the site's own claims.** The build reads the config:
 with an AI endpoint set, the privacy pages gain a section on what is sent
