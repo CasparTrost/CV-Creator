@@ -631,16 +631,47 @@ function zeilenAus(laeufe) {
   abstaende.sort((a, b) => a - b);
   const zeilenabstand = abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 0;
 
+  /* Wo eine Spalte ihren rechten Rand hat, steht nirgends geschrieben — aber
+     wo mehrere Zeilen an derselben Stelle aufhören, ist er. Und eine Zeile,
+     die ihn erreicht, ist nicht zu Ende: Sie ist umbrochen, und was folgt,
+     gehört dazu, auch wenn es groß anfängt. Ohne das wurde aus einem
+     dreizeiligen Stichpunkt einer mit zwei Zeilen und ein zweiter, der mit
+     „Orchestrator- und …“ anfing und niemandem gehörte.
+     Zwischen zwei Stichpunkten steht das Aufzählungszeichen als eigener Lauf
+     und eine Einrückung weiter links — daran scheitert dieser Weg, und genau
+     deshalb zieht er nicht zwei Stichpunkte zusammen. */
+  const proZeichen = (zeilenabstand || 12) * 0.22;
+  const ende = (l) => l.x + Math.min(l.text.length, 200) * proZeichen;
+  const enden = laeufe.map(ende);
+  const weit = Math.max(...enden) * 0.88;
+  const amRand = enden.filter(e => e >= weit).length >= 3 ? weit : Infinity;
+
+  /* Nur bei Stichpunkten, und nur bei solchen mit einem geschriebenen
+     Aufzählungszeichen. Denn dort — und nur dort — fängt ein neuer Punkt mit
+     seinem eigenen Zeichen an, das eine Einrückung weiter links steht: Die
+     Kette reißt von selbst, und „bis an den Rand“ kann gar nichts anderes
+     heißen als „umbrochen“. Wer die Punkte malt statt sie zu schreiben —
+     unsere eigenen PDFs tun das —, gibt diese Sicherheit nicht her; dann
+     bliebe von zwei kurzen Stichpunkten hintereinander einer übrig. */
+  const punktX = [];
+  laeufe.forEach(g => {
+    if (!MARKE_ALLEIN.test(g.text)) return;
+    const rechts = laeufe.find(l => l !== g && Math.abs(l.y - g.y) <= 2 && l.x > g.x);
+    if (rechts) punktX.push(rechts.x);
+  });
+  const imPunkt = (x) => punktX.some(p => Math.abs(p - x) <= 3);
+
   const aus = [];
-  let letzte = null, letzteY = 0;
+  let letzte = null, letzteY = 0, letztesEnde = 0;
   for (const lauf of laeufe) {
-    if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand)) {
-      letzte.text = /[\u2010-\u2014-]$/.test(letzte.text)
-        ? letzte.text.slice(0, -1) + lauf.text
-        : letzte.text + ' ' + lauf.text;
+    const randErreicht = letzte && letztesEnde >= amRand && imPunkt(letzte.x);
+    if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand, randErreicht)) {
+      letzte.text = verbinden(letzte.text, lauf.text);
       letzteY = lauf.y;
+      letztesEnde = ende(lauf);
       continue;
     }
+    letztesEnde = ende(lauf);
     /* Luft zwischen zwei Zeilen ist eine Aussage: Hier endet etwas. Sie wird
        als Leerzeile festgehalten, damit der spätere Durchgang ohne Geometrie
        sie nicht überschreibt — er hat sonst die Zeile mit dem nächsten
@@ -657,19 +688,54 @@ function zeilenAus(laeufe) {
 /* Nur eine Marke, kein Text: „hier war Luft“. */
 const ABSATZ = { text: '' };
 
+/* Ein Aufzählungszeichen, das allein auf einer Zeile steht. */
+const MARKE_ALLEIN = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]$/;
+
 const HAENGEND = /(^|\s)(und|oder|sowie|mit|f\u00fcr|in|im|am|zur|zum|von|bis|der|die|das|den|des|ein|eine|einer|and|or|with|for|of|the|to|a|an|y|o|con|para|de)$/i;
 
-function gehoertDazu(oben, obenY, unten, zeilenabstand) {
+/* Eine Zeile, die auf einen Bindestrich endet, hört nicht auf — sie wartet. */
+const OFFEN = /[\wÀ-ÿ][\u2010-\u2014-]$/;
+/* Was nach einem Ergänzungsstrich kommt: „Vertrags- und Buchhaltungswesen“. */
+const ANHANG = /^(und|oder|bzw\.?|sowie|beziehungsweise|and|or|y|o)\b/i;
+
+/* Zwei Zeilen werden eine. Wie sie zusammenkommen, verrät das Ende der oberen:
+ *
+ *   „Ver-“      + „änderung“       -> „Veränderung“        getrenntes Wort
+ *   „KI-“       + „gestützter“     -> „KI-gestützter“      Abkürzung, der Strich gehört dazu
+ *   „Software-“ + „Entwicklung“    -> „Software-Entwicklung“  zusammengesetztes Wort
+ *   „Vertrags-“ + „und Buch…“      -> „Vertrags- und Buch…“   Ergänzungsstrich
+ *   „…/i“       + „n/muster…“      -> „…/in/muster…“       Adresse, kein Raum darin
+ *
+ * Die Unterscheidung trägt weit, weil im Deutschen der zweite Teil eines
+ * zusammengesetzten Wortes groß anfängt und eine Worttrennung klein. Bleibt
+ * die Abkürzung: „KI-“, „RAG-“, „LLM-“ — dort steht der Strich fest, egal was
+ * folgt. Alles andere bekommt ein Leerzeichen. */
+function verbinden(oben, unten) {
+  if (OFFEN.test(oben)) {
+    if (ANHANG.test(unten)) return oben + ' ' + unten;
+    const wort = (oben.slice(0, -1).match(/[\wÀ-ÿ]+$/) || [''])[0];
+    const fest = /^[A-ZÀ-Þ0-9]{2,}$/.test(wort) || /^[A-ZÀ-Þ]/.test(unten);
+    return fest ? oben + unten : oben.slice(0, -1) + unten;
+  }
+  /* Eine Adresse bricht mitten im Pfad um; ein Leerzeichen macht sie kaputt. */
+  if (/(https?:\/\/|www\.)\S*$/.test(oben) && !/[.,;:!?]$/.test(oben)) return oben + unten;
+  return oben + ' ' + unten;
+}
+
+function gehoertDazu(oben, obenY, unten, zeilenabstand, amRand) {
   const abstand = unten.y - obenY;
   /* Eine Zeile weiter, nicht zwei — und nicht über das Luftholen hinweg, das
      eine Liste zwischen ihren Punkten lässt. */
   if (!(abstand > 0.5 && zeilenabstand > 0 && abstand <= zeilenabstand + 1.5)) return false;
   if (Math.abs(unten.x - oben.x) > 3) return false;      /* andere Spalte, andere Einrückung */
   if (oben.text.length <= 20) return false;
-  if (/[.;:!?)\]]$/.test(oben.text)) return false;
+  /* „…(Mendix)“ ist kein Satzende — eine Klammer schließt eine Einfügung,
+     nicht den Gedanken. Nur echte Satzzeichen halten hier an. */
+  if (/[.;:!?]$/.test(oben.text)) return false;
   if (/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(unten.text)) return false;
   if (/^\d/.test(unten.text)) return false;
-  return /^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(unten.text) || HAENGEND.test(oben.text);
+  return /^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(unten.text)
+      || HAENGEND.test(oben.text) || OFFEN.test(oben.text) || amRand === true;
 }
 
 /* Eine Kette aus ( ) ist bei einer Schrift mit Tabelle ebenfalls kodiert. */
@@ -773,20 +839,19 @@ function zusammenfuegen(zeilen) {
     /* Ein Aufzählungszeichen steht im PDF oft als eigener Lauf — es wird an
        einer anderen Stelle gesetzt als der Text dahinter. Allein ist es keine
        Zeile, sondern der Anfang der nächsten. */
-    if (/^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]$/.test(roh)) { marke = '• '; continue; }
+    if (MARKE_ALLEIN.test(roh)) { marke = '• '; continue; }
     if (!roh) { aus.push(''); continue; }          /* Luft trennt, sie steht nicht */
     const zeile = marke + roh;
     marke = '';
     const oben = aus.length ? aus[aus.length - 1] : null;
     const haengend = HAENGEND.test(oben || '');
     const passt = oben && oben.length > 20 &&
-      !/[.;:!?)\]]$/.test(oben) &&
+      !/[.;:!?]$/.test(oben) &&
       !/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(zeile) &&
       !/^\d/.test(zeile) &&
-      (/^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(zeile) || haengend);
+      (/^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(zeile) || haengend || OFFEN.test(oben));
     if (!passt) { aus.push(zeile); continue; }
-    if (/[\u2010-\u2014-]$/.test(oben)) aus[aus.length - 1] = oben.slice(0, -1) + zeile;
-    else aus[aus.length - 1] = oben + ' ' + zeile;
+    aus[aus.length - 1] = verbinden(oben, zeile);
   }
   return aus;
 }
