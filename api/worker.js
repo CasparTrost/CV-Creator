@@ -268,8 +268,8 @@ async function nachGliederung(text, umgebung) {
      zurückgegeben wurde — sonst stünde dieselbe Zeile zweimal da. */
   const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].anfang - 1),
                                     { name: kopf.name, rolle: rolleRoh });
-  const vorText = ohneDoppel(ausRolle.concat(vorspann.filter(istFliesstext)));
-  const vorDaten = vorspann.filter(z => !istFliesstext(z));
+  const vorText = ohneDoppel(ausRolle.concat(vorspann.filter(z => !istKontaktZeile(z))));
+  const vorDaten = vorspann.filter(istKontaktZeile);
   if (vorDaten.length) stapel.unshift({ titel: '', art: 'kontakt', zeilen: vorDaten });
   if (vorText.length) stapel.unshift({ titel: '', art: 'profil', zeilen: vorText });
 
@@ -282,6 +282,13 @@ async function nachGliederung(text, umgebung) {
     if (!a.eintraege.length) return;
     /* Ein kurzes Kurzprofil gehört in den Kopf — aber nur dorthin. Beides
        zu setzen war der Grund, warum es zweimal auf dem Blatt stand. */
+    /* Dieselbe Überschrift zweimal heißt nicht, dass der Lebenslauf sie
+       zweimal hat — es heißt, dass das Modell einen Abschnitt zerschnitten
+       hat. Auf dem Blatt standen sonst zwei „PERSONAL DATA“: eines in der
+       Leiste mit der Anschrift, eines in der breiten Spalte mit dem
+       Geburtsdatum. */
+    const gleicher = a.titel && abschnitte.find(x => x.art === a.art && gleicheWorte(x.titel, a.titel));
+    if (gleicher) { gleicher.eintraege = gleicher.eintraege.concat(a.eintraege); return; }
     if (a.art === 'profil') {
       /* Ein Kurzprofil gibt es einmal. Findet das Modell es in zwei Stücken —
          etwa weil es über einer Überschrift anfängt —, werden sie eines. */
@@ -413,11 +420,11 @@ function bereicheOrdnen(liste, zeilen) {
   zusammen.forEach(a => { if (!a.titel) titelNachholen(a, zeilen); });
   zusammen.forEach((a, i) => {
     const naechster = zusammen[i + 1];
-    if (naechster) a.bis -= randZeilen(zeilen, a.bis, a.von, -1, naechster.titel);
+    if (naechster) a.bis -= schlussZeilen(zeilen, a.bis, a.von, naechster.titel);
     /* „anfang“ ist der Anfang samt Überschrift. Was davor steht, ist der
        Vorspann des Dokuments — die Überschrift selbst gehört nicht dazu. */
     a.anfang = a.von;
-    a.von += randZeilen(zeilen, a.von, a.bis, 1, a.titel);
+    ueberschriftFassen(a, zeilen);
     if (a.bis < a.von) a.bis = a.von;
   });
   return zusammen;
@@ -431,22 +438,53 @@ function istStationsTitel(titel) {
   return /\d{1,2}\/\d{2,4}|\b(19|20)\d{2}\b/.test(t) || t.length > 55;
 }
 
-/* Wie viele Zeilen am Rand eines Bereichs sind Teil dieser Überschrift?
-   Gezählt wird von „start“ aus in Richtung „schritt“, höchstens drei, und nur
-   solange jedes Wort der Zeile auch in der Überschrift steht. */
-function randZeilen(zeilen, start, grenze, schritt, titel) {
+/* Wie viele Zeilen am Ende eines Bereichs gehören schon zur nächsten
+   Überschrift? Höchstens drei, und nur solange jede Zeile aus Wörtern dieser
+   Überschrift besteht — oder die ganze Überschrift enthält und kaum mehr. */
+function schlussZeilen(zeilen, bis, von, titel) {
   const teil = new Set(worte(titel));
   if (!teil.size) return 0;
   let weg = 0;
-  while (weg < 3) {
-    const nr = start + weg * schritt;
-    if (schritt > 0 ? nr >= grenze : nr <= grenze) break;
-    const w = worte(zeilen[nr - 1]);
-    if (!w.length || w.length > 4 || !w.every(x => teil.has(x))) break;
+  while (weg < 3 && bis - weg > von) {
+    const w = worte(zeilen[bis - weg - 1]);
+    if (!w.length || w.length > 4) break;
+    const drin = w.every(x => teil.has(x));
+    const umgekehrt = w.length <= teil.size + 1 && [...teil].every(x => w.includes(x));
+    if (!drin && !umgekehrt) break;
     weg++;
   }
   return weg;
 }
+
+/* Die Überschrift steht im Dokument, und dort wird sie geholt.
+ *
+ * Sie kann über zwei Zeilen gehen („ZUSÄTZLICHE“ / „QUALIFIKATIONEN“), das
+ * Modell kann sie halb mitgeschickt haben („PERSONAL“ statt „PERSONAL DATA“)
+ * oder gar nicht. In allen drei Fällen sind die überschriftartigen Zeilen am
+ * Anfang des Abschnitts die Überschrift: Sie werden abgeschnitten, und wenn
+ * sie mehr hergeben als der gelieferte Titel, wird das der Titel.
+ *
+ * Überschriftartig heißt: kurz, ohne Zahl, ohne Trenner, ohne
+ * Aufzählungszeichen davor — und entweder in Versalien oder aus Wörtern, die
+ * schon im Titel stehen. Alles andere ist eine Angabe und bleibt stehen;
+ * „Realschule – Nürnberg“ als Titel zu nehmen hieße, sie zu streichen. */
+function ueberschriftFassen(bereich, zeilen) {
+  const teil = new Set(worte(bereich.titel));
+  const gesammelt = [];
+  for (let nr = bereich.von; nr <= bereich.bis && gesammelt.length < 3; nr++) {
+    const zeile = String(zeilen[nr - 1] || '').trim();
+    if (!istUeberschrift(zeile) || MARKE_VORN.test(zeile)) break;
+    const w = worte(zeile);
+    if (!(w.length && w.every(x => teil.has(x))) && !istVersal(zeile)) break;
+    gesammelt.push(zeile);
+  }
+  if (!gesammelt.length) return;
+  bereich.von += gesammelt.length;
+  const neu = gesammelt.join(' ');
+  if (worte(neu).length >= teil.size) bereich.titel = sauberText(neu, 80);
+}
+
+const MARKE_VORN = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]/;
 
 /* Ein Abschnitt ohne Titel, dessen Überschrift im Dokument sehr wohl steht.
    Dann ist sie sein Titel und gehört aufs Blatt — nicht unser Ersatzwort, und
@@ -461,11 +499,31 @@ function randZeilen(zeilen, start, grenze, schritt, titel) {
 function titelNachholen(bereich, zeilen) {
   for (let nr = bereich.von; nr >= Math.max(1, bereich.von - 2); nr--) {
     const zeile = String(zeilen[nr - 1] || '').trim();
-    if (!zeile || /\d/.test(zeile) || worte(zeile).length > 4) continue;
-    if (artVon(zeile) !== bereich.art) continue;
+    if (!istUeberschrift(zeile) || MARKE_VORN.test(zeile)) continue;
+    /* Ein Rubrikname allein ist eine Überschrift, zwei Wörter mit einem
+       Rubriknamen darin sind es nicht: „Annähernd muttersprachliche“ enthält
+       „sprach“ und ist trotzdem eine Angabe. Sie zum Titel zu machen hieße,
+       sie vom Blatt zu nehmen — in Versalien dagegen ist die Sache klar. */
+    const rubrik = artVon(zeile) === bereich.art && worte(zeile).length === 1;
+    if (!rubrik && !istVersal(zeile)) continue;
     bereich.titel = sauberText(zeile, 80);
     return;
   }
+}
+
+/* Eine Überschrift ist kurz, trägt keine Zahl und keinen Trenner. „Realschule
+   – Nürnberg“ ist eine Angabe, keine Rubrik; sie zum Titel zu machen hieße,
+   sie vom Blatt zu streichen — und genau das ist passiert. */
+function istUeberschrift(zeile) {
+  if (!zeile || /\d/.test(zeile)) return false;
+  if (/[|\u2013\u2014,;:]/.test(zeile)) return false;
+  return worte(zeile).length >= 1 && zeile.split(/\s+/).length <= 4;
+}
+
+/* Versalien sind das verlässlichste Zeichen für eine Überschrift — und das
+   einzige, das auch bei „INTERESSEN“ noch trägt, wo kein Rubrikname passt. */
+function istVersal(zeile) {
+  return !/\p{Ll}/u.test(zeile) && /\p{Lu}/u.test(zeile);
 }
 
 /* Satz oder Angabe? Ein Kurzprofil besteht aus Sätzen, eine Kontaktzeile aus
@@ -476,6 +534,29 @@ function istFliesstext(zeile) {
   if (text.length < 60) return false;
   if (/@|^\+?[\d\s()/-]{7,}$/.test(text)) return false;
   return text.split(/\s+/).length >= 9;
+}
+
+/* Gehört die Zeile in den Kontaktblock?
+ *
+ * Gefragt wird nach dem, was dort steht — Anschrift, Telefon, Mail,
+ * Geburtsdatum, Adresse im Netz —, nicht nach der Länge. Vorher entschied
+ * das die Frage „ist das Fließtext?“, und die hängt an neun Wörtern: Eine
+ * umbrochene Zeile mitten aus dem Kurzprofil hat oft acht und stand deshalb
+ * als Kontaktangabe unter dem Geburtsdatum. */
+const KONTAKTMUSTER = [
+  /@[\w.-]+\.\w{2,}/,                          /* Mail */
+  /^\+?[\d\s()/.-]{7,}$/,                      /* Telefon */
+  /^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/,           /* Geburtsdatum */
+  /https?:\/\/|www\.|linkedin|xing|github/i,   /* Netz */
+  /\b\d{5}\b/,                                 /* Postleitzahl */
+];
+
+function istKontaktZeile(zeile) {
+  const t = String(zeile || '').trim();
+  if (!t) return false;
+  if (KONTAKTMUSTER.some(m => m.test(t))) return true;
+  /* Und was kurz ist und nicht wie ein Satz endet: „Nürnberg“, „ledig“. */
+  return t.split(/\s+/).length <= 3 && !/[.!?]$/.test(t);
 }
 
 function ohneDoppel(zeilen) {
@@ -708,8 +789,46 @@ function nachtragVerteilen(art, eintraege, zeilen, fehlt) {
     if (treffer) { aktuell = treffer; return; }
     if (!fehlend.has(zeile)) return;
     if (!Array.isArray(aktuell.punkte)) aktuell.punkte = [];
-    aktuell.punkte.push(zeile);
+    punktEinfuegen(aktuell.punkte, zeile);
   });
+}
+
+/* Eine nachgetragene Zeile ersetzt, was schon in ihr steckt.
+ *
+ * Das Modell hatte „1,5“ als Punkt notiert — die Note ohne das Wort davor.
+ * Die Vollständigkeitsprüfung sieht die Zeile „Abschluss: 1,5“ und hält sie
+ * für verloren, weil das Wort fehlt. Beides nebeneinander, und die Note steht
+ * zweimal auf dem Blatt. Die längere Fassung ist die vollständigere: Sie
+ * tritt an die Stelle der kürzeren, statt sich danebenzustellen. */
+function punktEinfuegen(punkte, zeile) {
+  const neu = stuecke(zeile);
+  if (!neu.length) return;
+  const stelle = punkte.findIndex(p => {
+    const alt = stuecke(p);
+    return alt.length && alt.length < neu.length && folgeDrin(alt, neu);
+  });
+  if (stelle >= 0) { punkte[stelle] = zeile; return; }
+  /* Steht die Zeile schon irgendwo, kommt sie nicht noch einmal dazu. Ein
+     einzelnes Wort beweist das aber nicht: „Nürnberg“ steht bei jeder Station
+     und wäre sonst nirgends mehr aufgetaucht. */
+  if (neu.length >= 2 && punkte.some(p => folgeDrin(neu, stuecke(p)))) return;
+  punkte.push(zeile);
+}
+
+/* Wie „worte“, aber ohne Mindestlänge: Zahlen und Kürzel zählen mit. Für den
+   Vergleich zweier Stichpunkte sind gerade sie das Unterscheidende — „1,5“
+   ist die ganze Aussage. */
+function stuecke(text) {
+  return String(text || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ').filter(Boolean);
+}
+
+/* Steht die Wortfolge a zusammenhängend in b? */
+function folgeDrin(a, b) {
+  if (!a.length || a.length > b.length) return false;
+  for (let i = 0; i + a.length <= b.length; i++)
+    if (a.every((w, k) => w === b[i + k])) return true;
+  return false;
 }
 
 /* Nennt diese Zeile den Eintrag — seinen Titel, seinen Arbeitgeber, seine
@@ -731,7 +850,7 @@ function eintragNachtragen(art, eintraege, zeile) {
   const letzter = eintraege[eintraege.length - 1];
   if ((art === 'beruf' || art === 'ausbildung') && letzter) {
     if (!Array.isArray(letzter.punkte)) letzter.punkte = [];
-    letzter.punkte.push(zeile);
+    punktEinfuegen(letzter.punkte, zeile);
     return;
   }
   eintraege.push(ersatzEintrag(art, zeile));
@@ -743,7 +862,10 @@ function eintragNachtragen(art, eintraege, zeile) {
    nicht. Deshalb wird nicht geglaubt, sondern nachgezählt: Welche Zeile
    findet sich im Ergebnis nicht wieder? */
 
-const NEBENSACHE = /^(lebenslauf|curriculum vitae|cv|resume|résumé|seite \d+|\d+\s*\/\s*\d+|\d+)$/i;
+/* Seitenzahlen und Deckblattwörter. Die Ziffernfolge ist auf drei Stellen
+   begrenzt: „017623771264“ ist keine Seitenzahl, sondern eine Telefonnummer,
+   und sie fiel hier still aus dem Kontaktabschnitt heraus. */
+const NEBENSACHE = /^(lebenslauf|curriculum vitae|cv|resume|résumé|seite \d+|\d{1,3}\s*\/\s*\d{1,3}|\d{1,3})$/i;
 
 function worte(text) {
   return String(text || '').toLowerCase()
@@ -783,30 +905,51 @@ function alleTexte(objekt) {
  * streng beantwortete Frage die Zeile ein zweites Mal aufs Blatt brächte,
  * gilt sie auch dann als vorhanden, wenn fast alle ihre Wörter da sind.
  */
-function istDrin(zeile, folge, einzeln) {
+/* Alles zusammengeschrieben, ohne Punkte und Leerzeichen: „B. Eng. :“ wird
+   zu „beng“. Das ist grob, aber es ist der einzige Weg, eine Zeile
+   wiederzufinden, die aus lauter kurzen Stücken besteht. */
+function knapp(text) {
+  return String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+function istDrin(zeile, folge, einzeln, engFolge) {
   const w = worte(zeile);
-  if (!w.length) return true;
+  /* „M.A. :“, „B. Eng. :“, „B. A. :“ — kein einziges Wort mit vier Buchstaben,
+     und damit für den Vergleich unsichtbar. Genau das sind die Abschlüsse:
+     Sie verschwanden spurlos, und niemandem fiel etwas auf, weil die
+     Vollständigkeitsprüfung sie nie vermisst hat. */
+  if (!w.length) {
+    const k = knapp(zeile);
+    return !k || String(engFolge || '').includes(k);
+  }
+  const gedeckt = w.filter(x => einzeln.has(x)).length / w.length;
+  /* Bei einer langen Zeile reicht eine gefundene Wortfolge nicht: „…von
+     KI-Projekten“ steht auch dann da, wenn der Rest des Satzes fehlt. Ein
+     gekürzter Stichpunkt ist ein verlorener Stichpunkt. */
+  if (w.length >= 6) return gedeckt >= 0.8;
   const n = Math.min(3, w.length);
   for (let i = 0; i + n <= w.length; i++) {
     if (folge.includes(' ' + w.slice(i, i + n).join(' ') + ' ')) return true;
   }
-  return w.filter(x => einzeln.has(x)).length / w.length >= 0.9;
+  return gedeckt >= 0.9;
 }
 
 export function fehlendeZeilen(text, ergebnis, ohneUeberschriften) {
-  const alle = worte(alleTexte(ergebnis));
+  const texte = alleTexte(ergebnis);
+  const alle = worte(texte);
   const folge = ' ' + alle.join(' ') + ' ';
   const einzeln = new Set(alle);
+  const engFolge = knapp(texte);
   const fehlt = [];
   String(text).split(/\r?\n/).forEach(zeile => {
     const roh = zeile.trim();
-    if (roh.length < 8 || NEBENSACHE.test(roh)) return;
+    if (roh.length < 4 || NEBENSACHE.test(roh)) return;
     /* Beim Weg am Stück sind die Überschriften des Dokuments nicht bekannt.
        Eine kurze Zeile ohne Ziffern ist dort fast immer eine — und eine
        Überschrift steht in keinem Eintrag, ohne dass etwas fehlt. */
     if (ohneUeberschriften && roh.length <= 34 && !/\d/.test(roh)
         && roh.split(/\s+/).length <= 3) return;
-    if (!istDrin(roh, folge, einzeln)) fehlt.push(roh);
+    if (!istDrin(roh, folge, einzeln, engFolge)) fehlt.push(roh);
   });
   return fehlt;
 }
