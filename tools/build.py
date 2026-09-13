@@ -2087,6 +2087,21 @@ def icons_css():
     return '\n'.join(lines) + '\n'
 
 
+def pdf_leser():
+    """api/pdf.js noch einmal, aber für den Browser.
+
+    Dieselbe Datei liest im Worker den Text aus einem PDF. Im Browser ist sie
+    mehr wert: Was dort schon zu Text geworden ist, muss nicht als ganze Datei
+    hochgeladen werden — das ist schneller, billiger und gibt weniger preis.
+    Erzeugt wird sie hier, damit es nur eine Quelle gibt.
+    """
+    quelle = open(os.path.join(ROOT, 'api', 'pdf.js')).read()
+    quelle = quelle.replace('export async function', 'async function')
+    quelle = quelle.replace('export function', 'function')
+    return ('/* Erzeugt aus api/pdf.js — nicht von Hand ändern. */\n'
+            '(function(){\n' + quelle + '\nwindow.pdfText = pdfText;\n})();\n')
+
+
 def patch_editor_icons(src):
     """Writes the icon variables into the editor, between its two marks."""
     anfang, ende = '/* symbole:anfang */', '/* symbole:ende */'
@@ -2112,6 +2127,7 @@ def patch_editor():
 def main():
     written = []
     write('assets/icons.css', icons_css())      # Stilblatt, gehört nicht in die Sitemap
+    write('assets/pdf-text.js', pdf_leser())    # derselbe Leser, für den Browser
 
     # ---- English, at the root ----------------------------------------
     written.append(write('index.html', page_index()))

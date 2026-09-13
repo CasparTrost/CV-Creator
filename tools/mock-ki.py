@@ -15,38 +15,163 @@ Dialoge richtig geführt und Ergebnisse richtig eingesetzt werden — nur eben
 ohne Modell dahinter.
 """
 import json
+import re
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
+RUBRIKEN = [
+    ('berufserfahrung', r'berufserfahrung|berufliche|werdegang|praxis|experience|employment|experiencia'),
+    ('ausbildung', r'ausbildung|bildungsweg|studium|schul|education|academic|formaci'),
+    ('weiterbildung', r'weiterbildung|fortbildung|zertifikat|training|certificat'),
+    ('kenntnisse', r'kenntnis|kompetenz|f[äa]higkeit|skills|edv|it-|competenc'),
+    ('sprachen', r'^sprachen|languages|idiomas'),
+    ('kontakt', r'pers[öo]nliche daten|kontakt|personal details|contact|datos'),
+]
+ZEITRAUM = re.compile(
+    r'(\d{1,2}[./]\d{4}|\d{4})\s*(?:–|-|bis|to|—)\s*(\d{1,2}[./]\d{4}|\d{4}|heute|jetzt|present|now)',
+    re.I)
+FIRMA = re.compile(r'\b(GmbH|AG|KG|mbH|e\.?\s?V\.?|SE|Ltd|Inc|Klinikum|Institut|Praxis|'
+                   r'Kanzlei|Stiftung|Akademie)\b|\w*(schule|universit[äa]t|hochschule|college|'
+                   r'university)\b', re.I)
+
+
+def rubrik_von(zeile):
+    """Ist diese Zeile eine Überschrift?
+
+    „Hochschule Beispielstadt“ enthält „schul“ und ist trotzdem keine
+    Rubrik — deshalb zählt nur, was kurz ist, aus wenigen Wörtern besteht
+    und nicht wie eine Einrichtung aussieht. Versalien gelten immer.
+    """
+    if len(zeile) > 45 or FIRMA.search(zeile):
+        return None
+    versal = zeile == zeile.upper() and len(zeile) > 3
+    if not versal and len(zeile.split()) > 3:
+        return None
+    for name, muster in RUBRIKEN:
+        if re.search(muster, zeile, re.I):
+            return name
+    return None
+
+
 def lebenslauf_aus(text):
-    zeilen = [z.strip() for z in text.splitlines() if z.strip()]
-    return {
-        'sprache': 'de',
-        'kopf': {
-            'name': zeilen[0] if zeilen else 'Ohne Namen',
-            'rolle': zeilen[1] if len(zeilen) > 1 else '',
-            'profil': ' '.join(zeilen[2:5]),
-        },
-        'kontakt': [{'art': 'mail', 'wert': 'max.mustermann@example.de'},
-                    {'art': 'tel', 'wert': '+49 170 123 45 67'}],
-        'berufserfahrung': [{
-            'titel': 'Projektmanager', 'firma': 'Beispiel GmbH', 'ort': 'Nürnberg',
-            'von': '03/2021', 'bis': 'heute',
-            'punkte': ['Steuerung externer Dienstleister', 'Aufnahme von Anforderungen'],
-        }],
-        'ausbildung': [{'abschluss': 'Master of Science', 'fach': 'Wirtschaftsinformatik',
-                        'einrichtung': 'Universität Musterstadt', 'von': '2015', 'bis': '2017',
-                        'punkte': []}],
-        'kenntnisse': ['Projektsteuerung', 'Anforderungsanalyse', 'Jira'],
-        'sprachen': [{'sprache': 'Deutsch', 'niveau': 'Muttersprache'},
-                     {'sprache': 'Englisch', 'niveau': 'C1'}],
-        'weiterbildung': [{'titel': 'Professional Scrum Master I', 'anbieter': 'Scrum.org',
-                           'jahr': '2022'}],
-        'weitere': [],
-        # Nur für die Prüfung im Test: wie viele Zeichen kamen an?
-        'zeichenErhalten': len(text),
-    }
+    """Baut aus dem gelieferten Text einen Lebenslauf — mit einfachen Regeln,
+    nicht mit einem Modell.
+
+    Das ist ausdrücklich kein Ersatz für die KI: Es ordnet nur, was schon
+    dasteht. Der Sinn ist, im Testbetrieb den *eigenen* Lebenslauf im Layout
+    zu sehen statt einer erfundenen Musterperson — und zu erkennen, ob das
+    Auslesen der Datei überhaupt etwas gebracht hat.
+    """
+    zeilen = [z.strip() for z in (text or '').splitlines() if z.strip()]
+    aus = {'sprache': 'de', 'kopf': {'name': '', 'rolle': '', 'profil': ''}, 'kontakt': [],
+           'berufserfahrung': [], 'ausbildung': [], 'kenntnisse': [], 'sprachen': [],
+           'weiterbildung': [], 'weitere': [], 'zeichenErhalten': len(text or '')}
+
+    # Kopf: die erste Zeile, die wie ein Name aussieht, danach die Rolle.
+    for i, z in enumerate(zeilen[:6]):
+        if rubrik_von(z):
+            break            # ab der ersten Überschrift ist der Kopf vorbei
+        if not aus['kopf']['name'] and re.match(r"^[^\d@]{4,45}$", z) and 1 <= z.count(' ') <= 3:
+            aus['kopf']['name'] = z
+            if i + 1 < len(zeilen) and not rubrik_von(zeilen[i + 1]):
+                aus['kopf']['rolle'] = zeilen[i + 1][:70]
+            break
+
+    rubrik = None
+    eintrag = None
+    wartend = []          # Zeilen vor einem Zeitraum: Abschluss, Fach, Einrichtung
+
+    datum_allein = [False]      # Stand der Zeitraum in einer eigenen Zeile?
+
+    def zeitraum_folgt(i, weite=3):
+        """Kommt gleich ein Zeitraum? Dann gehört diese Zeile zum nächsten
+        Eintrag und nicht als Stichpunkt zum laufenden."""
+        for j in range(i + 1, min(i + 1 + weite, len(zeilen))):
+            if rubrik_von(zeilen[j]):
+                return False        # dazwischen fängt eine neue Rubrik an
+            if ZEITRAUM.search(zeilen[j]):
+                return True
+        return False
+
+    for i, z in enumerate(zeilen):
+        neue = rubrik_von(z)
+        if neue:
+            rubrik, eintrag, wartend = neue, None, []
+            continue
+        if z in (aus['kopf']['name'], aus['kopf']['rolle']):
+            continue
+
+        if '@' in z and len(z) < 60:
+            aus['kontakt'].append({'art': 'mail', 'wert': z}); continue
+        if re.match(r'^[+\d][\d\s()/-]{7,}$', z):
+            aus['kontakt'].append({'art': 'tel', 'wert': z}); continue
+        if re.match(r'^\d{1,2}\.\d{1,2}\.\d{4}$', z):
+            aus['kontakt'].append({'art': 'datum', 'wert': z}); continue
+        if re.search(r'\b\d{5}\b', z) and len(z) < 70:
+            aus['kontakt'].append({'art': 'ort', 'wert': z}); continue
+
+        zeit = ZEITRAUM.search(z)
+        if rubrik in ('berufserfahrung', 'ausbildung', 'weiterbildung'):
+            if zeit:
+                # Steht der Zeitraum in einer eigenen Zeile, gehören Abschluss
+                # und Einrichtung zu den Zeilen davor — nicht zu denen danach.
+                rest = ZEITRAUM.sub('', z).strip(' ,;·|–-')
+                datum_allein[0] = not rest
+                kopf = [t for t in wartend if t]
+                if not rest and kopf:
+                    rest, kopf = kopf[0], kopf[1:]
+                einrichtung = next((t for t in kopf if FIRMA.search(t)), '')
+                fach = next((t for t in kopf if t != einrichtung), '')
+                wartend = []
+                if rubrik == 'ausbildung':
+                    eintrag = {'abschluss': rest or '—', 'fach': fach,
+                               'einrichtung': einrichtung,
+                               'von': zeit.group(1), 'bis': zeit.group(2), 'punkte': []}
+                elif rubrik == 'weiterbildung':
+                    eintrag = {'titel': rest or fach or '—', 'anbieter': einrichtung,
+                               'jahr': zeit.group(2)}
+                else:
+                    eintrag = {'titel': rest or '—', 'firma': einrichtung, 'ort': '',
+                               'von': zeit.group(1), 'bis': zeit.group(2), 'punkte': []}
+                aus[rubrik].append(eintrag)
+                continue
+            if eintrag is None or (datum_allein[0] and zeitraum_folgt(i)):
+                wartend = (wartend + [z])[-3:]
+                continue
+            if eintrag is not None:
+                if FIRMA.search(z) and not eintrag.get('firma') and not eintrag.get('einrichtung'):
+                    if rubrik == 'ausbildung':
+                        eintrag['einrichtung'] = z
+                    elif rubrik == 'weiterbildung':
+                        eintrag['anbieter'] = z
+                    else:
+                        eintrag['firma'] = z
+                elif 'punkte' in eintrag:
+                    eintrag['punkte'].append(z.lstrip('•-–· '))
+                continue
+
+        if rubrik == 'kenntnisse':
+            for teil in re.split(r'\s*[,;|]\s*', z):
+                if teil.strip():
+                    aus['kenntnisse'].append(teil.strip().lstrip('•-–· '))
+            continue
+        if rubrik == 'sprachen':
+            teile = re.split(r'\s*[:–-]\s*', z, 1)
+            aus['sprachen'].append({'sprache': teile[0].lstrip('•-–· '),
+                                    'niveau': teile[1] if len(teile) > 1 else ''})
+            continue
+        if rubrik is None and len(z) > 90 and not aus['kopf']['profil']:
+            aus['kopf']['profil'] = z
+            continue
+        if rubrik is None and len(zeilen) > 3:
+            continue
+
+    # Ist gar nichts erkannt worden, bleibt wenigstens der Rohtext sichtbar.
+    if not (aus['berufserfahrung'] or aus['ausbildung'] or aus['kenntnisse']):
+        aus['weitere'].append({'titel': 'Aus der Datei',
+                               'punkte': [z for z in zeilen[:25]]})
+    return aus
 
 
 def antwort_fuer(weg, daten):

@@ -76,12 +76,23 @@ Ausgabenlimit. Die Bremse oben ersetzt das nicht.
 
 ## PDF
 
-Der Worker versucht zuerst, den Text selbst aus dem PDF zu holen: Textströme
-auspacken, die Zeichenketten vor `Tj`/`TJ` einsammeln. Das trägt bei
-Lebensläufen, die am Rechner erzeugt wurden. Kommt dabei Zeichensalat heraus
-(Scan, Schrift ohne Zuordnung), geht die Datei selbst an das Modell. Klappt
-auch das nicht, sagt der Editor, dass der Text eingefügt werden soll — und
-nicht, dass „etwas schiefgelaufen" ist.
+`pdf.js` holt den Text selbst heraus: Seiten, Schriftressourcen,
+`ToUnicode`-Tabellen, Flate-Ströme. Dieselbe Datei läuft im Browser —
+`tools/build.py` erzeugt daraus `assets/pdf-text.js` —, und dort ist sie mehr
+wert: Was schon im Browser zu Text wird, muss nicht als ganze Datei den
+Rechner verlassen. Der Worker behält seinen eigenen Weg für den Fall, dass
+der Browser es nicht kann.
+
+Kommt dabei Zeichensalat heraus (Scan, Schrift ohne Zuordnung), geht die
+Datei selbst an das Modell. Klappt auch das nicht, sagt der Editor, dass der
+Text eingefügt werden soll — und nicht, dass „etwas schiefgelaufen" ist.
+
+Der Testbetrieb in `tools/mock-ki.py` ordnet den gelieferten Text mit
+einfachen Regeln: Überschriften an Schlüsselwörtern, Stationen an
+Zeiträumen, Kontaktzeilen an @ und Postleitzahl. Er ersetzt kein Modell und
+soll es nicht — er zeigt nur, ob das Auslesen der Datei etwas gebracht hat,
+und füllt das Layout mit dem eigenen Lebenslauf statt mit einer erfundenen
+Musterperson.
 
 ## Stellenanzeigen
 

@@ -352,11 +352,15 @@ arithmetic is the one job a language model reliably gets wrong and code never
 does; judgement is the one it is for. And the advice on a gap is never to
 conceal it — name it in a line and move on.
 
-**Uploads.** DOCX, ODT and XLSX are unpacked in the browser itself
-(`DecompressionStream`, no library), so only the extracted text is sent. PDFs
-go to the worker, which reads the text out of them directly — page objects,
-font tables, `ToUnicode` maps — and only falls back to handing the file to the
-model when that yields nothing, as with a scan. During development the dev
+**Uploads.** Everything is read **in the browser**: DOCX, ODT and XLSX are ZIP
+archives that `DecompressionStream` unpacks without a library, and PDFs go
+through the same reader the worker uses — page objects, font resources,
+`ToUnicode` maps — generated into `assets/pdf-text.js` from `api/pdf.js` so
+there is one source. Only the extracted text is sent, which is faster,
+cheaper and gives less away; the whole file goes out only when the text comes
+back unusable, as it does for a scan. The dialog shows how many characters
+were recognised and the first lines of them **before** anything is sent, so a
+failed read is visible rather than silent. During development the dev
 server answers `/api/…` itself with canned replies, and the editor finds them
 on localhost without anything being configured — labelled *Testbetrieb* in the
 panel, because a test mode mistaken for the real thing is worse than none.

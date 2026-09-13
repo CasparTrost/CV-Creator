@@ -1,3 +1,5 @@
+/* Erzeugt aus api/pdf.js — nicht von Hand ändern. */
+(function(){
 /*
  * Text aus einem PDF holen, ohne Bibliothek.
  *
@@ -25,7 +27,7 @@ const WIN1252_SONDER = {
   0x99: '™', 0x9a: 'š', 0x9b: '›', 0x9c: 'œ', 0x9e: 'ž', 0x9f: 'Ÿ',
 };
 
-export async function pdfText(bytes) {
+async function pdfText(bytes) {
   const roh = new TextDecoder('windows-1252').decode(bytes);   /* nur zum Suchen */
   const objekte = objektIndex(roh);
   const seiten = [];
@@ -318,3 +320,6 @@ function zusammenfuegen(zeilen) {
   }
   return aus;
 }
+
+window.pdfText = pdfText;
+})();
