@@ -136,7 +136,15 @@ THE RANGES
 - Together the sections cover every line from the first to the last. No holes,
   no overlaps. A line that stands under a heading belongs to that section, and
   a line under no heading at all belongs to the section above it.
-- The heading line itself belongs to its section ("von" points at it).
+- The heading line itself belongs to its section ("von" points at it). A
+  heading that ran over two lines ("ZUSÄTZLICHE" / "QUALIFIKATIONEN") is one
+  heading: put both words in "titel" and let "von" point at the first of them.
+- A heading names a CATEGORY, never one entry. "Berufserfahrung" is a heading;
+  "Sachbearbeiterin 02/2011 - 07/2016" and "Muster GmbH - Marke der Beispiel
+  Group" are the first lines of an entry INSIDE that section. A line that
+  carries a date, an employer or a job title is never the start of a new
+  section - however prominently it is set. Five positions under one heading
+  are ONE section with five entries, not five sections.
 
 THE TOP OF THE DOCUMENT — where this goes wrong most often
 Only three kinds of line stand outside every section: the person's name, one
@@ -248,6 +256,8 @@ back together with a space between them.
 - For "liste": one entry per item. An item that ran over two lines is one
   entry; two items that happen to sit on one line stay two.
 - For "beruf" and "ausbildung": the same for the "punkte".
+- For "kontakt": an address that ran over two lines ("Musterweg 3, 90402" /
+  "Nürnberg") is ONE entry, not two.
 Joining is not rewriting: the words, their order and their punctuation stay
 exactly as they are.`;
 

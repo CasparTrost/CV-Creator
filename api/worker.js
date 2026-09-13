@@ -182,7 +182,7 @@ const ARTEN = ['kontakt', 'profil', 'beruf', 'ausbildung', 'weiterbildung',
    in Stücke geschnitten; eine Liste, die man als Absatz behandelt, bleibt
    heil. Der Zweifel gehört auf die Seite, die nichts kaputt macht. */
 const ARTNAMEN = [
-  [/kontakt|contact|adress|persoenlich|persönlich|datos/i, 'kontakt'],
+  [/kontakt|contact|adress|persoenlich|persönlich|datos|personal (data|details|information)/i, 'kontakt'],
   [/profil|summary|about|ueber mich|über mich|perfil/i, 'profil'],
   [/beruf|erfahrung|experience|werdegang|employment|praxis|station/i, 'beruf'],
   [/ausbildung|bildung|studium|schul|education|academic|formaci/i, 'ausbildung'],
@@ -240,7 +240,7 @@ async function nachGliederung(text, umgebung) {
   }
   if (plan && plan.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
 
-  const bereiche = bereicheOrdnen(plan && plan.abschnitte, zeilen.length);
+  const bereiche = bereicheOrdnen(plan && plan.abschnitte, zeilen);
   /* Ohne brauchbare Gliederung lieber der alte Weg als gar keiner. */
   if (!bereiche.length) return await amStueck(text, umgebung);
 
@@ -264,7 +264,7 @@ async function nachGliederung(text, umgebung) {
   const stapel = bereiche.map(b => ({ ...b, zeilen: zeilen.slice(b.von - 1, b.bis) }));
   /* Verglichen wird mit dem, was oben stand, bevor die Rolle in den Text
      zurückgegeben wurde — sonst stünde dieselbe Zeile zweimal da. */
-  const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].von - 1),
+  const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].anfang - 1),
                                     { name: kopf.name, rolle: rolleRoh });
   const vorText = ohneDoppel(ausRolle.concat(vorspann.filter(istFliesstext)));
   const vorDaten = vorspann.filter(z => !istFliesstext(z));
@@ -339,7 +339,8 @@ function sauberText(wert, hoechstens) {
 /* Die Bereiche des Modells sind Vorschläge, keine Zusicherung: Sie
    überlappen sich, lassen Löcher, zeigen ins Leere. Hier werden sie zu einer
    lückenlosen Folge — jede Zeile in genau einem Abschnitt. */
-function bereicheOrdnen(liste, anzahl) {
+function bereicheOrdnen(liste, zeilen) {
+  const anzahl = zeilen.length;
   const roh = (Array.isArray(liste) ? liste : [])
     .map(a => ({
       titel: sauberText(a && a.titel, 80),
@@ -366,7 +367,84 @@ function bereicheOrdnen(liste, anzahl) {
     if (a.bis >= a.von) aus.push(a);
   });
   if (aus.length) aus[aus.length - 1].bis = anzahl;   /* bis zur letzten Zeile */
-  return aus;
+
+  /* Eine Überschrift nennt eine Rubrik, keine Station.
+     „Sachbearbeiterin 02/2011 – 07/2016“ ist keine Rubrik, sondern die
+     Station selbst: Das Modell hat mitten in der Berufserfahrung einen neuen
+     Abschnitt aufgemacht. Auf dem Blatt steht dann jede Stelle als eigener
+     Abschnitt mit eigener Überschrift — und weil ein Abschnitt seinen Titel
+     nicht zweimal setzt, bleibt die halbe Seite darunter leer. */
+  const zusammen = [];
+  aus.forEach(a => {
+    const vor = zusammen[zusammen.length - 1];
+    const stationsHaft = vor && (vor.art === a.art
+      || (a.art === 'text' && (vor.art === 'beruf' || vor.art === 'ausbildung')));
+    if (stationsHaft && istStationsTitel(a.titel)) {
+      vor.bis = a.bis;
+      return;
+    }
+    zusammen.push(a);
+  });
+
+  /* Überschriften gehören niemandem — weder dem Abschnitt davor noch dem
+     Inhalt danach. Sonst endet das Kurzprofil auf „… und reisebereit.
+     KONTAKT“, und aus einer zweizeiligen Überschrift werden zwei
+     Stichpunkte („ZUSÄTZLICHE“, „QUALIFIKATIONEN“) unter der ersten
+     Ausbildung. Beides stand so auf dem Blatt. */
+  zusammen.forEach(a => { if (!a.titel) titelNachholen(a, zeilen); });
+  zusammen.forEach((a, i) => {
+    const naechster = zusammen[i + 1];
+    if (naechster) a.bis -= randZeilen(zeilen, a.bis, a.von, -1, naechster.titel);
+    /* „anfang“ ist der Anfang samt Überschrift. Was davor steht, ist der
+       Vorspann des Dokuments — die Überschrift selbst gehört nicht dazu. */
+    a.anfang = a.von;
+    a.von += randZeilen(zeilen, a.von, a.bis, 1, a.titel);
+    if (a.bis < a.von) a.bis = a.von;
+  });
+  return zusammen;
+}
+
+function istStationsTitel(titel) {
+  const t = String(titel || '').trim();
+  if (!t) return false;
+  return /\d{1,2}\/\d{2,4}|\b(19|20)\d{2}\b/.test(t) || t.length > 55;
+}
+
+/* Wie viele Zeilen am Rand eines Bereichs sind Teil dieser Überschrift?
+   Gezählt wird von „start“ aus in Richtung „schritt“, höchstens drei, und nur
+   solange jedes Wort der Zeile auch in der Überschrift steht. */
+function randZeilen(zeilen, start, grenze, schritt, titel) {
+  const teil = new Set(worte(titel));
+  if (!teil.size) return 0;
+  let weg = 0;
+  while (weg < 3) {
+    const nr = start + weg * schritt;
+    if (schritt > 0 ? nr >= grenze : nr <= grenze) break;
+    const w = worte(zeilen[nr - 1]);
+    if (!w.length || w.length > 4 || !w.every(x => teil.has(x))) break;
+    weg++;
+  }
+  return weg;
+}
+
+/* Ein Abschnitt ohne Titel, dessen Überschrift im Dokument sehr wohl steht.
+   Dann ist sie sein Titel und gehört aufs Blatt — nicht unser Ersatzwort, und
+   erst recht nicht als Angabe mitten im Abschnitt: „PERSONAL DATA“ stand so
+   als fünfte Kontaktzeile unter dem Geburtsdatum.
+
+   Gesucht wird auch eine Zeile über dem Anfang: Beim Abschneiden der
+   Überlappungen rutscht der Anfang schon mal einen Schritt weiter, und dann
+   steht die Überschrift beim Abschnitt davor. Erkannt wird sie daran, dass
+   sie kurz ist, keine Zahl enthält und dieselbe Rubrik nennt wie der
+   Abschnitt — „Nürnberg“ wird so nie zur Überschrift. */
+function titelNachholen(bereich, zeilen) {
+  for (let nr = bereich.von; nr >= Math.max(1, bereich.von - 2); nr--) {
+    const zeile = String(zeilen[nr - 1] || '').trim();
+    if (!zeile || /\d/.test(zeile) || worte(zeile).length > 4) continue;
+    if (artVon(zeile) !== bereich.art) continue;
+    bereich.titel = sauberText(zeile, 80);
+    return;
+  }
 }
 
 /* Satz oder Angabe? Ein Kurzprofil besteht aus Sätzen, eine Kontaktzeile aus
