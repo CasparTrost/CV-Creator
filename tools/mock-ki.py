@@ -202,6 +202,70 @@ def lebenslauf_aus(text):
     return aus
 
 
+WORTTAUSCH = [
+    ('Steuerung', 'Koordination'),
+    ('Koordination', 'Steuerung'),
+    ('Erstellung', 'Aufbau'),
+    ('Analyse', 'Auswertung'),
+    ('Betreuung', 'Begleitung'),
+    ('Digitalisierung', 'digitale Transformation'),
+    (' und ', ' sowie '),
+]
+
+
+def stellen_aus(lebenslauf):
+    """Dasselbe Adressschema wie api/texte.js - nur die Stellen, an denen
+    umformuliert werden darf."""
+    aus = []
+    kopf = lebenslauf.get('kopf') or {}
+    if kopf.get('rolle'):
+        aus.append(('kopf.rolle', 'Berufsbezeichnung', kopf['rolle']))
+    if kopf.get('profil'):
+        aus.append(('kopf.profil', 'Kurzprofil', kopf['profil']))
+    for i, job in enumerate(lebenslauf.get('berufserfahrung') or []):
+        for k, punkt in enumerate(job.get('punkte') or []):
+            aus.append(('beruf.%d.punkt.%d' % (i, k), job.get('titel') or 'Station', punkt))
+    for i, weg in enumerate(lebenslauf.get('ausbildung') or []):
+        for k, punkt in enumerate(weg.get('punkte') or []):
+            aus.append(('ausbildung.%d.punkt.%d' % (i, k),
+                        weg.get('abschluss') or 'Ausbildung', punkt))
+    for i, kenntnis in enumerate(lebenslauf.get('kenntnisse') or []):
+        aus.append(('kenntnis.%d' % i, 'Kenntnisse', kenntnis))
+    return [(a, b, c) for a, b, c in aus if (c or '').strip()]
+
+
+def umformuliert(text):
+    """Eine Umformulierung ohne neue Behauptung - mehr braucht der
+    Testbetrieb nicht, und weniger waere unehrlich. Faellt kein Wort ein,
+    gibt es keinen Vorschlag: ein Vorschlag, der nichts aendert, kostet den
+    Leser Zeit und bringt ihm nichts."""
+    for wort, ersatz in WORTTAUSCH:
+        if wort in text:
+            return text.replace(wort, ersatz, 1)
+    return None
+
+
+def fehlende_zeilen(text, lebenslauf):
+    """Welche Zeile des Quelltextes findet sich im Ergebnis nicht wieder?
+    Dieselbe Rechnung wie im Worker, damit der Testbetrieb denselben Weg
+    geht wie der Ernstfall."""
+    import re as _re
+    def worte(s):
+        return [w for w in _re.split(r'[^0-9A-Za-zÀ-ÿ]+', s.lower()) if len(w) >= 4]
+    da = set(worte(json.dumps(lebenslauf, ensure_ascii=False)))
+    fehlt = []
+    for zeile in text.split('\n'):
+        roh = zeile.strip()
+        if len(roh) < 8 or _re.match(r'^(lebenslauf|cv|seite \d+|\d+)$', roh, _re.I):
+            continue
+        w = worte(roh)
+        if not w:
+            continue
+        if sum(1 for x in w if x in da) / len(w) < 0.6:
+            fehlt.append(roh)
+    return fehlt[:30]
+
+
 def antwort_fuer(weg, daten):
     """Die Antwort auf einen der KI-Wege. Wird von diesem Server und von
     tools/serve.py benutzt — eine Quelle, zwei Betriebsarten."""
@@ -211,26 +275,46 @@ def antwort_fuer(weg, daten):
         text = daten.get('text') or ''
         if daten.get('datei'):
             text = ('Aus Datei: ' + (daten['datei'].get('name') or '') + '\nProjektmanager\n'
-                    + 'Base64-Länge ' + str(len(daten['datei'].get('daten') or '')))
-        return 200, {'lebenslauf': lebenslauf_aus(text)}
+                    + 'Base64-Laenge ' + str(len(daten['datei'].get('daten') or '')))
+        lebenslauf = lebenslauf_aus(text)
+        # Derselbe Weg wie im Worker: nachzaehlen, was im Ergebnis fehlt, und
+        # es hinten anhaengen, statt es verschwinden zu lassen.
+        fehlt = fehlende_zeilen(text, lebenslauf)
+        for zeile in fehlt:
+            rest = None
+            for w in lebenslauf.setdefault('weitere', []):
+                if w.get('titel') == 'Weitere Angaben':
+                    rest = w
+            if rest is None:
+                rest = {'titel': 'Weitere Angaben', 'punkte': []}
+                lebenslauf['weitere'].append(rest)
+            rest['punkte'].append(zeile)
+        return 200, {'lebenslauf': lebenslauf, 'nachgetragen': len(fehlt), 'offen': 0}
 
     if weg == '/tailor':
         alt = daten.get('lebenslauf') or {}
-        neu = json.loads(json.dumps(alt))
-        if neu.get('berufserfahrung'):
-            erste = neu['berufserfahrung'][0]
-            erste['punkte'] = (['Steuerung von sieben externen Dienstleistern']
-                               + list(erste.get('punkte') or [])[1:])
+        stellen = stellen_aus(alt)[:4]
+        vorschlaege = []
+        for nr, (kennung, wo, text) in enumerate(stellen):
+            if nr != 1 and umformuliert(text) is None:
+                continue
+            # Der zweite ist absichtlich einer, der mehr behauptet als das
+            # Original: genau den muss der Benutzer ungehakt vorfinden.
+            bedenklich = nr == 1
+            vorschlaege.append({
+                'id': kennung, 'wo': wo, 'vorher': text,
+                'nachher': (text.rstrip('.') + ' für sieben Dienstleister') if bedenklich
+                           else umformuliert(text),
+                'warum': 'Die Anzeige nennt das zuerst.',
+                'bedenken': 'Im Original steht keine Anzahl.' if bedenklich else ''})
+        kenntnisse = alt.get('kenntnisse') or []
+        reihenfolge = list(reversed(kenntnisse)) if len(kenntnisse) > 1 else None
         return 200, {
-            'lebenslauf': neu,
+            'vorschlaege': vorschlaege,
+            'reihenfolge': reihenfolge,
+            'verworfen': [{'wo': 'Kurzprofil', 'grund': 'neue Angabe: 40'}],
             'passung': PASSUNG,
-            'aenderungen': [{'wo': 'Berufserfahrung 1, Punkt 1',
-                             'vorher': 'Steuerung externer Dienstleister',
-                             'nachher': 'Steuerung von sieben externen Dienstleistern',
-                             'warum': 'Die Anzeige nennt Lieferantensteuerung zuerst'}],
             'luecken': ['SAP S/4HANA', 'Erfahrung im Anlagenbau'],
-            'beanstandet': [{'nachher': 'Steuerung von sieben externen Dienstleistern',
-                             'grund': 'Das Original nennt keine Anzahl'}],
         }
 
     if weg == '/analyse':

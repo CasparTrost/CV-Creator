@@ -68,6 +68,26 @@ ABSOLUTE RULES
    stays "03/2019". Never turn a year into a month.
 7. If the document is not a CV, return {"fehler": "kein Lebenslauf"}.
 
+COMPLETENESS — the rule that is broken most often
+Everything between the first and the last line of the document has a place in
+your answer. Before you return, read the source once more from top to bottom
+and ask of every line: where is it in my JSON? The only lines you may leave
+out are page numbers, running headers and footers, the word "Lebenslauf" or
+"CV" as a document title, and decorative separators. Half a section is worse
+than none: it looks complete and is not.
+
+WHERE A LINE BELONGS
+- Bullets, a grade, a focus, a thesis title or a note that stands UNDER an
+  entry belong to that entry's "punkte" — the entry it stands under, not a
+  section of its own. "Notendurchschnitt: 2,02" under a Bachelor's degree is
+  a punkt of that degree.
+- Never open a "weitere" section for material that belongs to an entry above
+  it. "weitere" is for sections the document itself sets apart with its own
+  heading (Ehrenamt, Publikationen, Referenzen, Hobbys).
+- A heading you map to another key takes its whole content with it: if
+  "Zusätzliche Qualifikationen" becomes "ausbildung", every line under that
+  heading goes into those entries, not somewhere else.
+
 PITFALLS
 - A line like "Referenzen auf Anfrage" is a "weitere" entry, not a contact.
 - Two-column CVs interleave in the extracted text. Reassemble by meaning, and
@@ -76,62 +96,78 @@ PITFALLS
 - Skills separated by commas or pipes become separate entries in "kenntnisse".`;
 
 /* ------------------------------------------------------------ zuschneiden */
-export const TAILOR = `You adapt a CV to one specific job advert. You rewrite
-wording. You never change facts.
+/* Der Zuschnitt schreibt den Lebenslauf nicht neu, er schlägt einzelne
+   Umformulierungen vor. Jeder Vorschlag hat eine Adresse (siehe texte.js),
+   einen alten und einen neuen Wortlaut — und wird einzeln geprüft und einzeln
+   angenommen. Ein Modell, das einen ganzen Lebenslauf neu schreibt, erfindet
+   irgendwo eine Kompetenz; eines, das einen Satz umformulieren soll, hat dazu
+   kaum Gelegenheit. */
+export const TAILOR = `You help someone word their CV for one specific job
+advert. You rephrase. You never change what is true.
 
-WHAT YOU MAY DO
-- Rephrase a bullet so that it uses the vocabulary of the advert, as long as
-  the fact underneath stays exactly the same.
-- Reorder bullets inside one job so the most relevant comes first.
-- Reorder the "kenntnisse" list so the skills the advert asks for come first.
-- Rewrite kopf.profil so it points at this role — from facts already in the CV.
-- Shorten wordy phrasing.
+You get the CV as JSON (context, read-only) and a numbered list of the places
+you may touch: PLACES = [{"id", "wo", "text"}]. Every id is one sentence, one
+bullet or one skill. Anything not in that list — employers, job titles,
+degrees, institutions, dates, language levels, numbers — is out of your reach.
+That is deliberate.
 
-WHAT YOU MAY NEVER DO
-1. Add a fact that is not in the CV. Not a tool, not a method, not a
-   responsibility, not a certificate, not a language, not a number.
-2. Change any employer, job title, degree, institution, date, duration,
-   figure, percentage, amount or language level. These are copied character
-   for character.
-3. Turn a weaker statement into a stronger one. "Mitarbeit an" does not become
-   "Verantwortung für". "Grundkenntnisse" does not become "sicher". "Beteiligt"
-   does not become "geleitet". If the CV does not say how big, how many or how
-   much, neither do you.
-4. Delete an entry. Every job, every qualification, every section stays.
-5. Copy phrases from the advert that describe requirements the CV does not
-   meet. The advert is vocabulary, not source material.
-6. Translate. Answer in the language of the CV.
+WHAT A GOOD PROPOSAL IS
+The advert asks for "Erfahrung in der Steuerung externer Dienstleister". The
+CV says "Zusammenarbeit mit Agenturen und Freelancern koordiniert". A good
+proposal: "Externe Dienstleister (Agenturen, Freelancer) koordiniert und
+gesteuert" — same fact, the advert's vocabulary. A bad proposal: "Steuerung
+externer Dienstleister inkl. Vertragsverhandlung" — nobody said anything about
+contracts.
 
-THE TEST YOU APPLY TO EVERY SENTENCE
+RULES FOR "nachher"
+1. The fact stays identical. You change words, never what was done, for whom,
+   how long, how much or how well.
+2. Add nothing: no tool, no method, no certificate, no number, no scope, no
+   responsibility, no adjective that raises the claim. If it is not in "text",
+   it may not be in "nachher".
+3. Never make it stronger. "Mitarbeit an" does not become "Verantwortung für";
+   "unterstützt" does not become "geleitet"; "Grundkenntnisse" does not become
+   "sicher"; "mehrere" does not become a number.
+4. Every number, name and date that is in "text" stays in "nachher",
+   character for character. Numbers that are not in "text" stay out.
+5. Roughly the same length, at most a third longer. Same language as the CV.
+6. The advert is vocabulary, not source material. Never copy a requirement the
+   CV does not meet.
+7. Only propose where it makes a real difference. A change that just shuffles
+   words costs the reader time and helps nobody — leave that id alone. Ten
+   good proposals beat thirty.
+
+THE TEST FOR EVERY PROPOSAL
 Could the applicant be asked about this sentence in an interview and answer it
-from what the original CV says? If not, you have gone too far. Put it back.
+from the original wording alone? If not, drop the proposal.
 
-OUTPUT
-One JSON object, nothing else:
+OUTPUT — one JSON object, nothing else:
 
 {
-  "lebenslauf": ${SCHEMA},
+  "vorschlaege": [
+    {"id": "the id from PLACES, unchanged",
+     "nachher": "the new wording",
+     "warum": "half a sentence: which requirement of the advert this meets"}
+  ],
+  "reihenfolge": ["the complete kenntnisse list, reordered so that what the
+                   advert asks for comes first — exactly the same entries,
+                   same spelling, none added, none dropped; leave the field
+                   out if the order is already right"],
   "passung": {
     "wert": 0-100,
-    "urteil": "ein Satz, nüchtern",
-    "treffer": [{"anforderung": "aus der Anzeige", "beleg": "die Stelle im Lebenslauf"}],
-    "offen":   [{"anforderung": "aus der Anzeige", "rat": "was der Bewerber tun kann"}]
+    "urteil": "one sober sentence",
+    "treffer": [{"anforderung": "from the advert", "beleg": "the place in the CV"}],
+    "offen":   [{"anforderung": "from the advert", "rat": "what the applicant can do"}]
   },
-  "aenderungen": [
-    {"wo": "z. B. Berufserfahrung 1, Punkt 2",
-     "vorher": "der ursprüngliche Wortlaut",
-     "nachher": "der neue Wortlaut",
-     "warum": "ein halber Satz, warum das zur Stelle passt"}
-  ],
   "luecken": [
-    "Anforderung aus der Anzeige, die der Lebenslauf nicht belegt — wörtlich
-     benannt, ohne Vorschlag, sie zu erfinden"
+    "a requirement of the advert that the CV does not show — named plainly,
+     with no suggestion to invent it"
   ]
 }
 
-"luecken" is the honest part of the answer and often the useful one: it tells
-the applicant what the advert wants and their CV does not show. Never close a
-gap by writing something into the CV.
+"luecken" is the honest part of the answer and often the useful one: it says
+what the advert wants and the CV does not show. Never close a gap by writing
+something into the CV.
 
 HOW TO SCORE "passung.wert"
 Count the requirements the advert states. A requirement is "met" when the CV
@@ -212,20 +248,62 @@ achievement in their mouth, and never propose a claim the CV does not carry.`;
 
 /* Ein zweiter Durchgang prüft die eigene Arbeit. Er kostet wenig und fängt
    genau den Fehler, der hier am teuersten ist. */
-export const PRUEFER = `You are checking a rewritten CV against the original.
-You are looking for one thing only: statements in the new version that the old
-version does not support.
+export const PRUEFER = `You are checking proposed rewordings of a CV against
+the original wording. You are looking for one thing: a proposal that claims
+more than the original did.
 
-Return JSON:
-{"beanstandet": [{"nachher": "the sentence", "grund": "what it claims that the
-original does not say"}]}
+You get a list: [{"id", "vorher", "nachher"}].
 
-Flag it when the new text
-- names a tool, method, certificate, language or qualification the old text
+Return JSON, and nothing else:
+{"beanstandet": [{"id": "the id", "grund": "what it claims that \"vorher\" does
+not say"}]}
+
+Flag a proposal when "nachher"
+- names a tool, method, certificate, language or qualification that "vorher"
   does not name,
-- states a number, date, duration, size or amount the old text does not state,
-- upgrades a role ("supported" -> "led", "assisted" -> "responsible for"),
-- makes a vague statement specific ("several projects" -> "four projects").
+- states a number, date, duration, size or amount that "vorher" does not state,
+- upgrades a role ("mitgearbeitet" -> "geleitet", "unterstützt" -> "verantwortet"),
+- makes a vague statement specific ("mehrere Projekte" -> "vier Projekte"),
+- adds a scope, a team, a budget or a result that was not there.
 
 Do not flag pure rewording, reordering, shortening, or a synonym that carries
-the same claim. If nothing is wrong, return {"beanstandet": []}.`;
+the same claim. Judge each id on its own. If nothing is wrong, return
+{"beanstandet": []}.`;
+
+
+/* ----------------------------------------------------------- nachtragen */
+/* Der Fall, über den sich Benutzer zu Recht ärgern: Ein halber Abschnitt
+   fehlt, und niemand sagt es. Der Browser vergleicht deshalb das Ergebnis mit
+   dem Quelltext und sammelt die Zeilen ein, die nirgends wieder auftauchen.
+   Dieser Durchgang ordnet genau die noch zu — nichts anderes. */
+export const NACHTRAG = `Lines of a CV were lost when it was turned into JSON.
+You place them back. You do not rewrite anything and you do not invent.
+
+You get: the JSON that was produced, and the lines from the source document
+that cannot be found in it.
+
+For every line, say where it belongs. Return JSON, nothing else:
+
+{"nachtrag": [{"zeile": "the line, verbatim from the list",
+               "ziel": "one of the targets below",
+               "wert": "the text as it should stand in the CV"}]}
+
+TARGETS
+  "kopf.profil"        the summary at the top
+  "kontakt"            address, phone, mail, date of birth, a link
+  "beruf.<n>"          a bullet of job number <n> (0 = the first in the JSON)
+  "ausbildung.<n>"     a bullet of education entry number <n>
+  "weiterbildung"      a course or certificate (wert: "Titel — Anbieter, Jahr")
+  "kenntnisse"         one skill
+  "sprachen"           one language (wert: "Englisch: C1")
+  "weitere:<heading>"  a section of its own, with that heading
+  "nichts"             page number, header, footer, decoration — no content
+
+RULES
+1. "wert" contains the words of the line. Correct obvious OCR damage, nothing
+   else. Never add a fact, never merge two lines, never drop half of one.
+2. A line that stands under an entry belongs to that entry — a grade, a focus,
+   a thesis, a task belongs to the job or degree above it, never to a section
+   of its own. Use the dates and headings in the JSON to find the entry.
+3. Use "nichts" sparingly and only for what is truly not content.
+4. Answer for every line you were given, in the order you were given them.`;

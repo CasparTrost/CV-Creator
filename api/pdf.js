@@ -469,3 +469,97 @@ function zusammenfuegen(zeilen) {
   }
   return aus;
 }
+
+/* ------------------------------------------------------------------ Bilder
+ *
+ * Wer seinen Lebenslauf hochlädt, hat sein Foto schon ausgesucht — es noch
+ * einmal zu verlangen, wäre eine überflüssige Frage. Gesucht wird deshalb im
+ * PDF nach einem Bild, das ein Bewerbungsfoto sein kann.
+ *
+ * Woran man es erkennt: hochkant bis quadratisch, groß genug zum Drucken,
+ * aber kein gescanntes Blatt. Gescannte Seiten haben das Seitenverhältnis von
+ * A4 (1:1.414) und Millionen von Bildpunkten; ein Foto hat ungefähr 3:4. Was
+ * dazwischenliegt, bleibt liegen: lieber kein Foto als das Firmenlogo.
+ */
+export async function pdfBilder(bytes, hoechstens) {
+  const roh = new TextDecoder('windows-1252').decode(bytes);
+  const objekte = objektIndex(roh);
+  const gefunden = [];
+
+  for (const [nummer, eintrag] of objekte) {
+    if (gefunden.length >= (hoechstens || 4)) break;
+    if (!eintrag || eintrag.stelle === undefined) continue;
+    const koerper = koerperVon(roh, eintrag);
+    if (!/\/Subtype\s*\/Image/.test(koerper)) continue;
+
+    const breite = zahlAus(koerper, 'Width'), hoehe = zahlAus(koerper, 'Height');
+    if (!breite || !hoehe) continue;
+    if (!fotoMass(breite, hoehe)) continue;
+    if (/\/ImageMask\s+true/.test(koerper)) continue;
+
+    const strom = await stromBytes(roh, bytes, objekte, nummer);
+    if (!strom) continue;
+    const bild = /\/DCTDecode/.test(koerper)
+      ? { typ: 'image/jpeg', feld: strom.feld }
+      : await ausRohbild(koerper, strom);
+    if (!bild) continue;
+    gefunden.push({ breite, hoehe, typ: bild.typ, feld: bild.feld, daten: bild.daten });
+  }
+  /* Das plausibelste zuerst: nah an 3:4 und lieber groß als klein. */
+  gefunden.sort((a, b) =>
+    Math.abs(a.breite / a.hoehe - 0.75) - Math.abs(b.breite / b.hoehe - 0.75)
+    || b.breite * b.hoehe - a.breite * a.hoehe);
+  return gefunden;
+}
+
+function fotoMass(breite, hoehe) {
+  if (breite < 100 || hoehe < 120) return false;
+  if (breite * hoehe > 4000000) return false;          /* das ist eine Seite, kein Foto */
+  const verhaeltnis = breite / hoehe;
+  if (verhaeltnis < 0.45 || verhaeltnis > 1.2) return false;
+  if (Math.abs(verhaeltnis - 1 / Math.SQRT2) < 0.02) return false;   /* DIN-Format: ein Blatt */
+  return true;
+}
+
+/* Ein unkomprimiertes oder Flate-gepacktes Bild ist eine Folge von Bytes ohne
+   Dateikopf. Im Browser wird daraus über die Zeichenfläche ein PNG; im Worker
+   gibt es keine, und dort braucht auch niemand ein Foto. */
+async function ausRohbild(koerper, strom) {
+  if (typeof document === 'undefined') return null;
+  /* Alles außer roh und Flate — JPX, CCITT, JBIG2 — ist ein eigener Decoder.
+     Den gibt es hier nicht, und ein falsch gedeutetes Bild ist schlimmer als
+     keines. */
+  const filter = (koerper.match(/\/Filter\s*(\/[A-Za-z0-9]+|\[[^\]]*\])/) || [, ''])[1];
+  if (filter && !/FlateDecode/.test(filter)) return null;
+  const kanaele = /\/DeviceRGB/.test(koerper) ? 3 : (/\/DeviceGray/.test(koerper) ? 1 : 0);
+  if (!kanaele) return null;
+  if ((zahlAus(koerper, 'BitsPerComponent') || 8) !== 8) return null;
+
+  let feld = strom.feld;
+  if (strom.gepackt) {
+    feld = null;
+    for (const art of ['deflate', 'deflate-raw']) {
+      try {
+        const packe = new Blob([strom.feld]).stream().pipeThrough(new DecompressionStream(art));
+        feld = new Uint8Array(await new Response(packe).arrayBuffer());
+        break;
+      } catch (e) { /* nächster Versuch */ }
+    }
+    if (!feld) return null;
+  }
+  const breite = zahlAus(koerper, 'Width'), hoehe = zahlAus(koerper, 'Height');
+  if (feld.length < breite * hoehe * kanaele) return null;
+
+  const flaeche = document.createElement('canvas');
+  flaeche.width = breite; flaeche.height = hoehe;
+  const stift = flaeche.getContext('2d');
+  const punkte = stift.createImageData(breite, hoehe);
+  for (let i = 0, q = 0, z = 0; i < breite * hoehe; i++, q += kanaele, z += 4) {
+    punkte.data[z] = feld[q];
+    punkte.data[z + 1] = kanaele === 3 ? feld[q + 1] : feld[q];
+    punkte.data[z + 2] = kanaele === 3 ? feld[q + 2] : feld[q];
+    punkte.data[z + 3] = 255;
+  }
+  stift.putImageData(punkte, 0, 0);
+  return { typ: 'image/png', daten: flaeche.toDataURL('image/png') };
+}

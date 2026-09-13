@@ -11,11 +11,12 @@
  *
  * Endpunkte, alle POST mit JSON, außer /status:
  *   /parse   {text} | {datei:{name,typ,daten}}   -> {lebenslauf}
- *   /tailor  {lebenslauf, stelle}                -> {lebenslauf, aenderungen, luecken}
+ *   /tailor  {lebenslauf, stelle}                -> {vorschlaege, passung, luecken}
  *   /stelle  {url}                               -> {text, titel}
  *   /status                                      -> Selbstauskunft, ohne Geheimnisse
  */
-import { PARSE, TAILOR, PRUEFER, ANALYSE } from './prompts.js';
+import { PARSE, TAILOR, PRUEFER, ANALYSE, NACHTRAG } from './prompts.js';
+import { textStellen, textSetzen, REIHENFOLGE } from './texte.js';
 import { pdfText, textTaugt } from './pdf.js';
 
 const GRENZEN = {
@@ -195,7 +196,124 @@ async function lesen(daten, umgebung) {
   const ergebnis = await fragen(umgebung, PARSE,
     'Hier ist der Text eines Lebenslaufs. Gib das JSON zurück.\n\n---\n' + text, 0.1);
   if (ergebnis && ergebnis.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
-  return { lebenslauf: ergebnis };
+  return await vollstaendig(text, ergebnis, umgebung);
+}
+
+/* ---------------------------------------------------------- Vollständigkeit
+
+   Ein Modell, das einen Lebenslauf abschreibt, lässt gelegentlich etwas aus —
+   und sagt es nicht. Deshalb wird nicht geglaubt, sondern nachgezählt: Welche
+   Zeile des Quelltextes findet sich im Ergebnis nicht wieder? Was übrig
+   bleibt, ordnet ein zweiter, sehr kleiner Durchgang zu; was danach immer
+   noch übrig ist, kommt als eigener Abschnitt ans Ende. Verloren gehen darf
+   nichts — lieber steht es an der falschen Stelle, dort sieht man es und kann
+   es verschieben. */
+
+const NEBENSACHE = /^(lebenslauf|curriculum vitae|cv|resume|résumé|seite \d+|\d+\s*\/\s*\d+|\d+)$/i;
+
+function worte(text) {
+  return String(text).toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .split(' ')
+    .filter(w => w.length >= 4);
+}
+
+function alleTexte(objekt) {
+  const aus = [];
+  const gehen = x => {
+    if (typeof x === 'string') aus.push(x);
+    else if (Array.isArray(x)) x.forEach(gehen);
+    else if (x && typeof x === 'object') Object.values(x).forEach(gehen);
+  };
+  gehen(objekt);
+  return aus.join(' \n ');
+}
+
+/* Eine Zeile gilt als übernommen, wenn ihre tragenden Wörter im Ergebnis
+   vorkommen. Wortweise, weil ein zweispaltiges PDF Zeilen zerlegt und wieder
+   zusammensetzt — ein Vergleich auf Gleichheit fände fast nichts wieder. */
+export function fehlendeZeilen(text, lebenslauf) {
+  const da = new Set(worte(alleTexte(lebenslauf)));
+  const fehlt = [];
+  String(text).split(/\r?\n/).forEach(zeile => {
+    const roh = zeile.trim();
+    if (roh.length < 8 || NEBENSACHE.test(roh)) return;
+    const w = worte(roh);
+    if (!w.length) return;            /* reine Datums- oder Zahlenzeile */
+    const drin = w.filter(x => da.has(x)).length;
+    if (drin / w.length < 0.6) fehlt.push(roh);
+  });
+  return fehlt;
+}
+
+const RESTTITEL = { de: 'Weitere Angaben', en: 'Further details', es: 'Otros datos' };
+
+function nachtragSetzen(lebenslauf, ziel, wert) {
+  const text = String(wert || '').trim();
+  if (!text || !ziel || ziel === 'nichts') return false;
+  const liste = (name) => Array.isArray(lebenslauf[name]) ? lebenslauf[name] : (lebenslauf[name] = []);
+
+  if (ziel === 'kopf.profil') {
+    if (!lebenslauf.kopf || typeof lebenslauf.kopf !== 'object') lebenslauf.kopf = {};
+    lebenslauf.kopf.profil = (lebenslauf.kopf.profil ? lebenslauf.kopf.profil + ' ' : '') + text;
+    return true;
+  }
+  if (ziel === 'kontakt'){ liste('kontakt').push({ art: 'sonst', wert: text }); return true; }
+  if (ziel === 'kenntnisse'){ liste('kenntnisse').push(text); return true; }
+  if (ziel === 'sprachen'){
+    const teile = text.split(/\s*[:–-]\s*/);
+    liste('sprachen').push({ sprache: teile[0] || text, niveau: teile[1] || '' });
+    return true;
+  }
+  if (ziel === 'weiterbildung'){
+    const teile = text.split(/\s*[—–-]\s*/);
+    liste('weiterbildung').push({ titel: teile[0] || text, anbieter: teile[1] || '', jahr: teile[2] || '' });
+    return true;
+  }
+  let m = ziel.match(/^(beruf|ausbildung)\.(\d+)$/);
+  if (m) {
+    const wo = m[1] === 'beruf' ? lebenslauf.berufserfahrung : lebenslauf.ausbildung;
+    const eintrag = Array.isArray(wo) ? wo[+m[2]] : null;
+    if (!eintrag) return false;
+    if (!Array.isArray(eintrag.punkte)) eintrag.punkte = [];
+    eintrag.punkte.push(text);
+    return true;
+  }
+  m = ziel.match(/^weitere:(.*)$/);
+  if (m) {
+    const titel = (m[1] || '').trim() || RESTTITEL[lebenslauf.sprache] || RESTTITEL.de;
+    const weitere = liste('weitere');
+    let ab = weitere.find(w => (w.titel || '').trim().toLowerCase() === titel.toLowerCase());
+    if (!ab){ ab = { titel, punkte: [] }; weitere.push(ab); }
+    if (!Array.isArray(ab.punkte)) ab.punkte = [];
+    ab.punkte.push(text);
+    return true;
+  }
+  return false;
+}
+
+async function vollstaendig(text, lebenslauf, umgebung) {
+  let fehlt = fehlendeZeilen(text, lebenslauf);
+  let nachgetragen = 0;
+  if (fehlt.length) {
+    try {
+      const antwort = await fragen(umgebung, NACHTRAG,
+        'JSON\n---\n' + JSON.stringify(lebenslauf) +
+        '\n\nFEHLENDE ZEILEN\n---\n' + fehlt.slice(0, 60).map(z => '- ' + z).join('\n'), 0);
+      (Array.isArray(antwort.nachtrag) ? antwort.nachtrag : []).forEach(n => {
+        if (nachtragSetzen(lebenslauf, n && n.ziel, n && (n.wert || n.zeile))) nachgetragen++;
+      });
+    } catch (e) {
+      console.log('Nachtrag fehlgeschlagen:', e && e.message);
+    }
+    /* Was auch der zweite Durchgang nicht untergebracht hat, kommt als
+       eigener Abschnitt ans Blatt. Sichtbar an der falschen Stelle ist
+       besser als unsichtbar an gar keiner. */
+    fehlt = fehlendeZeilen(text, lebenslauf);
+    fehlt.slice(0, 30).forEach(z => nachtragSetzen(lebenslauf, 'weitere:', z));
+    if (fehlt.length) fehlt = fehlendeZeilen(text, lebenslauf);
+  }
+  return { lebenslauf, nachgetragen, offen: fehlt.length };
 }
 
 async function lesenAusDatei(datei, umgebung) {
@@ -228,34 +346,93 @@ async function lesenAusDatei(datei, umgebung) {
 
 /* ------------------------------------------------------------ zuschneiden */
 
+/* Was einen Satz zu einer Behauptung macht: Zahlen, Jahreszahlen, Kürzel.
+   Genau dort verrutscht einem Modell am ehesten etwas. */
+function harteAngaben(text) {
+  return (String(text).match(/\d+(?:[.,]\d+)*|\b[A-ZÄÖÜ]{2,}[A-ZÄÖÜ0-9/+-]*\b/g) || [])
+    .map(t => t.replace(/[.,]$/, ''));
+}
+
+/* Die eigene Kontrolle, vor dem Modell und unabhängig von ihm. Sie kostet
+   nichts und fängt den teuersten Fehler: eine Angabe, die vorher nicht
+   dastand. */
+function vorschlagPruefen(vorher, nachher) {
+  const neu = String(nachher || '').trim();
+  if (!neu) return { weg: 'leer' };
+  if (neu === vorher) return { weg: 'unverändert' };
+  if (neu.length > vorher.length * 1.4 + 25) return { weg: 'deutlich länger als das Original' };
+
+  const altAngaben = new Set(harteAngaben(vorher));
+  const neuAngaben = harteAngaben(neu);
+  const dazu = [...new Set(neuAngaben.filter(x => !altAngaben.has(x)))];
+  if (dazu.length) return { weg: 'neue Angabe: ' + dazu.join(', ') };
+
+  const jetzt = new Set(neuAngaben);
+  const fehlt = [...altAngaben].filter(x => !jetzt.has(x));
+  return fehlt.length ? { bedenken: 'Im Original steht ' + fehlt.join(', ') + ', hier nicht mehr.' } : {};
+}
+
 async function zuschneiden(daten, umgebung) {
   const lebenslauf = daten.lebenslauf;
   const stelle = String(daten.stelle || '').trim().slice(0, GRENZEN.stelle);
   if (!lebenslauf || typeof lebenslauf !== 'object') throw fehler('Kein Lebenslauf übergeben.', 400);
   if (stelle.length < 80) throw fehler('Die Stellenbeschreibung ist zu kurz.', 400);
 
+  const stellen = textStellen(lebenslauf);
+  if (!stellen.length) throw fehler('In diesem Lebenslauf ist nichts zum Umformulieren.', 400);
+  const nachId = new Map(stellen.map(s => [s.id, s]));
+
   const ergebnis = await fragen(umgebung, TAILOR,
     'STELLENANZEIGE\n---\n' + stelle +
-    '\n\nLEBENSLAUF (JSON)\n---\n' + JSON.stringify(lebenslauf), 0.3);
+    '\n\nLEBENSLAUF (JSON, nur zur Kenntnis)\n---\n' + JSON.stringify(lebenslauf) +
+    '\n\nPLACES (nur diese darfst du ändern)\n---\n' + JSON.stringify(stellen), 0.3);
 
-  /* Der zweite Blick: dasselbe Modell prüft das Ergebnis gegen das Original.
-     Zwei kleine Aufrufe sind billiger als eine erfundene Zahl im Lebenslauf. */
-  let beanstandet = [];
-  try {
-    const pruefung = await fragen(umgebung, PRUEFER,
-      'ORIGINAL\n---\n' + JSON.stringify(lebenslauf) +
-      '\n\nNEU\n---\n' + JSON.stringify(ergebnis.lebenslauf || {}), 0);
-    beanstandet = Array.isArray(pruefung.beanstandet) ? pruefung.beanstandet : [];
-  } catch (e) {
-    console.log('Prüfung fehlgeschlagen:', e && e.message);
+  /* Erst die eigene Prüfung, dann das Modell noch einmal über das, was
+     übrig bleibt. Was hier durchfällt, sieht der Benutzer gar nicht erst. */
+  const vorschlaege = [];
+  const verworfen = [];
+  (Array.isArray(ergebnis.vorschlaege) ? ergebnis.vorschlaege : []).slice(0, 40).forEach(v => {
+    const stelle2 = v && nachId.get(v.id);
+    if (!stelle2) return;
+    if (vorschlaege.some(x => x.id === v.id)) return;
+    const urteil = vorschlagPruefen(stelle2.text, v.nachher);
+    if (urteil.weg){ verworfen.push({ wo: stelle2.wo, grund: urteil.weg }); return; }
+    vorschlaege.push({ id: v.id, wo: stelle2.wo, vorher: stelle2.text,
+                       nachher: String(v.nachher).trim(),
+                       warum: String(v.warum || '').trim().slice(0, 200),
+                       bedenken: urteil.bedenken || '' });
+  });
+
+  if (vorschlaege.length) {
+    try {
+      const pruefung = await fragen(umgebung, PRUEFER,
+        JSON.stringify(vorschlaege.map(v => ({ id: v.id, vorher: v.vorher, nachher: v.nachher }))), 0);
+      (Array.isArray(pruefung.beanstandet) ? pruefung.beanstandet : []).forEach(b => {
+        const treffer = vorschlaege.find(v => v.id === (b && b.id));
+        if (treffer && b.grund) treffer.bedenken = String(b.grund).slice(0, 200);
+      });
+    } catch (e) {
+      console.log('Prüfung fehlgeschlagen:', e && e.message);
+    }
+  }
+
+  /* Umstellen ist der einzige Vorschlag ohne neuen Wortlaut — und nur
+     gültig, wenn wirklich dieselben Einträge herauskommen. */
+  let reihenfolge = null;
+  if (Array.isArray(ergebnis.reihenfolge) && Array.isArray(lebenslauf.kenntnisse)) {
+    const probe = { kenntnisse: lebenslauf.kenntnisse.slice() };
+    if (textSetzen(probe, REIHENFOLGE, ergebnis.reihenfolge)
+        && probe.kenntnisse.join('|') !== lebenslauf.kenntnisse.join('|')) {
+      reihenfolge = probe.kenntnisse;
+    }
   }
 
   return {
-    lebenslauf: ergebnis.lebenslauf || lebenslauf,
+    vorschlaege,
+    reihenfolge,
+    verworfen: verworfen.slice(0, 10),
     passung: ergebnis.passung || null,
-    aenderungen: Array.isArray(ergebnis.aenderungen) ? ergebnis.aenderungen : [],
     luecken: Array.isArray(ergebnis.luecken) ? ergebnis.luecken : [],
-    beanstandet,
   };
 }
 
