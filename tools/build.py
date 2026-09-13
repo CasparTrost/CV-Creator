@@ -2112,7 +2112,8 @@ def pdf_leser():
     quelle = quelle.replace('export function', 'function')
     return ('/* Erzeugt aus api/pdf.js — nicht von Hand ändern. */\n'
             '(function(){\n' + quelle +
-            '\nwindow.pdfText = pdfText;\nwindow.textTaugt = textTaugt;\n'
+            '\nwindow.pdfText = pdfText;\nwindow.pdfLesen = pdfLesen;\n'
+            'window.textTaugt = textTaugt;\n'
             'window.pdfBilder = pdfBilder;\n})();\n')
 
 

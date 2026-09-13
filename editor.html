@@ -2959,7 +2959,8 @@ async function kiUploadStarten(fenst){
   try {
     const eingabe = datei ? (kiVorbereitet || await dateiInhalt(datei)) : { text };
     const antwort = await kiRufen('/parse',
-      eingabe.text ? { text: eingabe.text } : { datei: eingabe.datei });
+      eingabe.text ? { text: eingabe.text, ueberschriften: eingabe.ueberschriften }
+                   : { datei: eingabe.datei });
     const lebenslauf = antwort.lebenslauf;
     if (!lebenslauf || !lebenslauf.kopf) throw new Error(T('kiNichtsGefunden'));
     kiVorschau(fenst, lebenslauf, antwort, eingabe.bild);

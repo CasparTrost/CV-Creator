@@ -30,7 +30,7 @@ const WIN1252_SONDER = {
   0x99: '™', 0x9a: 'š', 0x9b: '›', 0x9c: 'œ', 0x9e: 'ž', 0x9f: 'Ÿ',
 };
 
-async function pdfText(bytes) {
+async function pdfLesen(bytes) {
   const roh = new TextDecoder('windows-1252').decode(bytes);   /* nur zum Suchen */
   const objekte = objektIndex(roh);
   await objektStroemeOeffnen(roh, bytes, objekte);
@@ -53,7 +53,12 @@ async function pdfText(bytes) {
   }
   const teile = seitenLaeufe.map(l => seiteTeile(l));
   grabenUebernehmen(seitenLaeufe, teile);
-  return saeubern(seitenZusammen(teile).join('\n'));
+  return saeubern(seitenZusammen(teile));
+}
+
+/* Der Text allein — für alle, die mit der Gliederung nichts anfangen. */
+async function pdfText(bytes) {
+  return (await pdfLesen(bytes)).text;
 }
 
 /* Ein Raster gilt für das ganze Dokument.
@@ -131,7 +136,7 @@ function seitenZusammen(teile) {
     for (const t of lauf) zeilen.push(...t.voll);
     for (const t of lauf) zeilen.push(...t.links);
     for (const t of lauf) zeilen.push(...t.rechts);
-    if (zeilen.length) stuecke.push(zeilen.join('\n'));
+    if (zeilen.length) stuecke.push(...zeilen);
     i = j + 1;
   }
   return stuecke;
@@ -424,12 +429,24 @@ function verwandeln(px, py, m) {
   return [m[0] * px + m[2] * py + m[4], m[1] * px + m[3] * py + m[5]];
 }
 
+/* Wie stark die Fläche den Text vergrößert. Ein Erzeuger setzt die Schrift
+   auf 1 und skaliert die Fläche auf 12 — ohne das wäre jede Zeile gleich
+   groß. Gemessen wird die Fläche der Einheitsmasche. */
+function skalierung(m) {
+  const wert = Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2]));
+  return isFinite(wert) && wert > 0 ? wert : 1;
+}
+
 function zeichenketten(inhalt, schriften, anfang) {
   /* Chrome setzt jede Silbe einzeln und schiebt den Cursor dazwischen. Ein
      Zeilenumbruch bei jedem Vorschub ergäbe ein Wort je Zeile — umgebrochen
      wird deshalb nur, wenn sich die Höhe ändert. */
   const laeufe = [];                     /* {x, y, text} je Textlauf */
   let zeile = '', tabelle = null, letzteHoehe = null, x = 0, y = 0, zeileX = 0, zeileY = 0;
+  /* Schrift und Grad des gerade gesetzten Textes, und der größte Grad, der in
+     der laufenden Zeile vorkam: Eine Überschrift ist größer gesetzt als ihr
+     Abschnitt, und das steht hier so im Dokument. */
+  let schrift = '', grad = 0, zeileGrad = 0, zeileSchrift = '';
   /* Die Fläche, in die gerade gezeichnet wird. Ein Erzeuger setzt jeden Block
      mit einer eigenen Matrix — wer sie übergeht, vergleicht Koordinaten aus
      verschiedenen Welten und findet keine Spalte mehr. */
@@ -437,21 +454,30 @@ function zeichenketten(inhalt, schriften, anfang) {
   const stapel = [];
 
   const anweisung = new RegExp([
-    '\\/([^\\s/]+)\\s+[\\d.]+\\s+Tf',                    /* 1 Schrift */
-    '\\[((?:[^\\[\\]\\\\]|\\\\.)*)\\]\\s*TJ',    /* 2 Feld */
-    '\\(((?:[^()\\\\]|\\\\.)*)\\)\\s*(?:Tj|\')',    /* 3 Kette */
-    '<([0-9A-Fa-f\\s]*)>\\s*Tj',                               /* 4 Hex */
-    '(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(?:Td|TD)',             /* 5,6 Vorschub */
-    '(?:-?[\\d.]+\\s+){4}(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+Tm',  /* 7,8 Matrix */
-    '(T\\*|ET|BT)',                                              /* 9 Zeile/Block */
+    '\\/([^\\s/]+)\\s+([\\d.]+)\\s+Tf',                  /* 1 Schrift, 2 Grad */
+    '\\[((?:[^\\[\\]\\\\]|\\\\.)*)\\]\\s*TJ',    /* 3 Feld */
+    '\\(((?:[^()\\\\]|\\\\.)*)\\)\\s*(?:Tj|\')',    /* 4 Kette */
+    '<([0-9A-Fa-f\\s]*)>\\s*Tj',                               /* 5 Hex */
+    '(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(?:Td|TD)',             /* 6,7 Vorschub */
+    '(?:-?[\\d.]+\\s+){4}(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+Tm',  /* 8,9 Matrix */
+    '(T\\*|ET|BT)',                                              /* 10 Zeile/Block */
     '(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+(-?[\\d.]+)\\s+cm',
-                                                                   /* 10-15 Fläche */
-    '(?:^|[^A-Za-z])(q|Q)(?![A-Za-z])',                            /* 16 Stapel */
+                                                                   /* 11-16 Fläche */
+    '(?:^|[^A-Za-z])(q|Q)(?![A-Za-z])',                            /* 17 Stapel */
   ].join('|'), 'g');
 
+  /* Gemerkt wird der Grad erst, wenn wirklich Text kommt: „/F7 28 Tf“ steht
+     im Strom vor dem Namen, aber nach der letzten Zeile des Kurzprofils — wer
+     ihn sofort verbucht, schreibt die Größe der Überschrift der Zeile davor
+     zu und verschiebt die ganze Erkennung um eine Zeile. */
+  const nimmGrad = () => {
+    if (grad > zeileGrad) { zeileGrad = grad; zeileSchrift = schrift; }
+  };
+
   const umbruch = () => {
-    if (zeile.trim()) laeufe.push({ x: zeileX, y: zeileY, text: zeile.trim() });
-    zeile = '';
+    if (zeile.trim()) laeufe.push({ x: zeileX, y: zeileY, text: zeile.trim(),
+                                    grad: zeileGrad, schrift: zeileSchrift });
+    zeile = ''; zeileGrad = 0; zeileSchrift = '';
   };
   /* Jeder Textlauf beginnt mit einer Matrix, die seine Höhe nennt. Gleiche
      Höhe heißt gleiche Zeile — dort gehört ein Leerzeichen dazwischen, etwa
@@ -472,32 +498,36 @@ function zeichenketten(inhalt, schriften, anfang) {
   while ((treffer = anweisung.exec(inhalt)) !== null) {
     if (treffer[1] !== undefined) {
       tabelle = schriften.has(treffer[1]) ? schriften.get(treffer[1]) : null;
-    } else if (treffer[2] !== undefined) {
-      for (const stueck of treffer[2].matchAll(/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g)) {
+      /* Der Schriftgrad ist das, woran man eine Überschrift erkennt — und er
+         steht hier, im Textstrom, eine Anweisung vor dem Text selbst. */
+      schrift = treffer[1];
+      grad = parseFloat(treffer[2]) * skalierung(flaeche);
+    } else if (treffer[3] !== undefined) {
+      for (const stueck of treffer[3].matchAll(/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g)) {
         const s = stueck[0];
-        if (s[0] === '(') zeile += entziffern(entklammern(s.slice(1, -1)), tabelle);
-        else if (s[0] === '<') zeile += hexZuText(s.slice(1, -1), tabelle);
+        if (s[0] === '(') { nimmGrad(); zeile += entziffern(entklammern(s.slice(1, -1)), tabelle); }
+        else if (s[0] === '<') { nimmGrad(); zeile += hexZuText(s.slice(1, -1), tabelle); }
         else if (parseFloat(s) < -180) zeile += ' ';      /* großer Vorschub = Leerzeichen */
       }
-    } else if (treffer[3] !== undefined) {
-      zeile += entziffern(entklammern(treffer[3]), tabelle);
     } else if (treffer[4] !== undefined) {
-      zeile += hexZuText(treffer[4], tabelle);
-    } else if (treffer[6] !== undefined) {
+      nimmGrad(); zeile += entziffern(entklammern(treffer[4]), tabelle);
+    } else if (treffer[5] !== undefined) {
+      nimmGrad(); zeile += hexZuText(treffer[5], tabelle);
+    } else if (treffer[7] !== undefined) {
       /* Td/TD ist hier der Vorschub von Zeichen zu Zeichen. Aus einem
          waagerechten Vorschub ein Leerzeichen zu machen wäre falsch: die
          Wortzwischenräume stehen als eigenes Zeichen im Text. Nur ein
          Sprung in der Höhe ist eine neue Zeile. */
-      if (Math.abs(parseFloat(treffer[6])) > 0.4) umbruch();
-    } else if (treffer[8] !== undefined) {
-      hoehe(treffer[7], treffer[8]);
+      if (Math.abs(parseFloat(treffer[7])) > 0.4) umbruch();
     } else if (treffer[9] !== undefined) {
-      if (treffer[9] === 'T*') umbruch();
+      hoehe(treffer[8], treffer[9]);
     } else if (treffer[10] !== undefined) {
-      const neu = [10, 11, 12, 13, 14, 15].map(i => parseFloat(treffer[i]));
+      if (treffer[10] === 'T*') umbruch();
+    } else if (treffer[11] !== undefined) {
+      const neu = [11, 12, 13, 14, 15, 16].map(i => parseFloat(treffer[i]));
       if (neu.every(isFinite)) flaeche = malnehmen(neu, flaeche);
-    } else if (treffer[16] !== undefined) {
-      if (treffer[16] === 'q') stapel.push(flaeche.slice());
+    } else if (treffer[17] !== undefined) {
+      if (treffer[17] === 'q') stapel.push(flaeche.slice());
       else if (stapel.length) flaeche = stapel.pop();
     }
   }
@@ -580,7 +610,7 @@ function nachUntenGedreht(laeufe) {
     else if (laeufe[i].y < laeufe[i - 1].y) faellt++;
   }
   if (steigt >= faellt) return laeufe;
-  return laeufe.map(l => ({ x: l.x, y: -l.y, text: l.text }));
+  return laeufe.map(l => ({ x: l.x, y: -l.y, text: l.text, grad: l.grad }));
 }
 
 /* Die breiteste senkrechte Lücke im mittleren Teil der Seite. */
@@ -770,6 +800,7 @@ function zeilenAus(laeufe) {
     if (letzte && Math.abs(lauf.y - letzteY) <= gleicheZeile) {
       const nurMarke = MARKE_ALLEIN.test(letzte.text.trim());
       letzte.text += ' ' + lauf.text;
+      letzte.grad = Math.max(letzte.grad || 0, lauf.grad || 0);
       /* Das Aufzählungszeichen ist nicht der Anfang der Zeile, sondern was
          dahinter steht — sonst zeigt die Einrückung an die falsche Stelle. */
       if (nurMarke) letzte.x = lauf.x;
@@ -780,6 +811,7 @@ function zeilenAus(laeufe) {
     const randErreicht = !!letzte && amRand(letzte, letztesEnde);
     if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand, randErreicht)) {
       letzte.text = verbinden(letzte.text, lauf.text);
+      letzte.grad = Math.max(letzte.grad || 0, lauf.grad || 0);
       letzteY = lauf.y;
       letztesEnde = ende(lauf);
       continue;
@@ -791,11 +823,12 @@ function zeilenAus(laeufe) {
        Arbeitgeber an den letzten Stichpunkt der vorigen Station gehängt,
        weil der Firmenname klein anfing. */
     if (letzte && zeilenabstand > 0 && lauf.y - letzteY > zeilenabstand * 1.6) aus.push(ABSATZ);
-    letzte = { x: lauf.x, y: lauf.y, text: lauf.text };
+    letzte = { x: lauf.x, y: lauf.y, text: lauf.text, grad: lauf.grad || 0 };
     letzteY = lauf.y;
     aus.push(letzte);
   }
-  return aus.map(l => (l === ABSATZ ? '' : l.text));
+  return aus.map(l => (l === ABSATZ ? { text: '', grad: 0 }
+                                    : { text: l.text, grad: l.grad || 0 }));
 }
 
 /* Nur eine Marke, kein Text: „hier war Luft“. */
@@ -908,10 +941,10 @@ async function ohneSeiten(roh, bytes, objekte) {
   for (const nummer of objekte.keys()) {
     const text = await stromText(roh, bytes, objekte, nummer);
     if (text && /\b(Tj|TJ)\b/.test(text)) {
-      stuecke.push(seiteZuText(zeichenketten(text, new Map())).join('\n'));
+      stuecke.push(...seiteZuText(zeichenketten(text, new Map())));
     }
   }
-  return saeubern(stuecke.join('\n'));
+  return saeubern(stuecke);
 }
 
 /* Taugt der gelesene Text, oder ist es Zeichensalat?
@@ -936,11 +969,57 @@ function textTaugt(text, mindestens) {
   return mitVokal / woerter.length > 0.75;
 }
 
-function saeubern(text) {
+/* Aus den Zeilen wird der Text — und die Gliederung.
+ *
+ * Welche Zeile eine Überschrift ist, muss niemand raten: Sie steht größer da
+ * als der Abschnitt, den sie überschreibt. Das ist keine Feinheit des
+ * Layouts, sondern der Grund, warum ein Mensch den Lebenslauf auf einen Blick
+ * gliedern kann — und es steht im Dokument, Anweisung für Anweisung
+ * („/F5 14 Tf“ gegen „/F4 10 Tf“).
+ *
+ * Der Körpergrad ist der, in dem die meisten Zeichen gesetzt sind. Alles, was
+ * deutlich größer ist, ist eine Überschrift; zwei gleich große Zeilen
+ * hintereinander sind eine („ZUSÄTZLICHE“ / „QUALIFIKATIONEN“). Der Name
+ * ganz oben ist meist noch größer und wird nicht zur Rubrik erklärt — wo er
+ * steht, weiß der Kopf des Dokuments ohnehin.
+ */
+function saeubern(zeilen) {
+  const sauber = zeilen.map(z => ({
+    text: String(z.text || '').replace(/[ \t]+/g, ' ').trim(),
+    grad: z.grad || 0,
+  }));
   /* Die Leerzeilen bleiben bis hierher stehen — sie sind das einzige, was der
      Durchgang ohne Geometrie noch von den Abständen der Seite weiß. */
-  const zeilen = text.replace(/[ \t]+/g, ' ').split('\n').map(z => z.trim());
-  return zusammenfuegen(zeilen).join('\n').replace(/\n{2,}/g, '\n').trim();
+  const fertig = zusammenfuegen(sauber).filter(z => z.text);
+  return { text: fertig.map(z => z.text).join('\n'), ueberschriften: ueberschriftenAus(fertig) };
+}
+
+function ueberschriftenAus(zeilen) {
+  const gewicht = new Map();
+  zeilen.forEach(z => {
+    const g = Math.round(z.grad * 2) / 2;
+    if (g > 0) gewicht.set(g, (gewicht.get(g) || 0) + z.text.length);
+  });
+  if (!gewicht.size) return [];
+  const koerper = [...gewicht.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  /* „Deutlich größer“ heißt: ein Zehntel über dem Körpergrad und mindestens
+     einen halben Punkt. Eine fette Zeile in derselben Größe zählt nicht —
+     Firmennamen sind auch fett. */
+  const schwelle = Math.max(koerper * 1.1, koerper + 0.5);
+
+  const aus = [];
+  zeilen.forEach((z, i) => {
+    if (z.grad < schwelle) return;
+    const vor = aus[aus.length - 1];
+    /* Zwei gleich große Zeilen unmittelbar hintereinander sind eine
+       Überschrift, die umbrochen wurde. */
+    if (vor && vor.bis === i - 1 && Math.abs(zeilen[i - 1].grad - z.grad) < 0.1) {
+      vor.bis = i; vor.titel += ' ' + z.text;
+      return;
+    }
+    aus.push({ von: i + 1, bis: i, titel: z.text, grad: z.grad });
+  });
+  return aus.map(u => ({ von: u.von, bis: u.bis + 1, titel: u.titel, grad: u.grad }));
 }
 
 /* Ein PDF kennt keine Sätze, nur Zeilen. „Projektsteuerung nach Scrum und“ /
@@ -955,23 +1034,26 @@ function saeubern(text) {
 function zusammenfuegen(zeilen) {
   const aus = [];
   let marke = '';
-  for (const roh of zeilen) {
+  for (const stueck of zeilen) {
+    const roh = stueck.text;
     /* Ein Aufzählungszeichen steht im PDF oft als eigener Lauf — es wird an
        einer anderen Stelle gesetzt als der Text dahinter. Allein ist es keine
        Zeile, sondern der Anfang der nächsten. */
     if (MARKE_ALLEIN.test(roh)) { marke = '• '; continue; }
-    if (!roh) { aus.push(''); continue; }          /* Luft trennt, sie steht nicht */
+    if (!roh) { aus.push({ text: '', grad: 0 }); continue; }   /* Luft trennt */
     const zeile = marke + roh;
     marke = '';
-    const oben = aus.length ? aus[aus.length - 1] : null;
+    const letzte = aus.length ? aus[aus.length - 1] : null;
+    const oben = letzte ? letzte.text : null;
     const haengend = HAENGEND.test(oben || '');
     const passt = oben && oben.length > 20 &&
       !/[.;:!?]$/.test(oben) &&
       !/^[\u2022\u00b7\u25cf\u2013\u2014-]\s/.test(zeile) &&
       !/^\d/.test(zeile) && !ZEITRAUM.test(oben) &&
       (/^[a-z\u00e4\u00f6\u00fc\u00df(]/.test(zeile) || haengend || OFFEN.test(oben));
-    if (!passt) { aus.push(zeile); continue; }
-    aus[aus.length - 1] = verbinden(oben, zeile);
+    if (!passt) { aus.push({ text: zeile, grad: stueck.grad }); continue; }
+    letzte.text = verbinden(oben, zeile);
+    letzte.grad = Math.max(letzte.grad, stueck.grad);
   }
   return aus;
 }
@@ -1070,6 +1152,7 @@ async function ausRohbild(koerper, strom) {
 }
 
 window.pdfText = pdfText;
+window.pdfLesen = pdfLesen;
 window.textTaugt = textTaugt;
 window.pdfBilder = pdfBilder;
 })();

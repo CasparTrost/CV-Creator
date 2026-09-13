@@ -17,7 +17,7 @@
  */
 import { PARSE, GLIEDERUNG, ABSCHNITT, TAILOR, PRUEFER, ANALYSE } from './prompts.js';
 import { textStellen, textSetzen, REIHENFOLGE } from './texte.js';
-import { pdfText, textTaugt } from './pdf.js';
+import { pdfLesen, textTaugt } from './pdf.js';
 
 const GRENZEN = {
   koerper: 6 * 1024 * 1024,   /* Anfrage insgesamt */
@@ -202,12 +202,18 @@ function artVon(wert) {
 
 async function lesen(daten, umgebung) {
   let text = (daten.text || '').trim();
+  /* Welche Zeilen im Dokument als Überschrift gesetzt sind. Der Browser hat
+     die Datei schon gelesen und schickt es mit; kommt die Datei selbst, wird
+     es hier gemessen. */
+  let ueberschriften = Array.isArray(daten.ueberschriften) ? daten.ueberschriften : [];
 
   if (!text && daten.datei && daten.datei.daten) {
     const roh = base64Aus(daten.datei.daten);
     const name = (daten.datei.name || '').toLowerCase();
     if (name.endsWith('.pdf') || (daten.datei.typ || '').includes('pdf')) {
-      text = await pdfText(roh);
+      const gelesen = await pdfLesen(roh);
+      text = gelesen.text;
+      ueberschriften = gelesen.ueberschriften || [];
       if (!brauchbar(text)) {
         /* Gescannt oder mit eingebetteten Schriften ohne Zuordnung: dann
            bekommt das Modell die Datei selbst zu sehen. Eine Gliederung nach
@@ -221,7 +227,7 @@ async function lesen(daten, umgebung) {
   }
 
   if (!text) throw fehler('Es war kein Text in der Datei.', 400);
-  return await nachGliederung(text.slice(0, GRENZEN.text), umgebung);
+  return await nachGliederung(text.slice(0, GRENZEN.text), umgebung, ueberschriften);
 }
 
 /* --------------------------------------------------------- in zwei Stufen
@@ -229,7 +235,7 @@ async function lesen(daten, umgebung) {
    Erst die Gliederung, dann jeder Abschnitt für sich. Warum, steht bei den
    Systemprompts; hier steht, was danach noch geprüft wird. */
 
-async function nachGliederung(text, umgebung) {
+async function nachGliederung(text, umgebung, ueberschriften) {
   const zeilen = text.split(/\r?\n/).map(z => z.trim()).filter(Boolean).slice(0, 400);
   if (zeilen.length < 3) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
 
@@ -242,7 +248,14 @@ async function nachGliederung(text, umgebung) {
   }
   if (plan && plan.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
 
-  const bereiche = bereicheOrdnen(plan && plan.abschnitte, zeilen);
+  /* Die gemessene Gliederung schlägt die geratene.
+     Welche Zeile eine Überschrift ist, steht im Dokument: Sie ist größer
+     gesetzt als der Abschnitt, den sie überschreibt. Ein Modell, das
+     dasselbe aus dem Wortlaut erraten soll, macht jedes Mal andere Fehler —
+     es hat denselben Lebenslauf mal in sechs, mal in siebzehn Abschnitte
+     zerlegt. Gemessen ist es jedes Mal dasselbe. */
+  const gemessen = bereicheAusUeberschriften(ueberschriften, zeilen);
+  const bereiche = gemessen || bereicheOrdnen(plan && plan.abschnitte, zeilen);
   /* Ohne brauchbare Gliederung lieber der alte Weg als gar keiner. */
   if (!bereiche.length) return await amStueck(text, umgebung);
 
@@ -348,6 +361,67 @@ function sauberText(wert, hoechstens) {
 /* Die Bereiche des Modells sind Vorschläge, keine Zusicherung: Sie
    überlappen sich, lassen Löcher, zeigen ins Leere. Hier werden sie zu einer
    lückenlosen Folge — jede Zeile in genau einem Abschnitt. */
+/* Die Abschnitte, wie das Dokument sie setzt.
+ *
+ * Geliefert wird je Überschrift die erste und die letzte ihrer Zeilen (eine
+ * Überschrift kann umbrochen sein) und der Schriftgrad. Daraus wird die
+ * Gliederung: Jede Überschrift beginnt einen Abschnitt, der bis zur nächsten
+ * reicht. Was vor der ersten steht, ist der Vorspann — Name, Kurzprofil,
+ * manchmal die Kontaktdaten.
+ *
+ * Der Name ganz oben ist ebenfalls größer gesetzt, meist noch größer als die
+ * Rubriken. Er wird herausgenommen: Die Rubriken sind die Gruppe mit den
+ * meisten Mitgliedern, alles Größere ist der Name.
+ *
+ * Unter zwei Rubriken lohnt es nicht — dann hat die Datei entweder keine
+ * Überschriften oder sie sind nicht als solche gesetzt, und das Modell ist
+ * wieder die bessere Auskunft. */
+function bereicheAusUeberschriften(liste, zeilen) {
+  const roh = (Array.isArray(liste) ? liste : [])
+    .map(u => ({
+      anfang: Math.max(1, parseInt(u && u.von, 10) || 0),
+      ende: Math.max(1, parseInt(u && (u.bis || u.von), 10) || 0),
+      titel: sauberText(u && u.titel, 80),
+      grad: parseFloat(u && u.grad) || 0,
+    }))
+    .filter(u => u.titel && u.anfang <= zeilen.length && u.ende >= u.anfang)
+    .sort((a, b) => a.anfang - b.anfang);
+  if (roh.length < 2) return null;
+
+  const zaehl = new Map();
+  roh.forEach(u => {
+    const g = Math.round(u.grad * 2) / 2;
+    zaehl.set(g, (zaehl.get(g) || 0) + 1);
+  });
+  const rubrikGrad = [...zaehl.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
+  const rubriken = roh.filter(u => Math.abs(Math.round(u.grad * 2) / 2 - rubrikGrad) < 0.1);
+  if (rubriken.length < 2) return null;
+
+  const aus = rubriken.map((u, i) => ({
+    titel: u.titel,
+    art: artVon(u.titel),
+    anfang: u.anfang,
+    von: Math.min(u.ende + 1, zeilen.length),
+    bis: i + 1 < rubriken.length ? rubriken[i + 1].anfang - 1 : zeilen.length,
+    eigene: true,
+  }));
+  const brauchbar = aus.filter(a => a.bis >= a.von);
+  if (brauchbar.length < 2) return null;
+
+  /* Auch hier gilt: Eine Reihe von Zeiträumen ist keine Aufzählung. */
+  brauchbar.forEach(a => artNachInhalt(a, zeilen));
+  return brauchbar;
+}
+
+function artNachInhalt(a, zeilen) {
+  if (a.art !== 'liste' && a.art !== 'text') return;
+  let mit = 0;
+  for (let nr = a.von; nr <= a.bis; nr++) if (ZEITRAUM_ZEILE.test(zeilen[nr - 1] || '')) mit++;
+  if (mit < 2) return;
+  const nach = artVon(a.titel);
+  if (nach === 'beruf' || nach === 'ausbildung' || nach === 'weiterbildung') a.art = nach;
+}
+
 function bereicheOrdnen(liste, zeilen) {
   const anzahl = zeilen.length;
   const roh = (Array.isArray(liste) ? liste : [])
