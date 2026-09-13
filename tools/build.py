@@ -11,12 +11,24 @@ tools/content.py, run the script, commit the HTML it writes.
 Domain and operator details are read from assets/site-config.js, so that
 file stays the single place you edit before going live.
 """
+import io
 import json
 import os
 import re
 import datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def lies(pfad):
+    """Jede Datei hier ist UTF-8.
+
+    Ohne diese Angabe nimmt Python die Kodierung des Betriebssystems — unter
+    deutschem Windows cp1252 — und bricht beim ersten typografischen
+    Anführungszeichen ab. Auf einem Linux-Rechner fällt das nie auf, und
+    genau deshalb steht es hier und nicht im Kopf jeder einzelnen Zeile.
+    """
+    return io.open(pfad, encoding='utf-8').read()
 TODAY = datetime.date.today().isoformat()
 
 import sys
@@ -28,7 +40,7 @@ import icons  # noqa: E402  (the icon set, one source for site and editor)
 # ---------------------------------------------------------------- config
 
 def read_config():
-    src = open(os.path.join(ROOT, 'assets', 'site-config.js')).read()
+    src = lies(os.path.join(ROOT, 'assets', 'site-config.js'))
 
     def field(name, block=''):
         pattern = r"%s\s*:\s*'([^']*)'" % name
@@ -53,7 +65,7 @@ def read_config():
 CFG = read_config()
 DOMAIN = CFG['domain']
 BRAND = 'PlainSheet'
-TEMPLATES = json.load(open(os.path.join(ROOT, 'tools', 'data', 'templates.json')))
+TEMPLATES = json.loads(lies(os.path.join(ROOT, 'tools', 'data', 'templates.json')))
 BY_ID = {t['tid']: t for t in TEMPLATES}
 
 _de = content.for_lang('de')
@@ -423,7 +435,7 @@ def footer(depth, lang='en'):
 def write(path, html):
     full = os.path.join(ROOT, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
-    with open(full, 'w') as fh:
+    with io.open(full, 'w', encoding='utf-8', newline='\n') as fh:
         fh.write(html.rstrip() + '\n')
     return path
 
@@ -2095,7 +2107,7 @@ def pdf_leser():
     hochgeladen werden — das ist schneller, billiger und gibt weniger preis.
     Erzeugt wird sie hier, damit es nur eine Quelle gibt.
     """
-    quelle = open(os.path.join(ROOT, 'api', 'pdf.js')).read()
+    quelle = lies(os.path.join(ROOT, 'api', 'pdf.js'))
     quelle = quelle.replace('export async function', 'async function')
     quelle = quelle.replace('export function', 'function')
     return ('/* Erzeugt aus api/pdf.js — nicht von Hand ändern. */\n'
@@ -2113,7 +2125,7 @@ def patch_editor_icons(src):
 def patch_editor():
     """The editor is hand-written, so only its canonical and og: URLs are stamped."""
     path = os.path.join(ROOT, 'editor.html')
-    src = open(path).read()
+    src = lies(path)
     fixed = patch_editor_icons(src)
     fixed = re.sub(r'https://[A-Za-z0-9.\-]*YOUR-DOMAIN\.example', DOMAIN, fixed)
     fixed = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',
@@ -2121,7 +2133,7 @@ def patch_editor():
     fixed = re.sub(r'(<meta property="og:url" content=")[^"]*(">)',
                    r'\g<1>%s/editor.html\g<2>' % DOMAIN, fixed)
     if fixed != src:
-        open(path, 'w').write(fixed)
+        io.open(path, 'w', encoding='utf-8', newline='\n').write(fixed)
     return 'editor.html'
 
 

@@ -8,6 +8,7 @@ assets/icon-512.png and assets/og.png. Run it again if the wordmark or the
 accent colour changes.
 """
 import io
+import io
 import os
 import re
 import urllib.request
@@ -139,7 +140,8 @@ def og_image():
 
 
 def main():
-    with open(os.path.join(ASSETS, 'favicon.svg'), 'w') as fh:
+    with io.open(os.path.join(ASSETS, 'favicon.svg'), 'w',
+                 encoding='utf-8', newline='\n') as fh:
         fh.write(FAVICON_SVG)
     sheet_icon(32).save(os.path.join(ASSETS, 'favicon.png'))
     sheet_icon(180).save(os.path.join(ASSETS, 'apple-touch-icon.png'))

@@ -117,7 +117,7 @@ def main():
             print('  English  http://localhost:%d/' % port)
             print('  Deutsch  http://localhost:%d/de/' % port)
             print('  Editor   http://localhost:%d/editor.html' % port)
-            print('  KI       Testbetrieb unter /api — erfundene Antworten, keine Kosten')
+            print('  KI       Testbetrieb unter /api - erfundene Antworten, keine Kosten')
             print('Ctrl+C to stop.\n')
             httpd.serve_forever()
     except OSError as err:
