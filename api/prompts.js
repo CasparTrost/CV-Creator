@@ -95,6 +95,117 @@ PITFALLS
 - A "Profil" or "Summary" at the top belongs in kopf.profil, not in weitere.
 - Skills separated by commas or pipes become separate entries in "kenntnisse".`;
 
+/* ------------------------------------------------------ Gliederung lesen
+
+   Warum in zwei Stufen gelesen wird:
+
+   Ein Lebenslauf hat eine Gliederung, die sein Verfasser gewählt hat —
+   "Kontakt", "Zusätzliche Qualifikationen", "Ehrenamt". Wer den ganzen Text
+   in einem Zug in ein festes Formular presst, verliert genau diese
+   Gliederung: Überschriften werden zu etwas anderem umbenannt, ein langer
+   Abschnitt reißt in zwei, und was nirgends hineinpasst, fällt heraus. Und
+   niemand merkt es, weil das Ergebnis vollständig aussieht.
+
+   Deshalb wird zuerst nur gefragt, welche Abschnitte es gibt und wo sie
+   anfangen und aufhören. Danach bekommt das Modell jeden Abschnitt einzeln,
+   mit seinen eigenen Zeilen und der Aufgabe, nur diese zu übertragen. Das
+   ist billig (kurze Anfragen, gleichzeitig gestellt) und es lässt sich
+   prüfen: Die Zeilen eines Abschnitts sind bekannt, also ist auch bekannt,
+   ob eine davon fehlt. */
+
+export const GLIEDERUNG = `You are given the plain text of a CV. Every line is
+numbered. Return its outline — which sections the document has and where each
+one begins and ends. You do not transcribe any content here.
+
+OUTPUT — one JSON object, nothing else:
+
+{
+  "sprache": "de | en | es  (the language of the document)",
+  "kopf": {"name": "the person's name", "rolle": "their job title, one line, or empty"},
+  "abschnitte": [
+    {"titel": "the heading exactly as it stands in the document, or \"\" if the
+               section has none",
+     "art": "kontakt|profil|beruf|ausbildung|weiterbildung|sprachen|liste|text",
+     "von": 12, "bis": 30}
+  ]
+}
+
+THE RANGES
+- "von" and "bis" are line numbers, inclusive, and they are the point of this
+  answer. Get them right and the rest of the work is easy.
+- Together the sections cover every line from the first to the last. No holes,
+  no overlaps. A line that stands under a heading belongs to that section, and
+  a line under no heading at all belongs to the section above it.
+- The heading line itself belongs to its section ("von" points at it).
+- The name, the job title and a photo caption at the very top belong to no
+  section: start the first section below them. Contact lines at the top ARE a
+  section — "kontakt" with an empty "titel".
+
+THE KINDS
+  kontakt        address, phone, mail, date of birth, links, nationality
+  profil         a summary about the person, prose, usually at the top
+  beruf          employment: positions with employers and dates
+  ausbildung     school, studies, apprenticeship, degrees
+  weiterbildung  courses, certificates, training
+  sprachen       languages with levels
+  liste          anything that is a list of short items: skills, software,
+                 interests, licences, strengths
+  text           prose that is none of the above
+
+RULES
+1. "titel" is copied from the document, letter for letter. Do not translate it,
+   do not tidy it, do not replace it with a standard name. "Zusätzliche
+   Qualifikationen" stays "Zusätzliche Qualifikationen".
+2. What the document shows as one section stays one section. What it shows as
+   two stays two. Never split a section because it is long, never merge two
+   because they are similar.
+3. Judge "art" by what the lines contain, not by the heading alone. A section
+   called "Erfahrung" that lists employers and dates is "beruf"; one that lists
+   software is "liste".
+4. Do not invent a section that is not there. Page numbers, headers, footers
+   and decoration belong to the section they stand in — they are dropped later.
+5. At most 14 sections. If the document has more headings than that, the
+   smallest neighbouring ones are merged.
+6. If this is not a CV, return {"fehler": "kein Lebenslauf"}.`;
+
+/* ---------------------------------------------------- einen Abschnitt lesen */
+export const ABSCHNITT = `You transcribe ONE section of a CV into JSON. You get
+its heading, its kind and its lines, and nothing else. You are a transcriber,
+not an author.
+
+OUTPUT — one JSON object, nothing else:
+
+{"eintraege": [ ... ]}
+
+The shape of an entry depends on the kind you were given:
+
+  kontakt        {"art": "ort|tel|mail|datum|web|sonst", "wert": "the line"}
+  beruf          {"titel": "", "firma": "", "ort": "", "von": "MM/JJJJ",
+                  "bis": "MM/JJJJ or heute", "punkte": ["one task or result each"]}
+  ausbildung     {"abschluss": "", "fach": "", "einrichtung": "", "von": "",
+                  "bis": "", "punkte": ["a grade, a focus, a thesis"]}
+  weiterbildung  {"titel": "", "anbieter": "", "jahr": ""}
+  sprachen       {"sprache": "", "niveau": ""}
+  liste          "one item per entry, as a plain string"
+  profil, text   "one paragraph per entry, as a plain string"
+
+ABSOLUTE RULES
+1. Every word you write stands in the lines you were given. Fix obvious OCR
+   damage ("Pro3ektleiter" -> "Projektleiter"), drop page numbers, running
+   headers and the section heading itself. Nothing else.
+2. Invent nothing. No dates, no employers, no degrees, no levels. An empty
+   field is correct; a plausible one is a lie.
+3. Lose nothing. Every line you were given shows up in some entry. A line that
+   stands under an entry belongs to that entry: a grade under a degree is one
+   of its "punkte", a task under a position is one of its "punkte".
+4. Keep the order of the document.
+5. Do not translate. Do not shorten a bullet so that a fact disappears, and do
+   not merge two bullets into one.
+6. Dates keep the granularity of the source: "2019" stays "2019", "03/2019"
+   stays "03/2019".
+7. A line you cannot place is still not dropped — put it in the nearest entry's
+   "punkte", or, for "liste" and "text", as an entry of its own.`;
+
 /* ------------------------------------------------------------ zuschneiden */
 /* Der Zuschnitt schreibt den Lebenslauf nicht neu, er schlägt einzelne
    Umformulierungen vor. Jeder Vorschlag hat eine Adresse (siehe texte.js),
@@ -269,41 +380,3 @@ Flag a proposal when "nachher"
 Do not flag pure rewording, reordering, shortening, or a synonym that carries
 the same claim. Judge each id on its own. If nothing is wrong, return
 {"beanstandet": []}.`;
-
-
-/* ----------------------------------------------------------- nachtragen */
-/* Der Fall, über den sich Benutzer zu Recht ärgern: Ein halber Abschnitt
-   fehlt, und niemand sagt es. Der Browser vergleicht deshalb das Ergebnis mit
-   dem Quelltext und sammelt die Zeilen ein, die nirgends wieder auftauchen.
-   Dieser Durchgang ordnet genau die noch zu — nichts anderes. */
-export const NACHTRAG = `Lines of a CV were lost when it was turned into JSON.
-You place them back. You do not rewrite anything and you do not invent.
-
-You get: the JSON that was produced, and the lines from the source document
-that cannot be found in it.
-
-For every line, say where it belongs. Return JSON, nothing else:
-
-{"nachtrag": [{"zeile": "the line, verbatim from the list",
-               "ziel": "one of the targets below",
-               "wert": "the text as it should stand in the CV"}]}
-
-TARGETS
-  "kopf.profil"        the summary at the top
-  "kontakt"            address, phone, mail, date of birth, a link
-  "beruf.<n>"          a bullet of job number <n> (0 = the first in the JSON)
-  "ausbildung.<n>"     a bullet of education entry number <n>
-  "weiterbildung"      a course or certificate (wert: "Titel — Anbieter, Jahr")
-  "kenntnisse"         one skill
-  "sprachen"           one language (wert: "Englisch: C1")
-  "weitere:<heading>"  a section of its own, with that heading
-  "nichts"             page number, header, footer, decoration — no content
-
-RULES
-1. "wert" contains the words of the line. Correct obvious OCR damage, nothing
-   else. Never add a fact, never merge two lines, never drop half of one.
-2. A line that stands under an entry belongs to that entry — a grade, a focus,
-   a thesis, a task belongs to the job or degree above it, never to a section
-   of its own. Use the dates and headings in the JSON to find the entry.
-3. Use "nichts" sparingly and only for what is truly not content.
-4. Answer for every line you were given, in the order you were given them.`;

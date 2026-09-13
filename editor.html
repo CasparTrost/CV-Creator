@@ -272,6 +272,8 @@ body{display:flex;align-items:flex-start;background:#eceae8}
 @keyframes dreh{to{transform:rotate(360deg)}}
 #kiFenster .kiListe{margin:0 0 12px;padding-left:18px}
 #kiFenster .kiListe li{margin-bottom:5px}
+#kiFenster .kiListe .anzahl{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;
+  border-radius:9px;background:#efe9e6;color:#6b615c;font-size:11px;line-height:17px;text-align:center}
 #kiFenster .warnung{background:#fdf3f2;border-left:3px solid #b4524b;padding:9px 11px;
   border-radius:0 6px 6px 0;color:#6d3a36}
 #kiFenster .luecken{background:#f7f3ec;border-left:3px solid #b08a3e;padding:9px 11px;
@@ -972,7 +974,7 @@ h2.sec[data-sym]::before{
         <span class="wert" id="fZoomTxt">85 %</span></div>
       <div class="reihe">
         <button data-t="pruefen" onclick="checkFit(true)">Prüfen</button>
-        <button data-t="neuOrdnen" onclick="neuOrdnen(true)">Neu ordnen</button>
+        <button data-t="neuOrdnen" onclick="neuOrdnen(true, true)">Neu ordnen</button>
         <button data-t="symbole" onclick="symboleZeigen()">Symbole ein / aus</button>
         <button class="leise breit" data-t="reset" onclick="zuruecksetzen()">Farben &amp; Schrift zurücksetzen</button>
       </div>
@@ -1549,13 +1551,16 @@ function seiteEntlasten(p){
 }
 
 /* Verteilt den ganzen Inhalt auf so viele Seiten, wie er braucht. */
-function verteilen(){
+function verteilen(ausgleich){
   if (!seitenListe().length) return;
   /* Erst alles zurückholen, dann die Trennungen lösen: eine Fortsetzung
      steht erst nach dem Zusammenlegen wieder neben dem Abschnitt, zu
      dem sie gehört. */
   zusammenlegen();
   fortAufloesen();
+  /* Und jetzt, solange noch alles auf einem Blatt steht, die Spalten
+     ausgleichen — nur hier ist zu sehen, welche die längere ist. */
+  if (ausgleich) spaltenAusgleich();
   for (let i = 0; i < HOECHSTSEITEN; i++){
     const p = seitenListe()[i];
     if (!p) break;
@@ -1568,11 +1573,98 @@ function verteilen(){
   plaetzeZeichnen();
 }
 
+/* ==================================================================
+   Spalten ausgleichen
+
+   Eine Seitenleiste, die nach drei Zeilen aufhört, während die Hauptspalte
+   auf das nächste Blatt läuft, ist verschenkter Platz — und genau das sieht
+   man einem frisch eingelesenen Lebenslauf an: Die Leiste bekommt, was seiner
+   Art nach hineingehört, und das ist mal viel und mal fast nichts.
+
+   Ausgeglichen wird deshalb nach Augenmaß, aber nur, wenn jemand darum bittet
+   (der Knopf „Neu ordnen“) oder gerade etwas eingelesen wurde. Beim Tippen
+   bleibt alles, wo es ist: Ein Abschnitt, den man selbst hinübergezogen hat,
+   darf nicht von allein zurückspringen.
+   ================================================================== */
+
+const WANDERBAR = ['liste', 'sprachen', 'ausbildung', 'weiterbildung'];
+
+/* Stationen bleiben in der breiten Spalte, der Kontaktblock in der Leiste —
+   alles andere darf wandern. Woher ein Abschnitt kommt, steht an ihm; für
+   die Beispielblätter und für selbst angelegte entscheiden die Bauteile. */
+function wanderbar(b){
+  const art = b.dataset && b.dataset.art;
+  if (art) return WANDERBAR.indexOf(art) >= 0;
+  if (b.querySelector('.job') || b.querySelector('.contact')) return false;
+  return true;
+}
+
+function spaltenAusgleich(){
+  const p1 = seitenListe()[0];
+  if (!p1 || p1.classList.contains('einspaltig') || p1.classList.contains('ohne-leiste')) return;
+  const links = spalte(p1, 'side'), rechts = spalte(p1, 'main');
+  if (!links || !rechts) return;
+  /* Höchstens drei Züge: Danach wäre es kein Ausgleich mehr, sondern eine
+     Umsortierung des Lebenslaufs. */
+  for (let zug = 0; zug < 3; zug++) if (!einZug(links, rechts)) break;
+}
+
+/* Gemessen wird, während alles auf Seite 1 steht — dann stehen beide Spalten
+   in voller Länge nebeneinander, und man sieht, welche die längere ist. Nach
+   dem Verteilen sähe man nur noch, dass unten etwas fehlt. */
+const AUSGLEICH_AB = 1.35;      /* so viel länger darf eine Spalte sein */
+
+function einZug(links, rechts){
+  const mass = inDruckmass(() => {
+    const hoch = sp => {
+      const bloecke = [...sp.querySelectorAll(':scope > .blk')];
+      if (!bloecke.length) return 0;
+      return bloecke[bloecke.length - 1].getBoundingClientRect().bottom
+           - sp.getBoundingClientRect().top;
+    };
+    const naechster = (sp, welcher) => {
+      const w = [...sp.querySelectorAll(':scope > .blk')].filter(wanderbar);
+      const b = welcher === 'erster' ? w[0] : w[w.length - 1];
+      return b ? { block: b, hoehe: b.getBoundingClientRect().height } : null;
+    };
+    return {
+      lh: hoch(links), rh: hoch(rechts),
+      lb: links.getBoundingClientRect().width || 1,
+      rb: rechts.getBoundingClientRect().width || 1,
+      ausLinks: naechster(links, 'letzter'), ausRechts: naechster(rechts, 'erster'),
+    };
+  });
+  if (!mass.lh && !mass.rh) return false;
+
+  const linksLaenger = mass.lh > mass.rh;
+  const gross = Math.max(mass.lh, mass.rh), klein = Math.min(mass.lh, mass.rh);
+  if (gross < klein * AUSGLEICH_AB) return false;      /* nah genug beieinander */
+
+  const zug = linksLaenger ? mass.ausLinks : mass.ausRechts;
+  if (!zug) return false;
+  /* Schmaler heißt höher: Was die Spalte wechselt, ändert seine Höhe im
+     Verhältnis der Spaltenbreiten. Genauer ginge nur durch Ausprobieren, und
+     das flackert. */
+  const streckung = linksLaenger ? mass.lb / mass.rb : mass.rb / mass.lb;
+  const neuGross = gross - zug.hoehe;
+  const neuKlein = klein + zug.hoehe * streckung;
+  if (Math.abs(neuGross - neuKlein) >= gross - klein) return false;   /* würde nicht besser */
+
+  const ziel = linksLaenger ? rechts : links;
+  const platz = ziel.querySelector(':scope > .platz');
+  if (platz) ziel.insertBefore(zug.block, platz); else ziel.appendChild(zug.block);
+  return true;
+}
+
 /* Ein Durchlauf nach jeder Änderung am Aufbau. Zwei Runden, weil das
    Verteilen eine Spalte leeren kann und die Geometrie dann anders
    ausfällt. */
-function neuOrdnen(laut){
-  for (let i = 0; i < 2; i++){ bandAnpassen(); flaechenAnpassen(); verteilen(); }
+function neuOrdnen(laut, ausgleich){
+  for (let i = 0; i < 2; i++){
+    bandAnpassen();
+    flaechenAnpassen();
+    verteilen(ausgleich);
+  }
   flaechenAnpassen();
   plaetzeZeichnen();
   checkFit(laut === true);
@@ -1653,7 +1745,7 @@ function kontaktBlock(wurzel){
   return blk;
 }
 
-function setVar(k){
+function setVar(k, stillhalten){
   const einspaltig = EINSPALTIG.indexOf(k) >= 0;
   seiten().forEach(p => {
     p.className = p.className.replace(/\bt\d+\b/g,'').trim() + ' ' + k;
@@ -1671,7 +1763,11 @@ function setVar(k){
   });
   markiere();
   fotoZuruecksetzen(true);
-  setTimeout(() => neuOrdnen(), 80);
+  /* Wer das Layout wechselt, will es gleich sehen. Wer gerade einen ganzen
+     Lebenslauf eingesetzt hat, ordnet selbst — und zwar erst, wenn die
+     Schriften geladen sind. Zwei Durchläufe kurz hintereinander messen
+     verschiedene Höhen, und der zweite gewinnt. */
+  if (!stillhalten) setTimeout(() => neuOrdnen(), 80);
 }
 
 /* ---------------- Text ---------------- */
@@ -2796,17 +2892,23 @@ function testHinweis(){
   return KI_TESTBETRIEB ? '<p class="warnung">' + T('kiTestHinweis') + '</p>' : '';
 }
 
+/* Die Vorschau zeigt die Gliederung, die erkannt wurde — mit den
+   Überschriften des Dokuments. Wer seinen eigenen Lebenslauf kennt, sieht
+   hier in zwei Sekunden, ob etwas fehlt. Zahlen allein („4 Stationen“)
+   verraten das nicht. */
 function kiVorschau(fenst, lebenslauf, antwort, bild){
-  const zahl = (feld) => (lebenslauf[feld] || []).length;
   const bericht = antwort || {};
+  const namen = RUBRIKEN_TEXT[lebenslauf.sprache] || RUBRIKEN_TEXT[sprache] || RUBRIKEN_TEXT.de;
+  const abschnitte = (lebenslauf.abschnitte && lebenslauf.abschnitte.length)
+    ? lebenslauf.abschnitte : abschnitteAusFlach(lebenslauf, namen);
   const zeilen = [
     T('kiGefunden'),
     '<ul class="kiListe">',
-    '<li>' + (lebenslauf.kopf.name || '—') + (lebenslauf.kopf.rolle ? ' · ' + lebenslauf.kopf.rolle : '') + '</li>',
-    '<li>' + T('kiZahl').replace('{n}', zahl('berufserfahrung')).replace('{was}', T('rBeruf')) + '</li>',
-    '<li>' + T('kiZahl').replace('{n}', zahl('ausbildung')).replace('{was}', T('rAusbildung')) + '</li>',
-    '<li>' + T('kiZahl').replace('{n}', zahl('kenntnisse')).replace('{was}', T('rKenntnisse')) + '</li>',
-    '<li>' + T('kiZahl').replace('{n}', zahl('sprachen')).replace('{was}', T('rSprachen')) + '</li>',
+    '<li><b>' + fluchten(lebenslauf.kopf.name || '—') + '</b>' +
+      (lebenslauf.kopf.rolle ? ' · ' + fluchten(lebenslauf.kopf.rolle) : '') + '</li>',
+    (lebenslauf.kopf.profil ? '<li>' + fluchten(namen.profil) + '</li>' : ''),
+    abschnitte.map(a => '<li>' + fluchten((a.titel || '').trim() || standardTitel(a.art, namen)) +
+      ' <span class="anzahl">' + (a.eintraege || []).length + '</span></li>').join(''),
     '</ul>',
     /* Was beim ersten Durchgang gefehlt hat, steht hier — verschwiegene
        Lücken sind der Grund, warum niemand solchen Werkzeugen traut. */
@@ -2839,11 +2941,14 @@ function kiVorschau(fenst, lebenslauf, antwort, bild){
 
 const RUBRIKEN_TEXT = {
   de: { kontakt:'Persönliche Daten', beruf:'Berufserfahrung', ausbildung:'Ausbildung',
-        kenntnisse:'Kenntnisse', sprachen:'Sprachen', weiterbildung:'Weiterbildung' },
+        kenntnisse:'Kenntnisse', sprachen:'Sprachen', weiterbildung:'Weiterbildung',
+        profil:'Kurzprofil' },
   en: { kontakt:'Personal details', beruf:'Work experience', ausbildung:'Education',
-        kenntnisse:'Skills', sprachen:'Languages', weiterbildung:'Further training' },
+        kenntnisse:'Skills', sprachen:'Languages', weiterbildung:'Further training',
+        profil:'Profile' },
   es: { kontakt:'Datos personales', beruf:'Experiencia profesional', ausbildung:'Formación',
-        kenntnisse:'Competencias', sprachen:'Idiomas', weiterbildung:'Formación continua' },
+        kenntnisse:'Competencias', sprachen:'Idiomas', weiterbildung:'Formación continua',
+        profil:'Perfil' },
 };
 
 function fluchten(s){
@@ -2877,89 +2982,153 @@ function zeitraum(von, bis){
 /* Setzt einen eingelesenen oder zugeschnittenen Lebenslauf auf das Blatt.
    Das Layout, die Farben und die Schrift bleiben, wie sie sind — ersetzt
    wird der Inhalt, nicht die Gestaltung. */
+/* ==================================================================
+   Der hochgeladene Lebenslauf kommt aufs Blatt
+
+   Er kommt als Folge von Abschnitten, so wie sie im Dokument stehen: mit
+   ihrer eigenen Überschrift und in ihrer Reihenfolge. Ein Abschnitt, den
+   jemand „Kontakt“ genannt hat, heißt hier „Kontakt“ — nicht „Persönliche
+   Daten“, weil das die Vorlage so vorsieht. Die Art entscheidet nur, wie er
+   aussieht und in welcher Spalte er anfängt.
+   ================================================================== */
+
+const SPALTENWUNSCH = {
+  kontakt: 'side', sprachen: 'side', liste: 'side', ausbildung: 'side',
+  beruf: 'main', weiterbildung: 'main', text: 'main', profil: 'main',
+};
+
+/* Hat ein Abschnitt im Dokument keine Überschrift, bekommt er die der
+   Vorlage — ein Kasten ohne Titel sieht aus wie ein Fehler. */
+function standardTitel(art, namen){
+  return { kontakt: namen.kontakt, beruf: namen.beruf, ausbildung: namen.ausbildung,
+           liste: namen.kenntnisse, sprachen: namen.sprachen,
+           weiterbildung: namen.weiterbildung, profil: namen.profil,
+           text: namen.profil }[art] || namen.kenntnisse;
+}
+
+function kontaktHtml(eintraege){
+  return eintraege.map(k => {
+    const art = ['ort','tel','mail','datum'].indexOf(k.art) >= 0 ? k.art : 'punkt';
+    return '<div class="contact"><span class="ic ic-' + art + '"></span><span>' +
+           fluchten(k.wert) + '</span></div>';
+  }).join('');
+}
+
+function berufHtml(eintraege){
+  return eintraege.map(j =>
+    '<div class="job">' +
+      '<div class="jobhead"><span class="jobtitle">' + fluchten(j.titel || '') + '</span>' +
+      '<span class="jobdate">' + fluchten(zeitraum(j.von, j.bis)) + '</span></div>' +
+      (j.firma || j.ort
+        ? '<div class="company"><strong>' + fluchten(j.firma || '') + '</strong>' +
+          (j.ort ? ' – ' + fluchten(j.ort) : '') + '</div>' : '') +
+      punkteListe(j.punkte) +
+    '</div>').join('');
+}
+
+function ausbildungHtml(eintraege){
+  return eintraege.map(a =>
+    '<div class="edu">' +
+      (a.abschluss ? '<div class="degree">' + fluchten(a.abschluss) + '</div>' : '') +
+      (a.fach ? '<div>' + fluchten(a.fach) + '</div>' : '') +
+      (a.einrichtung ? '<div><strong>' + fluchten(a.einrichtung) + '</strong></div>' : '') +
+      (zeitraum(a.von, a.bis) ? '<div class="date">' + fluchten(zeitraum(a.von, a.bis)) + '</div>' : '') +
+      punkteListe(a.punkte) +
+    '</div>').join('');
+}
+
+function weiterbildungHtml(eintraege){
+  return eintraege.map(w =>
+    '<div class="job">' +
+      '<div class="jobhead"><span class="jobtitle">' + fluchten(w.titel || '') + '</span>' +
+      '<span class="jobdate">' + fluchten(w.jahr || '') + '</span></div>' +
+      (w.anbieter ? '<div class="company"><strong>' + fluchten(w.anbieter) + '</strong></div>' : '') +
+    '</div>').join('');
+}
+
+function sprachenHtml(eintraege){
+  return eintraege.map(s =>
+    '<div class="lang"><strong>' + fluchten(s.sprache || '') + '</strong>' +
+    (s.niveau ? ': ' + fluchten(s.niveau) : '') + '</div>').join('');
+}
+
+function abschnittInhalt(abschnitt){
+  const e = abschnitt.eintraege || [];
+  if (!e.length) return '';
+  switch (abschnitt.art){
+    case 'kontakt': return kontaktHtml(e);
+    case 'beruf': return berufHtml(e);
+    case 'ausbildung': return ausbildungHtml(e);
+    case 'weiterbildung': return weiterbildungHtml(e);
+    case 'sprachen': return sprachenHtml(e);
+    case 'profil':
+    case 'text': return e.map(t => '<p>' + fluchten(t) + '</p>').join('');
+    default: return punkteListe(e);
+  }
+}
+
+/* Ein Lebenslauf aus einer älteren Fassung des Dienstes kommt noch im festen
+   Formular. Er wird hier in dieselbe Folge von Abschnitten gebracht, damit es
+   im Editor nur einen Weg gibt. */
+function abschnitteAusFlach(daten, namen){
+  const aus = [];
+  const nimm = (art, liste, titel) => {
+    if ((liste || []).length) aus.push({ titel: titel || standardTitel(art, namen), art, eintraege: liste });
+  };
+  nimm('kontakt', daten.kontakt);
+  nimm('beruf', daten.berufserfahrung);
+  nimm('ausbildung', daten.ausbildung);
+  nimm('liste', daten.kenntnisse);
+  nimm('sprachen', daten.sprachen);
+  nimm('weiterbildung', daten.weiterbildung);
+  (daten.weitere || []).forEach(w => nimm('liste', w && w.punkte, w && w.titel));
+  return aus;
+}
+
 function lebenslaufEinsetzen(daten){
   const namen = RUBRIKEN_TEXT[daten.sprache] || RUBRIKEN_TEXT[sprache] || RUBRIKEN_TEXT.de;
   const seiteEins = [...seiten()][0];
   const kopf = seiteEins.querySelector('.bandtext');
+  const profil = (daten.kopf && daten.kopf.profil || '').trim();
   if (daten.kopf){
     kopf.innerHTML =
       '<h1>' + fluchten(daten.kopf.name || '') + '</h1>' +
       '<div class="role">' + fluchten(daten.kopf.rolle || '') + '</div>' +
-      (daten.kopf.profil ? '<p>' + fluchten(daten.kopf.profil) + '</p>' : '');
+      (profil && profil.length <= 420 ? '<p>' + fluchten(profil) + '</p>' : '');
   }
+
+  const abschnitte = (daten.abschnitte && daten.abschnitte.length)
+    ? daten.abschnitte : abschnitteAusFlach(daten, namen);
 
   const leiste = [], haupt = [];
-
-  if ((daten.kontakt || []).length){
-    const zeilen = daten.kontakt.map(k => {
-      const art = ['ort','tel','mail','datum'].indexOf(k.art) >= 0 ? k.art : 'punkt';
-      return '<div class="contact"><span class="ic ic-' + art + '"></span><span>' +
-             fluchten(k.wert) + '</span></div>';
-    }).join('');
-    leiste.push(blockBauen(namen.kontakt, zeilen));
+  /* Ein langes Kurzprofil passt in kein Kopfband. Es wird ein Abschnitt wie
+     jeder andere — einer, nicht zwei. */
+  if (profil && profil.length > 420){
+    haupt.push(blockBauen(namen.profil, '<p>' + fluchten(profil) + '</p>'));
   }
-
-  if ((daten.ausbildung || []).length){
-    const innen = daten.ausbildung.map(a =>
-      '<div class="edu">' +
-        '<div class="degree">' + fluchten(a.abschluss || '') + '</div>' +
-        (a.fach ? '<div>' + fluchten(a.fach) + '</div>' : '') +
-        (a.einrichtung ? '<div><strong>' + fluchten(a.einrichtung) + '</strong></div>' : '') +
-        '<div class="date">' + fluchten(zeitraum(a.von, a.bis)) + '</div>' +
-        punkteListe(a.punkte) +
-      '</div>').join('');
-    leiste.push(blockBauen(namen.ausbildung, innen));
-  }
-
-  if ((daten.kenntnisse || []).length){
-    leiste.push(blockBauen(namen.kenntnisse, punkteListe(daten.kenntnisse)));
-  }
-
-  if ((daten.sprachen || []).length){
-    const innen = daten.sprachen.map(s =>
-      '<div class="lang"><strong>' + fluchten(s.sprache) + '</strong>' +
-      (s.niveau ? ': ' + fluchten(s.niveau) : '') + '</div>').join('');
-    leiste.push(blockBauen(namen.sprachen, innen));
-  }
-
-  if ((daten.berufserfahrung || []).length){
-    const innen = daten.berufserfahrung.map(j =>
-      '<div class="job">' +
-        '<div class="jobhead"><span class="jobtitle">' + fluchten(j.titel || '') + '</span>' +
-        '<span class="jobdate">' + fluchten(zeitraum(j.von, j.bis)) + '</span></div>' +
-        (j.firma || j.ort
-          ? '<div class="company"><strong>' + fluchten(j.firma || '') + '</strong>' +
-            (j.ort ? ' – ' + fluchten(j.ort) : '') + '</div>' : '') +
-        punkteListe(j.punkte) +
-      '</div>').join('');
-    haupt.push(blockBauen(namen.beruf, innen));
-  }
-
-  if ((daten.weiterbildung || []).length){
-    const innen = daten.weiterbildung.map(w =>
-      '<div class="job">' +
-        '<div class="jobhead"><span class="jobtitle">' + fluchten(w.titel || '') + '</span>' +
-        '<span class="jobdate">' + fluchten(w.jahr || '') + '</span></div>' +
-        (w.anbieter ? '<div class="company"><strong>' + fluchten(w.anbieter) + '</strong></div>' : '') +
-      '</div>').join('');
-    haupt.push(blockBauen(namen.weiterbildung, innen));
-  }
-
-  (daten.weitere || []).forEach(w => {
-    haupt.push(blockBauen(w.titel || '', punkteListe(w.punkte)));
+  abschnitte.forEach(a => {
+    const innen = abschnittInhalt(a);
+    if (!innen) return;
+    const block = blockBauen((a.titel || '').trim() || standardTitel(a.art, namen), innen);
+    block.dataset.art = a.art || 'liste';
+    (SPALTENWUNSCH[a.art] === 'side' ? leiste : haupt).push(block);
   });
 
   seiten().forEach(p => {
     ['side','main'].forEach(art => { const sp = spalte(p, art); if (sp) sp.innerHTML = ''; });
   });
   const zielLeiste = spalte(seiteEins, 'side'), zielHaupt = spalte(seiteEins, 'main');
-  leiste.forEach(b => zielLeiste.appendChild(b));
+  leiste.forEach(b => (zielLeiste || zielHaupt).appendChild(b));
   haupt.forEach(b => zielHaupt.appendChild(b));
 
   markiere();
-  setVar(aktuelleVar());
+  setVar(aktuelleVar(), true);
   kopfNameSetzen();
-  setTimeout(() => { neuOrdnen(); melde(T('kiFertig'), 5000); }, 60);
+  /* Erst wenn die Schriften stehen, stimmen die Höhen — und nur dann führt
+     das Ausgleichen der Spalten zu etwas, das auch so bleibt. */
+  const ordnen = () => { neuOrdnen(false, true); melde(T('kiFertig'), 5000); };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(ordnen, 40));
+  else setTimeout(ordnen, 120);
 }
 
 /* ---------------- Blatt zurück in JSON ---------------- */

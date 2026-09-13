@@ -27,10 +27,11 @@ RUBRIKEN = [
     ('profil', r'profil|[üu]ber mich|kurzprofil|zusammenfassung|summary|about me|perfil'),
     ('sprachen', r'sprach|languages|idiomas'),
     ('weiterbildung', r'weiterbildung|fortbildung|zertifikat|training|certificat'),
-    ('ausbildung', r'ausbildung|bildungsweg|studium|schul|education|academic|formaci'),
+    ('ausbildung', r'ausbildung|bildungsweg|studium|schul|qualifikation|education|academic|formaci'),
     ('berufserfahrung', r'berufserfahrung|berufliche|werdegang|praxis|experience|employment|experiencia'),
     ('kenntnisse', r'kenntnis|kompetenz|f[äa]higkeit|skills|edv|it-|competenc|tools'),
     ('kontakt', r'pers[öo]nliche daten|kontakt|personal details|contact|datos'),
+    ('weitere', r'ehrenamt|engagement|interess|hobby|publikation|referenz|auszeichnung|volunteer|award'),
 ]
 
 
@@ -81,7 +82,8 @@ def lebenslauf_aus(text):
     zeilen = [z.strip() for z in (text or '').splitlines() if z.strip()]
     aus = {'sprache': 'de', 'kopf': {'name': '', 'rolle': '', 'profil': ''}, 'kontakt': [],
            'berufserfahrung': [], 'ausbildung': [], 'kenntnisse': [], 'sprachen': [],
-           'weiterbildung': [], 'weitere': [], 'zeichenErhalten': len(text or '')}
+           'weiterbildung': [], 'weitere': [], 'ueberschriften': {},
+           'zeichenErhalten': len(text or '')}
 
     # Kopf: die erste Zeile, die wie ein Name aussieht, danach die Rolle.
     for i, z in enumerate(zeilen[:6]):
@@ -111,7 +113,14 @@ def lebenslauf_aus(text):
 
     for i, z in enumerate(zeilen):
         neue = rubrik_von(z)
+        if neue == 'weitere':
+            aus['weitere'].append({'titel': z.strip(' :'), 'punkte': []})
+            rubrik, eintrag, wartend = 'weitere', None, []
+            continue
         if neue:
+            # Die Ueberschrift des Dokuments merken: Wer seinen Abschnitt
+            # "Kontakt" nennt, soll ihn auf dem Blatt "Kontakt" nennen duerfen.
+            aus['ueberschriften'].setdefault(neue, z.strip(' :'))
             rubrik, eintrag, wartend = neue, None, []
             continue
         if z in (aus['kopf']['name'], aus['kopf']['rolle']):
@@ -192,6 +201,10 @@ def lebenslauf_aus(text):
                                         'niveau': stufe[1].strip(' )') if len(stufe) > 1 else ''})
             continue
 
+        if rubrik == 'weitere' and aus['weitere']:
+            aus['weitere'][-1]['punkte'].append(z.lstrip('•-–· '))
+            continue
+
         if rubrik is None and len(zeilen) > 3:
             continue
 
@@ -213,9 +226,46 @@ WORTTAUSCH = [
 ]
 
 
+STANDARDTITEL = {'kontakt': 'Kontakt', 'beruf': 'Berufserfahrung',
+                 'ausbildung': 'Ausbildung', 'liste': 'Kenntnisse',
+                 'sprachen': 'Sprachen', 'weiterbildung': 'Weiterbildung'}
+
+# Von welchem Feld des flachen Formulars zu welcher Art - dieselbe Zuordnung
+# wie im Worker, damit der Testbetrieb denselben Weg geht.
+FLACH_ZU_ART = [
+    ('kontakt', 'kontakt', 'kontakt'),
+    ('berufserfahrung', 'beruf', 'berufserfahrung'),
+    ('ausbildung', 'ausbildung', 'ausbildung'),
+    ('kenntnisse', 'liste', 'kenntnisse'),
+    ('sprachen', 'sprachen', 'sprachen'),
+    ('weiterbildung', 'weiterbildung', 'weiterbildung'),
+]
+
+
+def abschnitte_aus_flach(flach):
+    """Das flache Formular in die Folge von Abschnitten bringen, die der
+    Editor heute erwartet - mit den Ueberschriften des Dokuments, wo sie
+    bekannt sind."""
+    ueber = flach.get('ueberschriften') or {}
+    abschnitte = []
+    for feld, art, schluessel in FLACH_ZU_ART:
+        eintraege = flach.get(feld) or []
+        if eintraege:
+            abschnitte.append({'titel': ueber.get(schluessel) or STANDARDTITEL[art],
+                               'art': art, 'eintraege': eintraege})
+    for w in flach.get('weitere') or []:
+        if w.get('punkte'):
+            abschnitte.append({'titel': w.get('titel') or 'Weitere Angaben',
+                               'art': 'liste', 'eintraege': w['punkte']})
+    return {'sprache': flach.get('sprache') or 'de',
+            'kopf': flach.get('kopf') or {},
+            'abschnitte': abschnitte}
+
+
 def stellen_aus(lebenslauf):
     """Dasselbe Adressschema wie api/texte.js - nur die Stellen, an denen
-    umformuliert werden darf."""
+    umformuliert werden darf. Der Zuschnitt bekommt den Lebenslauf vom Blatt,
+    und das ist weiterhin das flache Formular."""
     aus = []
     kopf = lebenslauf.get('kopf') or {}
     if kopf.get('rolle'):
@@ -245,7 +295,7 @@ def umformuliert(text):
     return None
 
 
-def fehlende_zeilen(text, lebenslauf):
+def fehlende_zeilen(text, lebenslauf, ueberschriften=None):
     """Welche Zeile des Quelltextes findet sich im Ergebnis nicht wieder?
     Dieselbe Rechnung wie im Worker, damit der Testbetrieb denselben Weg
     geht wie der Ernstfall."""
@@ -253,13 +303,14 @@ def fehlende_zeilen(text, lebenslauf):
     def worte(s):
         return [w for w in _re.split(r'[^0-9A-Za-zÀ-ÿ]+', s.lower()) if len(w) >= 4]
     da = set(worte(json.dumps(lebenslauf, ensure_ascii=False)))
+    kopfzeilen = {' '.join(worte(u)) for u in (ueberschriften or [])}
     fehlt = []
     for zeile in text.split('\n'):
         roh = zeile.strip()
         if len(roh) < 8 or _re.match(r'^(lebenslauf|cv|seite \d+|\d+)$', roh, _re.I):
             continue
         w = worte(roh)
-        if not w:
+        if not w or ' '.join(w) in kopfzeilen:
             continue
         if sum(1 for x in w if x in da) / len(w) < 0.6:
             fehlt.append(roh)
@@ -276,19 +327,17 @@ def antwort_fuer(weg, daten):
         if daten.get('datei'):
             text = ('Aus Datei: ' + (daten['datei'].get('name') or '') + '\nProjektmanager\n'
                     + 'Base64-Laenge ' + str(len(daten['datei'].get('daten') or '')))
-        lebenslauf = lebenslauf_aus(text)
+        flach = lebenslauf_aus(text)
+        lebenslauf = abschnitte_aus_flach(flach)
         # Derselbe Weg wie im Worker: nachzaehlen, was im Ergebnis fehlt, und
         # es hinten anhaengen, statt es verschwinden zu lassen.
-        fehlt = fehlende_zeilen(text, lebenslauf)
-        for zeile in fehlt:
-            rest = None
-            for w in lebenslauf.setdefault('weitere', []):
-                if w.get('titel') == 'Weitere Angaben':
-                    rest = w
-            if rest is None:
-                rest = {'titel': 'Weitere Angaben', 'punkte': []}
-                lebenslauf['weitere'].append(rest)
-            rest['punkte'].append(zeile)
+        # Die Ueberschriften stehen in keinem Eintrag - sie fehlen also nicht.
+        bekannt = list((flach.get('ueberschriften') or {}).values())
+        bekannt += [a['titel'] for a in lebenslauf['abschnitte']]
+        fehlt = fehlende_zeilen(text, lebenslauf, bekannt)
+        if fehlt:
+            lebenslauf['abschnitte'].append(
+                {'titel': 'Weitere Angaben', 'art': 'liste', 'eintraege': fehlt})
         return 200, {'lebenslauf': lebenslauf, 'nachgetragen': len(fehlt), 'offen': 0}
 
     if weg == '/tailor':

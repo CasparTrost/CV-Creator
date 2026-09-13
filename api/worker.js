@@ -15,7 +15,7 @@
  *   /stelle  {url}                               -> {text, titel}
  *   /status                                      -> Selbstauskunft, ohne Geheimnisse
  */
-import { PARSE, TAILOR, PRUEFER, ANALYSE, NACHTRAG } from './prompts.js';
+import { PARSE, GLIEDERUNG, ABSCHNITT, TAILOR, PRUEFER, ANALYSE } from './prompts.js';
 import { textStellen, textSetzen, REIHENFOLGE } from './texte.js';
 import { pdfText, textTaugt } from './pdf.js';
 
@@ -173,6 +173,9 @@ function jsonAus(text) {
 
 /* ------------------------------------------------------------------ lesen */
 
+const ARTEN = ['kontakt', 'profil', 'beruf', 'ausbildung', 'weiterbildung',
+               'sprachen', 'liste', 'text'];
+
 async function lesen(daten, umgebung) {
   let text = (daten.text || '').trim();
 
@@ -183,7 +186,9 @@ async function lesen(daten, umgebung) {
       text = await pdfText(roh);
       if (!brauchbar(text)) {
         /* Gescannt oder mit eingebetteten Schriften ohne Zuordnung: dann
-           bekommt das Modell die Datei selbst zu sehen. */
+           bekommt das Modell die Datei selbst zu sehen. Eine Gliederung nach
+           Zeilennummern gibt es dann nicht — die Zeilen kennt nur das
+           Modell. Also der Weg am Stück. */
         return await lesenAusDatei(daten.datei, umgebung);
       }
     } else {
@@ -192,30 +197,219 @@ async function lesen(daten, umgebung) {
   }
 
   if (!text) throw fehler('Es war kein Text in der Datei.', 400);
-  text = text.slice(0, GRENZEN.text);
-  const ergebnis = await fragen(umgebung, PARSE,
-    'Hier ist der Text eines Lebenslaufs. Gib das JSON zurück.\n\n---\n' + text, 0.1);
-  if (ergebnis && ergebnis.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
-  return await vollstaendig(text, ergebnis, umgebung);
+  return await nachGliederung(text.slice(0, GRENZEN.text), umgebung);
+}
+
+/* --------------------------------------------------------- in zwei Stufen
+
+   Erst die Gliederung, dann jeder Abschnitt für sich. Warum, steht bei den
+   Systemprompts; hier steht, was danach noch geprüft wird. */
+
+async function nachGliederung(text, umgebung) {
+  const zeilen = text.split(/\r?\n/).map(z => z.trim()).filter(Boolean).slice(0, 400);
+  if (zeilen.length < 3) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
+
+  let plan = null;
+  try {
+    plan = await fragen(umgebung, GLIEDERUNG,
+      zeilen.map((z, i) => (i + 1) + ': ' + z).join('\n'), 0);
+  } catch (e) {
+    console.log('Gliederung fehlgeschlagen:', e && e.message);
+  }
+  if (plan && plan.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
+
+  const bereiche = bereicheOrdnen(plan && plan.abschnitte, zeilen.length);
+  /* Ohne brauchbare Gliederung lieber der alte Weg als gar keiner. */
+  if (!bereiche.length) return await amStueck(text, umgebung);
+
+  const kopf = {
+    name: sauberText(plan.kopf && plan.kopf.name, 120),
+    rolle: sauberText(plan.kopf && plan.kopf.rolle, 120),
+    profil: '',
+  };
+
+  /* Was über dem ersten Abschnitt steht und nicht Name oder Rolle ist, sind
+     fast immer die Kontaktzeilen. Sie bekommen einen eigenen Abschnitt,
+     statt zwischen Kopf und erstem Abschnitt zu verschwinden. */
+  const stapel = bereiche.map(b => ({ ...b, zeilen: zeilen.slice(b.von - 1, b.bis) }));
+  const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].von - 1), kopf);
+  if (vorspann.length) stapel.unshift({ titel: '', art: 'kontakt', zeilen: vorspann });
+
+  const gelesen = await Promise.all(stapel.map(b => abschnittLesen(b, umgebung)));
+
+  const abschnitte = [];
+  let nachgetragen = 0;
+  gelesen.forEach(a => {
+    nachgetragen += a.nachgetragen;
+    if (!a.eintraege.length) return;
+    /* Ein kurzes Kurzprofil gehört in den Kopf — aber nur dorthin. Beides
+       zu setzen war der Grund, warum es zweimal auf dem Blatt stand. */
+    if (a.art === 'profil' && !kopf.profil) {
+      const ganz = a.eintraege.join(' ').trim();
+      if (ganz.length <= 420) { kopf.profil = ganz; return; }
+    }
+    abschnitte.push({ titel: a.titel, art: a.art, eintraege: a.eintraege });
+  });
+
+  if (!abschnitte.length && !kopf.profil) return await amStueck(text, umgebung);
+  return { lebenslauf: { sprache: spracheVon(plan), kopf, abschnitte }, nachgetragen, offen: 0 };
+}
+
+function spracheVon(plan) {
+  const s = plan && typeof plan.sprache === 'string' ? plan.sprache.slice(0, 2).toLowerCase() : '';
+  return ['de', 'en', 'es'].indexOf(s) >= 0 ? s : 'de';
+}
+
+function sauberText(wert, hoechstens) {
+  return String(wert === undefined || wert === null ? '' : wert)
+    .replace(/\s+/g, ' ').trim().slice(0, hoechstens || 400);
+}
+
+/* Die Bereiche des Modells sind Vorschläge, keine Zusicherung: Sie
+   überlappen sich, lassen Löcher, zeigen ins Leere. Hier werden sie zu einer
+   lückenlosen Folge — jede Zeile in genau einem Abschnitt. */
+function bereicheOrdnen(liste, anzahl) {
+  const roh = (Array.isArray(liste) ? liste : [])
+    .map(a => ({
+      titel: sauberText(a && a.titel, 80),
+      art: ARTEN.indexOf(a && a.art) >= 0 ? a.art : 'liste',
+      von: Math.min(anzahl, Math.max(1, parseInt(a && a.von, 10) || 0)),
+      bis: Math.min(anzahl, Math.max(1, parseInt(a && a.bis, 10) || 0)),
+    }))
+    .filter(a => a.von && a.bis >= a.von)
+    .sort((a, b) => a.von - b.von || a.bis - b.bis)
+    .slice(0, 14);
+
+  const aus = [];
+  roh.forEach(a => {
+    const vor = aus[aus.length - 1];
+    if (vor) {
+      if (a.von <= vor.bis) a.von = vor.bis + 1;      /* Überlappung abschneiden */
+      else if (a.von > vor.bis + 1) vor.bis = a.von - 1;  /* Loch an den Vorgänger */
+    }
+    if (a.bis >= a.von) aus.push(a);
+  });
+  if (aus.length) aus[aus.length - 1].bis = anzahl;   /* bis zur letzten Zeile */
+  return aus;
+}
+
+function uebrigerVorspann(zeilen, kopf) {
+  const bekannt = new Set(worte(kopf.name + ' ' + kopf.rolle));
+  return zeilen.filter(z => {
+    const w = worte(z);
+    if (!w.length) return false;
+    return w.filter(x => bekannt.has(x)).length / w.length < 0.6;
+  });
+}
+
+/* Ein Abschnitt, seine Zeilen, und danach die Frage, ob wirklich jede davon
+   angekommen ist. Der Abschnitt ist klein genug, dass sich das beantworten
+   lässt — beim ganzen Dokument war es Raten. */
+async function abschnittLesen(bereich, umgebung) {
+  let eintraege = [];
+  try {
+    const antwort = await fragen(umgebung, ABSCHNITT,
+      'ART\n---\n' + bereich.art +
+      '\n\nÜBERSCHRIFT\n---\n' + (bereich.titel || '(ohne Überschrift)') +
+      '\n\nZEILEN\n---\n' + bereich.zeilen.join('\n'), 0);
+    eintraege = Array.isArray(antwort.eintraege) ? antwort.eintraege : [];
+  } catch (e) {
+    console.log('Abschnitt „' + bereich.titel + '“:', e && e.message);
+  }
+  eintraege = eintraegeSaeubern(bereich.art, eintraege);
+
+  /* Die Überschrift selbst steht in keinem Eintrag — sie fehlt also nicht. */
+  const pruefen = bereich.zeilen.filter(z => !gleicheWorte(z, bereich.titel));
+  const fehlt = fehlendeZeilen(pruefen.join('\n'), eintraege);
+  fehlt.slice(0, 20).forEach(z => eintragNachtragen(bereich.art, eintraege, z));
+  return { titel: bereich.titel, art: bereich.art, eintraege, nachgetragen: fehlt.length };
+}
+
+const EINTRAG_FELDER = {
+  kontakt: ['art', 'wert'],
+  beruf: ['titel', 'firma', 'ort', 'von', 'bis', 'punkte'],
+  ausbildung: ['abschluss', 'fach', 'einrichtung', 'von', 'bis', 'punkte'],
+  weiterbildung: ['titel', 'anbieter', 'jahr'],
+  sprachen: ['sprache', 'niveau'],
+};
+
+const KONTAKTARTEN = ['ort', 'tel', 'mail', 'datum', 'web', 'sonst'];
+
+/* Was vom Modell kommt, wird nicht durchgereicht: Nur die Felder, die es zu
+   dieser Art gibt, und nur als Text. Der Editor setzt das später in HTML — was
+   hier durchrutscht, steht dort auf dem Blatt. */
+function eintraegeSaeubern(art, eintraege) {
+  const liste = eintraege.slice(0, 60);
+  if (art === 'liste' || art === 'profil' || art === 'text') {
+    return liste
+      .map(e => sauberText(typeof e === 'string' ? e : (e && (e.wert || e.text || e.titel)), 600))
+      .filter(Boolean);
+  }
+  const felder = EINTRAG_FELDER[art] || EINTRAG_FELDER.weiterbildung;
+  return liste.map(e => {
+    if (!e || typeof e !== 'object') {
+      const text = sauberText(e, 300);
+      return text ? ersatzEintrag(art, text) : null;
+    }
+    const aus = {};
+    felder.forEach(f => {
+      if (f === 'punkte') {
+        aus.punkte = (Array.isArray(e.punkte) ? e.punkte : [])
+          .map(p => sauberText(typeof p === 'string' ? p : (p && p.text), 600))
+          .filter(Boolean).slice(0, 30);
+      } else {
+        aus[f] = sauberText(e[f], 200);
+      }
+    });
+    if (art === 'kontakt' && KONTAKTARTEN.indexOf(aus.art) < 0) aus.art = 'sonst';
+    const inhalt = felder.some(f => f !== 'punkte' && aus[f]) || (aus.punkte || []).length;
+    return inhalt ? aus : null;
+  }).filter(Boolean);
+}
+
+function ersatzEintrag(art, text) {
+  if (art === 'kontakt') return { art: 'sonst', wert: text };
+  if (art === 'sprachen') {
+    const teile = text.split(/\s*[:–-]\s*/);
+    return { sprache: teile[0] || text, niveau: teile[1] || '' };
+  }
+  if (art === 'beruf') return { titel: text, firma: '', ort: '', von: '', bis: '', punkte: [] };
+  if (art === 'ausbildung') return { abschluss: text, fach: '', einrichtung: '', von: '', bis: '', punkte: [] };
+  return { titel: text, anbieter: '', jahr: '' };
+}
+
+/* Eine Zeile, die das Modell übersehen hat, kommt dorthin, wo sie am
+   wenigsten Schaden anrichtet: an den Eintrag darüber. Sichtbar an der
+   falschen Stelle ist besser als unsichtbar an gar keiner. */
+function eintragNachtragen(art, eintraege, zeile) {
+  if (art === 'liste' || art === 'profil' || art === 'text') { eintraege.push(zeile); return; }
+  const letzter = eintraege[eintraege.length - 1];
+  if ((art === 'beruf' || art === 'ausbildung') && letzter) {
+    if (!Array.isArray(letzter.punkte)) letzter.punkte = [];
+    letzter.punkte.push(zeile);
+    return;
+  }
+  eintraege.push(ersatzEintrag(art, zeile));
 }
 
 /* ---------------------------------------------------------- Vollständigkeit
 
-   Ein Modell, das einen Lebenslauf abschreibt, lässt gelegentlich etwas aus —
-   und sagt es nicht. Deshalb wird nicht geglaubt, sondern nachgezählt: Welche
-   Zeile des Quelltextes findet sich im Ergebnis nicht wieder? Was übrig
-   bleibt, ordnet ein zweiter, sehr kleiner Durchgang zu; was danach immer
-   noch übrig ist, kommt als eigener Abschnitt ans Ende. Verloren gehen darf
-   nichts — lieber steht es an der falschen Stelle, dort sieht man es und kann
-   es verschieben. */
+   Ein Modell, das abschreibt, lässt gelegentlich etwas aus — und sagt es
+   nicht. Deshalb wird nicht geglaubt, sondern nachgezählt: Welche Zeile
+   findet sich im Ergebnis nicht wieder? */
 
 const NEBENSACHE = /^(lebenslauf|curriculum vitae|cv|resume|résumé|seite \d+|\d+\s*\/\s*\d+|\d+)$/i;
 
 function worte(text) {
-  return String(text).toLowerCase()
+  return String(text || '').toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(' ')
     .filter(w => w.length >= 4);
+}
+
+function gleicheWorte(a, b) {
+  const x = worte(a), y = worte(b);
+  return x.length > 0 && x.join(' ') === y.join(' ');
 }
 
 function alleTexte(objekt) {
@@ -232,12 +426,17 @@ function alleTexte(objekt) {
 /* Eine Zeile gilt als übernommen, wenn ihre tragenden Wörter im Ergebnis
    vorkommen. Wortweise, weil ein zweispaltiges PDF Zeilen zerlegt und wieder
    zusammensetzt — ein Vergleich auf Gleichheit fände fast nichts wieder. */
-export function fehlendeZeilen(text, lebenslauf) {
-  const da = new Set(worte(alleTexte(lebenslauf)));
+export function fehlendeZeilen(text, ergebnis, ohneUeberschriften) {
+  const da = new Set(worte(alleTexte(ergebnis)));
   const fehlt = [];
   String(text).split(/\r?\n/).forEach(zeile => {
     const roh = zeile.trim();
     if (roh.length < 8 || NEBENSACHE.test(roh)) return;
+    /* Beim Weg am Stück sind die Überschriften des Dokuments nicht bekannt.
+       Eine kurze Zeile ohne Ziffern ist dort fast immer eine — und eine
+       Überschrift steht in keinem Eintrag, ohne dass etwas fehlt. */
+    if (ohneUeberschriften && roh.length <= 34 && !/\d/.test(roh)
+        && roh.split(/\s+/).length <= 3) return;
     const w = worte(roh);
     if (!w.length) return;            /* reine Datums- oder Zahlenzeile */
     const drin = w.filter(x => da.has(x)).length;
@@ -246,74 +445,65 @@ export function fehlendeZeilen(text, lebenslauf) {
   return fehlt;
 }
 
-const RESTTITEL = { de: 'Weitere Angaben', en: 'Further details', es: 'Otros datos' };
+/* ------------------------------------------------------------- am Stück
 
-function nachtragSetzen(lebenslauf, ziel, wert) {
-  const text = String(wert || '').trim();
-  if (!text || !ziel || ziel === 'nichts') return false;
-  const liste = (name) => Array.isArray(lebenslauf[name]) ? lebenslauf[name] : (lebenslauf[name] = []);
+   Der Rückfallweg: ein Aufruf, festes Formular. Er springt ein, wenn die
+   Gliederung nichts hergibt, und er ist der einzige Weg für eine Datei, die
+   nur das Modell selbst lesen kann. Das Ergebnis wird in dieselbe Form
+   gebracht, damit der Editor nur eine kennt. */
 
-  if (ziel === 'kopf.profil') {
-    if (!lebenslauf.kopf || typeof lebenslauf.kopf !== 'object') lebenslauf.kopf = {};
-    lebenslauf.kopf.profil = (lebenslauf.kopf.profil ? lebenslauf.kopf.profil + ' ' : '') + text;
-    return true;
+async function amStueck(text, umgebung) {
+  const ergebnis = await fragen(umgebung, PARSE,
+    'Hier ist der Text eines Lebenslaufs. Gib das JSON zurück.\n\n---\n' + text, 0.1);
+  if (ergebnis && ergebnis.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
+  const lebenslauf = flachZuAbschnitten(ergebnis);
+  const fehlt = fehlendeZeilen(text, lebenslauf, true);
+  if (fehlt.length) {
+    const rest = { titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de, art: 'liste',
+                   eintraege: fehlt.slice(0, 30) };
+    lebenslauf.abschnitte.push(rest);
   }
-  if (ziel === 'kontakt'){ liste('kontakt').push({ art: 'sonst', wert: text }); return true; }
-  if (ziel === 'kenntnisse'){ liste('kenntnisse').push(text); return true; }
-  if (ziel === 'sprachen'){
-    const teile = text.split(/\s*[:–-]\s*/);
-    liste('sprachen').push({ sprache: teile[0] || text, niveau: teile[1] || '' });
-    return true;
-  }
-  if (ziel === 'weiterbildung'){
-    const teile = text.split(/\s*[—–-]\s*/);
-    liste('weiterbildung').push({ titel: teile[0] || text, anbieter: teile[1] || '', jahr: teile[2] || '' });
-    return true;
-  }
-  let m = ziel.match(/^(beruf|ausbildung)\.(\d+)$/);
-  if (m) {
-    const wo = m[1] === 'beruf' ? lebenslauf.berufserfahrung : lebenslauf.ausbildung;
-    const eintrag = Array.isArray(wo) ? wo[+m[2]] : null;
-    if (!eintrag) return false;
-    if (!Array.isArray(eintrag.punkte)) eintrag.punkte = [];
-    eintrag.punkte.push(text);
-    return true;
-  }
-  m = ziel.match(/^weitere:(.*)$/);
-  if (m) {
-    const titel = (m[1] || '').trim() || RESTTITEL[lebenslauf.sprache] || RESTTITEL.de;
-    const weitere = liste('weitere');
-    let ab = weitere.find(w => (w.titel || '').trim().toLowerCase() === titel.toLowerCase());
-    if (!ab){ ab = { titel, punkte: [] }; weitere.push(ab); }
-    if (!Array.isArray(ab.punkte)) ab.punkte = [];
-    ab.punkte.push(text);
-    return true;
-  }
-  return false;
+  return { lebenslauf, nachgetragen: 0, offen: fehlt.length };
 }
 
-async function vollstaendig(text, lebenslauf, umgebung) {
-  let fehlt = fehlendeZeilen(text, lebenslauf);
-  let nachgetragen = 0;
-  if (fehlt.length) {
-    try {
-      const antwort = await fragen(umgebung, NACHTRAG,
-        'JSON\n---\n' + JSON.stringify(lebenslauf) +
-        '\n\nFEHLENDE ZEILEN\n---\n' + fehlt.slice(0, 60).map(z => '- ' + z).join('\n'), 0);
-      (Array.isArray(antwort.nachtrag) ? antwort.nachtrag : []).forEach(n => {
-        if (nachtragSetzen(lebenslauf, n && n.ziel, n && (n.wert || n.zeile))) nachgetragen++;
-      });
-    } catch (e) {
-      console.log('Nachtrag fehlgeschlagen:', e && e.message);
-    }
-    /* Was auch der zweite Durchgang nicht untergebracht hat, kommt als
-       eigener Abschnitt ans Blatt. Sichtbar an der falschen Stelle ist
-       besser als unsichtbar an gar keiner. */
-    fehlt = fehlendeZeilen(text, lebenslauf);
-    fehlt.slice(0, 30).forEach(z => nachtragSetzen(lebenslauf, 'weitere:', z));
-    if (fehlt.length) fehlt = fehlendeZeilen(text, lebenslauf);
-  }
-  return { lebenslauf, nachgetragen, offen: fehlt.length };
+const RESTTITEL = { de: 'Weitere Angaben', en: 'Further details', es: 'Otros datos' };
+
+const FLACHNAMEN = {
+  de: { kontakt: 'Kontakt', beruf: 'Berufserfahrung', ausbildung: 'Ausbildung',
+        liste: 'Kenntnisse', sprachen: 'Sprachen', weiterbildung: 'Weiterbildung' },
+  en: { kontakt: 'Contact', beruf: 'Work experience', ausbildung: 'Education',
+        liste: 'Skills', sprachen: 'Languages', weiterbildung: 'Further training' },
+  es: { kontakt: 'Contacto', beruf: 'Experiencia', ausbildung: 'Formación',
+        liste: 'Competencias', sprachen: 'Idiomas', weiterbildung: 'Formación continua' },
+};
+
+export function flachZuAbschnitten(flach) {
+  const f = flach || {};
+  const sprache = ['de', 'en', 'es'].indexOf(f.sprache) >= 0 ? f.sprache : 'de';
+  const namen = FLACHNAMEN[sprache];
+  const abschnitte = [];
+  const nimm = (art, eintraege, titel) => {
+    const sauber = eintraegeSaeubern(art, Array.isArray(eintraege) ? eintraege : []);
+    if (sauber.length) abschnitte.push({ titel: titel || namen[art] || '', art, eintraege: sauber });
+  };
+  nimm('kontakt', f.kontakt);
+  nimm('beruf', f.berufserfahrung);
+  nimm('ausbildung', f.ausbildung);
+  nimm('liste', f.kenntnisse);
+  nimm('sprachen', f.sprachen);
+  nimm('weiterbildung', f.weiterbildung);
+  (Array.isArray(f.weitere) ? f.weitere : []).forEach(w => {
+    if (w) nimm('liste', w.punkte, sauberText(w.titel, 80));
+  });
+  return {
+    sprache,
+    kopf: {
+      name: sauberText(f.kopf && f.kopf.name, 120),
+      rolle: sauberText(f.kopf && f.kopf.rolle, 120),
+      profil: sauberText(f.kopf && f.kopf.profil, 600),
+    },
+    abschnitte,
+  };
 }
 
 async function lesenAusDatei(datei, umgebung) {
@@ -341,7 +531,9 @@ async function lesenAusDatei(datei, umgebung) {
   }
   const daten = await antwortModell.json();
   const inhalt = daten.choices && daten.choices[0] && daten.choices[0].message.content;
-  return { lebenslauf: jsonAus(inhalt) };
+  /* Auch dieser Weg gibt Abschnitte zurück: Der Editor soll nur eine Form
+     kennen, egal wie gelesen wurde. */
+  return { lebenslauf: flachZuAbschnitten(jsonAus(inhalt)), nachgetragen: 0, offen: 0 };
 }
 
 /* ------------------------------------------------------------ zuschneiden */
