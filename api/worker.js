@@ -38,6 +38,17 @@ export default {
       grenze: umgebung.LIMITS ? GRENZEN.proTagUndIP + ' Anfragen pro Tag und IP' : 'ohne KV-Bindung ungebremst',
     }, 200, kopf);
 
+    /* „405 Method Not Allowed“ ist als erste Begegnung mit dem eigenen
+       Dienst keine gute Auskunft. */
+    if (anfrage.method === 'GET') {
+      return new Response(
+        'PlainSheet KI-Dienst\n\n' +
+        (umgebung.COMETAPI_KEY ? 'Schlüssel ist hinterlegt.' : 'Es fehlt der Schlüssel (COMETAPI_KEY).') +
+        '\nModell: ' + modell(umgebung) +
+        '\n\nDiese Adresse wird vom Editor benutzt, nicht vom Browser.' +
+        '\nSelbstauskunft als JSON: ' + new URL('/api/status', anfrage.url).toString() + '\n',
+        { status: 200, headers: { ...kopf, 'Content-Type': 'text/plain; charset=utf-8' } });
+    }
     if (anfrage.method !== 'POST') return antwort({ fehler: 'nur POST' }, 405, kopf);
     if (!umgebung.COMETAPI_KEY) return antwort({ fehler: 'Der Dienst ist nicht eingerichtet.' }, 503, kopf);
 
@@ -77,8 +88,11 @@ function basis(umgebung){ return (umgebung.BASIS || 'https://api.cometapi.com/v1
 function corsKopf(anfrage, umgebung) {
   const erlaubt = (umgebung.HERKUNFT || '').split(',').map(s => s.trim()).filter(Boolean);
   const woher = anfrage.headers.get('Origin') || '';
+  /* Beim Entwickeln heißt derselbe Rechner mal localhost, mal 127.0.0.1
+     und mal [::1] — je nachdem, was der Browser zuerst auflöst. */
+  const daheim = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(woher);
   const passt = erlaubt.length === 0 ? '*'
-    : (erlaubt.includes(woher) || /^https?:\/\/localhost(:\d+)?$/.test(woher) ? woher : erlaubt[0]);
+    : (erlaubt.includes(woher) || daheim ? woher : erlaubt[0]);
   return {
     'Access-Control-Allow-Origin': passt,
     'Access-Control-Allow-Headers': 'Content-Type',

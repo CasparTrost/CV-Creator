@@ -2156,16 +2156,21 @@ if (KI_TESTBETRIEB) KI.endpunkt = location.origin + '/api';
    Gefragt wird nur von einem Rechner aus, der ohnehin lokal arbeitet. */
 async function kiWorkerSuchen(){
   if (!KI_TESTBETRIEB) return;
-  try {
-    const antwort = await fetch('http://localhost:8787/api/status',
-                                { signal: AbortSignal.timeout(900) });
-    const stand = await antwort.json();
-    if (!stand || !stand.bereit) return;
-    KI.endpunkt = 'http://localhost:8787/api';
-    KI_TESTBETRIEB = false;
-    kiKarteZeigen();
-    melde(T('kiEchtGefunden').replace('{m}', stand.modell || ''), 4000);
-  } catch (e){ /* keiner da — dann bleibt es beim Testbetrieb */ }
+  /* „localhost“ und „127.0.0.1“ sind derselbe Rechner, aber nicht dieselbe
+     Adresse: Windows löst localhost zuerst nach ::1 auf, wrangler horcht auf
+     127.0.0.1 — und dann findet die Suche nichts, obwohl der Dienst läuft. */
+  for (const wo of ['http://localhost:8787', 'http://127.0.0.1:8787']){
+    try {
+      const antwort = await fetch(wo + '/api/status', { signal: AbortSignal.timeout(900) });
+      const stand = await antwort.json();
+      if (!stand || !stand.bereit) continue;
+      KI.endpunkt = wo + '/api';
+      KI_TESTBETRIEB = false;
+      kiKarteZeigen();
+      melde(T('kiEchtGefunden').replace('{m}', stand.modell || ''), 4000);
+      return;
+    } catch (e){ /* nächste Adresse */ }
+  }
 }
 
 function kiBereit(){ return !!(KI && KI.endpunkt); }
