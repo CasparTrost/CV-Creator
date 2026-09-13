@@ -185,8 +185,10 @@ const ARTNAMEN = [
   [/kontakt|contact|adress|persoenlich|persönlich|datos|personal (data|details|information)/i, 'kontakt'],
   [/profil|summary|about|ueber mich|über mich|perfil/i, 'profil'],
   [/beruf|erfahrung|experience|werdegang|employment|praxis|station/i, 'beruf'],
-  [/ausbildung|bildung|studium|schul|education|academic|formaci/i, 'ausbildung'],
+  /* Das Genauere vor dem Allgemeineren: „Weiterbildung“ enthält „bildung“
+     und ist trotzdem keine Ausbildung. */
   [/weiterbild|fortbild|zertifik|training|certific|kurs/i, 'weiterbildung'],
+  [/ausbildung|bildung|studium|schul|education|academic|formaci|qualifikation|qualification/i, 'ausbildung'],
   [/sprach|language|idioma/i, 'sprachen'],
   [/liste|list|kenntnis|skill|kompetenz|competenc/i, 'liste'],
 ];
@@ -391,6 +393,23 @@ function bereicheOrdnen(liste, zeilen) {
      KONTAKT“, und aus einer zweizeiligen Überschrift werden zwei
      Stichpunkte („ZUSÄTZLICHE“, „QUALIFIKATIONEN“) unter der ersten
      Ausbildung. Beides stand so auf dem Blatt. */
+  /* Eine Aufzählung hat keine Zeiträume.
+     Steht in einem Abschnitt mehrmals „09/2011 – 08/2014“, ist er keine
+     Liste, sondern eine Folge von Stationen — und muss auch so gelesen
+     werden. Sonst steht jede Zeile einzeln als Stichpunkt auf dem Blatt:
+     Fach, Hochschule und Zeitraum gleichberechtigt untereinander, und von
+     der Zuordnung ist nichts mehr übrig. Umgetauft wird nur, wenn die
+     Überschrift sagt, wohin: „Zusätzliche Qualifikationen“ ist eine
+     Ausbildung, „Publikationen“ bleibt eine Liste. */
+  zusammen.forEach(a => {
+    if (a.art !== 'liste' && a.art !== 'text') return;
+    let mit = 0;
+    for (let nr = a.von; nr <= a.bis; nr++) if (ZEITRAUM_ZEILE.test(zeilen[nr - 1] || '')) mit++;
+    if (mit < 2) return;
+    const nach = artVon(a.titel);
+    if (nach === 'beruf' || nach === 'ausbildung' || nach === 'weiterbildung') a.art = nach;
+  });
+
   zusammen.forEach(a => { if (!a.titel) titelNachholen(a, zeilen); });
   zusammen.forEach((a, i) => {
     const naechster = zusammen[i + 1];
@@ -403,6 +422,8 @@ function bereicheOrdnen(liste, zeilen) {
   });
   return zusammen;
 }
+
+const ZEITRAUM_ZEILE = /\d{1,2}\/\d{4}|\b(19|20)\d{2}\s*[\u2013\u2014-]\s*((19|20)\d{2}|heute|today|present|now)\b/i;
 
 function istStationsTitel(titel) {
   const t = String(titel || '').trim();
@@ -518,6 +539,7 @@ async function abschnittLesen(bereich, umgebung) {
   const pruefen = bereich.zeilen.filter(z => !gleicheWorte(z, bereich.titel));
   const fehlt = fehlendeZeilen(pruefen.join('\n'), eintraege);
   nachtragVerteilen(bereich.art, eintraege, pruefen, fehlt.slice(0, 40));
+  if (bereich.art === 'ausbildung') eintraege.forEach(notenRuecken);
   return { titel: bereich.titel, art: bereich.art, eintraege, nachgetragen: fehlt.length };
 }
 
@@ -627,20 +649,26 @@ function eintraegeSaeubern(art, eintraege) {
       }
     });
     if (art === 'kontakt' && KONTAKTARTEN.indexOf(aus.art) < 0) aus.art = 'sonst';
-    if (art === 'ausbildung' && istNote(aus.abschluss)) {
-      /* „Abschluss“ heißt im Lebenslauf zweierlei: der Grad und die Note.
-         Steht eine Zahl in dem Feld, war der Grad gemeint und die Note
-         gefunden — dann lieber kein Grad als ein falscher, und die Note
-         dorthin, wo sie hingehört. Sonst stand sie am Ende zweimal auf dem
-         Blatt: einmal als Abschluss, einmal als nachgetragene Zeile. */
-      const note = aus.abschluss;
-      aus.abschluss = '';
-      aus.punkte = aus.punkte || [];
-      if (!aus.punkte.some(p => gleicheWorte(p, note))) aus.punkte.unshift(note);
-    }
     const inhalt = felder.some(f => f !== 'punkte' && aus[f]) || (aus.punkte || []).length;
     return inhalt ? aus : null;
   }).filter(Boolean);
+}
+
+/* „Abschluss“ heißt im Lebenslauf zweierlei: der Grad und die Note. Steht
+   eine Zahl in dem Feld, war der Grad gemeint und die Note gefunden — dann
+   lieber kein Grad als ein falscher.
+   Wohin mit der Zahl: Die Zeile, aus der sie stammt, steht zu diesem
+   Zeitpunkt meist schon als Punkt dabei, denn die Vollständigkeitsprüfung
+   hat sie nachgetragen — „Abschluss: 1,5“, also mit dem Wort davor und
+   damit besser als die nackte Zahl. Nur wenn sie fehlt, kommt die Zahl
+   dazu. Sonst stand die Note zweimal untereinander. */
+function notenRuecken(eintrag) {
+  if (!eintrag || !istNote(eintrag.abschluss)) return;
+  const note = eintrag.abschluss;
+  const zahl = (note.match(/\d[\d.,]*/) || [''])[0];
+  eintrag.abschluss = '';
+  eintrag.punkte = eintrag.punkte || [];
+  if (!zahl || !eintrag.punkte.some(p => String(p).includes(zahl))) eintrag.punkte.unshift(note);
 }
 
 /* Eine Note ist eine Zahl, mit oder ohne das Wort davor. Ein Jahr nicht:

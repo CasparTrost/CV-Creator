@@ -715,10 +715,13 @@ function zeilenAus(laeufe) {
   const abstaende = [];
   for (let i = 1; i < laeufe.length; i++) {
     const d = laeufe[i].y - laeufe[i - 1].y;
-    if (d > 0.5 && d < 60) abstaende.push(d);
+    /* Erst ab zwei Einheiten ist es der Abstand zweier Zeilen. Was darunter
+       liegt, ist der Versatz eines Aufzählungszeichens gegen seinen Text. */
+    if (d > 2 && d < 60) abstaende.push(d);
   }
   abstaende.sort((a, b) => a - b);
   const zeilenabstand = abstaende.length ? abstaende[Math.floor(abstaende.length / 2)] : 0;
+  const gleicheZeile = Math.max(1.5, zeilenabstand * 0.4);
 
   /* Wo eine Spalte ihren rechten Rand hat, steht nirgends geschrieben — aber
      wo mehrere Zeilen an derselben Stelle aufhören, ist er. Und eine Zeile,
@@ -758,6 +761,22 @@ function zeilenAus(laeufe) {
   const aus = [];
   let letzte = null, letzteY = 0, letztesEnde = 0;
   for (const lauf of laeufe) {
+    /* Zwei Läufe auf derselben Höhe sind eine Zeile — auch wenn die halbe
+       Spalte zwischen ihnen liegt. „Maschinenbau“ links und „09/2011 –
+       08/2014“ rechtsbündig stehen im Dokument nebeneinander; untereinander
+       geschrieben weiß niemand mehr, ob der Zeitraum zum Fach darüber oder
+       zur Hochschule darunter gehört, und das Modell rät. Auf dem Blatt
+       standen dann Fach und Einrichtung über Kreuz. */
+    if (letzte && Math.abs(lauf.y - letzteY) <= gleicheZeile) {
+      const nurMarke = MARKE_ALLEIN.test(letzte.text.trim());
+      letzte.text += ' ' + lauf.text;
+      /* Das Aufzählungszeichen ist nicht der Anfang der Zeile, sondern was
+         dahinter steht — sonst zeigt die Einrückung an die falsche Stelle. */
+      if (nurMarke) letzte.x = lauf.x;
+      letzteY = lauf.y;
+      letztesEnde = ende(lauf);
+      continue;
+    }
     const randErreicht = !!letzte && amRand(letzte, letztesEnde);
     if (letzte && gehoertDazu(letzte, letzteY, lauf, zeilenabstand, randErreicht)) {
       letzte.text = verbinden(letzte.text, lauf.text);
