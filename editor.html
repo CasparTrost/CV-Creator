@@ -253,6 +253,7 @@ body{display:flex;align-items:flex-start;background:#eceae8}
 #kiFenster .schau b{display:block;color:#2b2523;margin-bottom:4px}
 #kiFenster .schau span{display:block;max-height:66px;overflow:hidden;color:#8b807b}
 #kiFenster .schau.warn{background:#fdf3f2;border-color:#f0dcda;color:#6d3a36}
+#kiFenster .schau.hinweis{background:#f2f6fb;border-color:#dde5f0;color:#3c4a5c}
 #kiFenster .schau.laeuft::after{content:"";display:inline-block;width:9px;height:9px;
   margin-left:7px;border:2px solid #cbc0ba;border-top-color:var(--accent);border-radius:50%;
   animation:dreh .8s linear infinite}
@@ -485,6 +486,10 @@ h2.sec[data-sym]::before{
 .griff{position:absolute;right:-1mm;top:-2mm;z-index:5;display:none;gap:4px;
        background:#2e2826;border-radius:4px;padding:2px 5px;font:12px/1.1 Arial,sans-serif;color:#fff}
 .blk:hover > .griff{display:flex}
+/* Eine Fortsetzung ist keine eigene Rubrik, sondern der Rest des
+   Abschnitts von der Seite davor: Sie hat keinen Griff, denn Löschen
+   und Verschieben gehören zum ganzen Abschnitt. */
+.blk.fort:hover > .griff{display:none}
 .griff .zieh{cursor:grab;padding:2px 3px}
 .griff .weg{cursor:pointer;padding:2px 3px;opacity:.7}
 .griff .weg:hover{opacity:1;color:#ff9a9a}
@@ -781,7 +786,7 @@ h2.sec[data-sym]::before{
   body{display:block}
   .blk.ueberlauf{outline:0 !important}
   .page{margin:0;box-shadow:none;page-break-after:always}
-  .page:last-of-type{page-break-after:auto}
+  .page.letzte,.page:last-of-type{page-break-after:auto}
   .page[style*="display: none"]{display:none !important}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
@@ -1028,6 +1033,15 @@ h2.sec[data-sym]::before{
           <li>Unterstützung bei der Einführung eines Ticketsystems</li>
         </ul>
       </div>
+
+      <div class="job">
+        <div class="jobhead"><span class="jobtitle">Praktikant Unternehmensberatung</span><span class="jobdate">03/2015 – 08/2015</span></div>
+        <div class="company"><strong>Consult &amp; Partner GmbH</strong> – München</div>
+        <ul>
+          <li>Mitarbeit an einer Prozessaufnahme im Einkauf eines Industriekunden</li>
+          <li>Erstellung von Präsentationen und Ergebnisdokumentationen</li>
+        </ul>
+      </div>
         </div>
       </section>
     </div>
@@ -1062,18 +1076,6 @@ h2.sec[data-sym]::before{
       </section>
     </div>
     <div class="spalte main">
-      <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
-        <div class="inhalt" contenteditable="true">
-      <div class="job">
-        <div class="jobhead"><span class="jobtitle">Praktikant Unternehmensberatung</span><span class="jobdate">03/2015 – 08/2015</span></div>
-        <div class="company"><strong>Consult &amp; Partner GmbH</strong> – München</div>
-        <ul>
-          <li>Mitarbeit an einer Prozessaufnahme im Einkauf eines Industriekunden</li>
-          <li>Erstellung von Präsentationen und Ergebnisdokumentationen</li>
-        </ul>
-      </div>
-        </div>
-      </section>
       <section class="blk"><div class="griff" contenteditable="false"><span class="zieh" title="Abschnitt verschieben">&#9776;</span><span class="weg" title="Abschnitt entfernen" onclick="blockWeg(this)">&#10005;</span></div>
         <div class="inhalt" contenteditable="true"><h2 class="sec">Weiterbildung</h2>
       <div class="job">
@@ -1115,9 +1117,9 @@ const VARS = [
   {k:'t16',n:'Akzentstreifen',  b:'Farbkante am Rand'}
 ];
 const EINSPALTIG = ['t7','t8','t9','t10','t11','t13','t14','t16'];
-const INHALT = {"en": {"p1kopf": "<h1>John Doe</h1><div class=\"role\">Digital Transformation Project Manager</div><p>Project manager, eight years, taking IT initiatives from first concept to rollout. Focus on process analysis, requirements management and steering external suppliers.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Personal details</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>12 Sample Street, 90402 Nuremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>john.doe@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14 May 1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Education</h2><div class=\"edu\"><div class=\"degree\">Master of Science</div><div>Business Information Systems</div><div><strong>Sample University</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Final grade 1.7 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachelor of Arts</div><div>Business Administration</div><div><strong>Example University of Applied Sciences</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Final grade 2.1 (German scale)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Work experience</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Digital Transformation Project Manager</span><span class=\"jobdate\">03/2021 – present</span></div><div class=\"company\"><strong>Example GmbH</strong> – Nuremberg</div><ul><li>Led four parallel digitalisation projects with budgets of up to €500,000</li><li>Gathered and prioritised requirements together with six departments</li><li>Managed external service providers including acceptance testing and invoice review</li><li>Introduced consistent reporting for the management board</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Project Officer</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Sample AG</strong> – Fürth</div><ul><li>Prepared decision papers and cost-benefit analyses</li><li>Coordinated deadlines, milestones and project documentation</li><li>Analysed existing workflows and proposed improvements</li><li>Point of contact for user questions during two system rollouts</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Working Student, Process Management</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Example Trading KG</strong> – Erlangen</div><ul><li>Documented and visualised core business processes</li><li>Produced analyses and reports for the division head</li><li>Supported the introduction of a ticketing system</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Skills</h2><ul><li>Project management, agile and traditional</li><li>Requirements and process analysis</li><li>Jira &amp; Confluence – confident daily use</li><li>SAP – working knowledge</li><li>Microsoft Office – advanced</li><li>Presenting and facilitating</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Languages</h2><div class=\"lang\"><strong>English</strong>: native speaker</div><div class=\"lang\"><strong>German</strong>: C1</div><div class=\"lang\"><strong>Spanish</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Intern, Management Consulting</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Munich</div><ul><li>Supported a procurement process review at an industrial client</li><li>Produced presentations and result documentation</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Further training</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">IPMA Level D Project Management</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>German Association for Project Management</strong></div></div></div></section>"}, "es": {"p1kopf": "<h1>Juan Pérez</h1><div class=\"role\">Jefe de proyecto de digitalización</div><p>Jefe de proyecto con ocho años de experiencia en iniciativas de TI, del concepto a la implantación. Especializado en análisis de procesos y gestión de proveedores.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Datos personales</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>Calle Ejemplo 12, 90402 Núremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>juan.perez@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14/05/1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación</h2><div class=\"edu\"><div class=\"degree\">Máster</div><div>Sistemas de Información Empresarial</div><div><strong>Universidad de Ejemplo</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Nota final 1,7 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Grado</div><div>Administración de Empresas</div><div><strong>Escuela Superior de Ejemplo</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Nota final 2,1 (escala alemana)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Experiencia profesional</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Jefe de proyecto de digitalización</span><span class=\"jobdate\">03/2021 – actualidad</span></div><div class=\"company\"><strong>Ejemplo GmbH</strong> – Núremberg</div><ul><li>Dirección de cuatro proyectos de digitalización simultáneos con presupuestos de hasta 500.000 €</li><li>Recogida y priorización de requisitos junto a seis departamentos</li><li>Gestión de proveedores externos, incluidas recepción y revisión de facturas</li><li>Implantación de un sistema de informes unificado para la dirección</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Técnico de proyectos</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Empresa Ejemplo AG</strong> – Fürth</div><ul><li>Elaboración de propuestas de decisión y análisis de rentabilidad</li><li>Coordinación de plazos, hitos y documentación del proyecto</li><li>Análisis de procesos existentes y propuestas de mejora</li><li>Persona de contacto para los usuarios durante dos implantaciones de sistemas</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Estudiante en prácticas, gestión de procesos</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Comercial Ejemplo KG</strong> – Erlangen</div><ul><li>Documentación y representación gráfica de los procesos clave</li><li>Análisis e informes para la dirección de área</li><li>Apoyo en la implantación de un sistema de tickets</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Competencias</h2><ul><li>Gestión de proyectos, ágil y clásica</li><li>Análisis de requisitos y de procesos</li><li>Jira &amp; Confluence – uso habitual</li><li>SAP – conocimientos básicos</li><li>Microsoft Office – nivel avanzado</li><li>Presentación y moderación</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Idiomas</h2><div class=\"lang\"><strong>Español</strong>: lengua materna</div><div class=\"lang\"><strong>Inglés</strong>: C1</div><div class=\"lang\"><strong>Alemán</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Prácticas en consultoría</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Múnich</div><ul><li>Colaboración en un análisis de procesos de compras en un cliente industrial</li><li>Elaboración de presentaciones y documentación de resultados</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación continua</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Gestión de proyectos IPMA nivel D</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>Asociación Alemana de Gestión de Proyectos</strong></div></div></div></section>"}};
+const INHALT = {"en": {"p1kopf": "<h1>John Doe</h1><div class=\"role\">Digital Transformation Project Manager</div><p>Project manager, eight years, taking IT initiatives from first concept to rollout. Focus on process analysis, requirements management and steering external suppliers.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Personal details</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>12 Sample Street, 90402 Nuremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>john.doe@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14 May 1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Education</h2><div class=\"edu\"><div class=\"degree\">Master of Science</div><div>Business Information Systems</div><div><strong>Sample University</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Final grade 1.7 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachelor of Arts</div><div>Business Administration</div><div><strong>Example University of Applied Sciences</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Final grade 2.1 (German scale)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Work experience</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Digital Transformation Project Manager</span><span class=\"jobdate\">03/2021 – present</span></div><div class=\"company\"><strong>Example GmbH</strong> – Nuremberg</div><ul><li>Led four parallel digitalisation projects with budgets of up to €500,000</li><li>Gathered and prioritised requirements together with six departments</li><li>Managed external service providers including acceptance testing and invoice review</li><li>Introduced consistent reporting for the management board</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Project Officer</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Sample AG</strong> – Fürth</div><ul><li>Prepared decision papers and cost-benefit analyses</li><li>Coordinated deadlines, milestones and project documentation</li><li>Analysed existing workflows and proposed improvements</li><li>Point of contact for user questions during two system rollouts</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Working Student, Process Management</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Example Trading KG</strong> – Erlangen</div><ul><li>Documented and visualised core business processes</li><li>Produced analyses and reports for the division head</li><li>Supported the introduction of a ticketing system</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Intern, Management Consulting</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Munich</div><ul><li>Supported a procurement process review at an industrial client</li><li>Produced presentations and result documentation</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Skills</h2><ul><li>Project management, agile and traditional</li><li>Requirements and process analysis</li><li>Jira &amp; Confluence – confident daily use</li><li>SAP – working knowledge</li><li>Microsoft Office – advanced</li><li>Presenting and facilitating</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Languages</h2><div class=\"lang\"><strong>English</strong>: native speaker</div><div class=\"lang\"><strong>German</strong>: C1</div><div class=\"lang\"><strong>Spanish</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Further training</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">IPMA Level D Project Management</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>German Association for Project Management</strong></div></div></div></section>"}, "es": {"p1kopf": "<h1>Juan Pérez</h1><div class=\"role\">Jefe de proyecto de digitalización</div><p>Jefe de proyecto con ocho años de experiencia en iniciativas de TI, del concepto a la implantación. Especializado en análisis de procesos y gestión de proveedores.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Datos personales</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>Calle Ejemplo 12, 90402 Núremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>juan.perez@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14/05/1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación</h2><div class=\"edu\"><div class=\"degree\">Máster</div><div>Sistemas de Información Empresarial</div><div><strong>Universidad de Ejemplo</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Nota final 1,7 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Grado</div><div>Administración de Empresas</div><div><strong>Escuela Superior de Ejemplo</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Nota final 2,1 (escala alemana)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Experiencia profesional</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Jefe de proyecto de digitalización</span><span class=\"jobdate\">03/2021 – actualidad</span></div><div class=\"company\"><strong>Ejemplo GmbH</strong> – Núremberg</div><ul><li>Dirección de cuatro proyectos de digitalización simultáneos con presupuestos de hasta 500.000 €</li><li>Recogida y priorización de requisitos junto a seis departamentos</li><li>Gestión de proveedores externos, incluidas recepción y revisión de facturas</li><li>Implantación de un sistema de informes unificado para la dirección</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Técnico de proyectos</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Empresa Ejemplo AG</strong> – Fürth</div><ul><li>Elaboración de propuestas de decisión y análisis de rentabilidad</li><li>Coordinación de plazos, hitos y documentación del proyecto</li><li>Análisis de procesos existentes y propuestas de mejora</li><li>Persona de contacto para los usuarios durante dos implantaciones de sistemas</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Estudiante en prácticas, gestión de procesos</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Comercial Ejemplo KG</strong> – Erlangen</div><ul><li>Documentación y representación gráfica de los procesos clave</li><li>Análisis e informes para la dirección de área</li><li>Apoyo en la implantación de un sistema de tickets</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Prácticas en consultoría</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Múnich</div><ul><li>Colaboración en un análisis de procesos de compras en un cliente industrial</li><li>Elaboración de presentaciones y documentación de resultados</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Competencias</h2><ul><li>Gestión de proyectos, ágil y clásica</li><li>Análisis de requisitos y de procesos</li><li>Jira &amp; Confluence – uso habitual</li><li>SAP – conocimientos básicos</li><li>Microsoft Office – nivel avanzado</li><li>Presentación y moderación</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Idiomas</h2><div class=\"lang\"><strong>Español</strong>: lengua materna</div><div class=\"lang\"><strong>Inglés</strong>: C1</div><div class=\"lang\"><strong>Alemán</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación continua</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Gestión de proyectos IPMA nivel D</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>Asociación Alemana de Gestión de Proyectos</strong></div></div></div></section>"}};
 const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Formatierung löschen", "abschnitt": "+ Abschnitt", "abschnittLeiste": "+ in Seitenleiste", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "neuOrdnen": "Neu ordnen", "symbole": "Symbole ein / aus", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto", "neuStart": "Von vorn beginnen", "zurueck": "Vorlagen", "ratgeber": "Ratgeber", "gKi": "KI-Hilfe", "kiUpload": "Lebenslauf hochladen", "kiStelle": "Für eine Stelle optimieren", "kiZurueck": "Zuschnitt zurücknehmen", "kiPruefen": "Lebenslauf prüfen", "kiTest": "Testbetrieb"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "abschnittLeiste": "+ in sidebar", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "neuOrdnen": "Rearrange", "symbole": "Icons on / off", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo", "neuStart": "Start over", "zurueck": "Templates", "ratgeber": "Guides", "gKi": "AI help", "kiUpload": "Upload a CV", "kiStelle": "Tailor to a job advert", "kiZurueck": "Undo the tailoring", "kiPruefen": "Check the CV", "kiTest": "Test mode"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "abschnittLeiste": "+ en barra lateral", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "neuOrdnen": "Reordenar", "symbole": "Símbolos sí / no", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia", "neuStart": "Empezar de nuevo", "zurueck": "Plantillas", "ratgeber": "Guías", "gKi": "Ayuda con IA", "kiUpload": "Subir un CV", "kiStelle": "Adaptar a una oferta", "kiZurueck": "Deshacer la adaptación", "kiPruefen": "Revisar el CV", "kiTest": "Modo de prueba"}};
-const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel eintippen.", "neuSeite": "Auf dieser Seite war kein Platz mehr – der Abschnitt steht jetzt auf Seite {n}.", "erstKlicken": "Erst in den Abschnitt klicken, dann das Format entfernen.", "formatWeg": "Fett, kursiv und Farben in diesem Abschnitt entfernt.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "platzLeiste": "Abschnitt in der Seitenleiste", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst.", "abbrechen": "Abbrechen", "kiFehler": "Das hat nicht geklappt. Bitte noch einmal versuchen.", "kiTitelHinweis": "Einmal kurz aufpassen", "kiHinweisLang": "Für diese Funktion verlässt Ihr Text das Gerät: Er wird an unseren Server und von dort an {a} geschickt, ausgewertet und zurückgegeben. Gespeichert wird er dabei von uns nicht. Alles andere im Editor bleibt wie bisher in Ihrem Browser. Wenn Sie das nicht möchten, benutzen Sie diese beiden Funktionen einfach nicht — der Editor kann alles übrige ohne sie.", "kiSenden": "Einverstanden, senden", "kiTitelUpload": "Lebenslauf einlesen", "kiUploadText": "Wählen Sie Ihren bisherigen Lebenslauf aus. PDF, DOCX, ODT, XLSX oder Text. Die Angaben werden ausgelesen und in das gewählte Layout gesetzt.", "kiDateiWaehlen": "Datei auswählen", "kiOderText": "oder Text einfügen", "kiEinfuegen": "Den Text Ihres Lebenslaufs hier einfügen …", "kiLesen": "Einlesen", "kiNichts": "Bitte eine Datei wählen oder den Text einfügen.", "kiLaeuft": "Wird gelesen …", "kiGelesen": "Anzeige von {q} gelesen. Wird zugeschnitten …", "kiNichtsGefunden": "In der Datei war kein Lebenslauf zu erkennen.", "kiGefunden": "Das habe ich gefunden:", "kiZahl": "{n} × {was}", "rBeruf": "Berufserfahrung", "rAusbildung": "Ausbildung", "rKenntnisse": "Kenntnisse", "rSprachen": "Sprachen", "kiErsetzt": "Beim Übernehmen wird der jetzige Inhalt des Blattes ersetzt. Layout, Farben und Schrift bleiben.", "kiUebernehmen": "Übernehmen", "kiFertig": "Eingesetzt. Bitte alles nachlesen — auch Namen, Daten und Zahlen.", "kiKeinZip": "Diese Datei lässt sich nicht öffnen.", "kiZuGross": "Die Datei ist größer als 8 MB.", "kiLeer": "In der Datei stand kein Text.", "kiAltesWord": "Das alte .doc-Format kann ich nicht lesen. Bitte als DOCX oder PDF speichern.", "kiFormat": "Dieses Format kann ich nicht lesen. PDF, DOCX, ODT, XLSX oder Text.", "kiTitelStelle": "Für eine Stelle zuschneiden", "kiStelleText": "Die Anzeige wird gelesen, und Ihr Lebenslauf wird darauf zugeschnitten: umformuliert und umsortiert. Inhaltlich kommt nichts hinzu — was Sie nicht vorweisen, wird nicht erfunden.", "kiOderAnzeige": "oder die Anzeige einfügen", "kiAnzeigeEinfuegen": "Den Text der Stellenanzeige hier einfügen …", "kiZuschneiden": "Zuschneiden", "kiNichtsStelle": "Bitte einen Link angeben oder den Text der Anzeige einfügen.", "kiBeanstandet": "Die Nachprüfung hat Sätze gefunden, die mehr behaupten als Ihr Lebenslauf hergibt. Bitte besonders genau ansehen:", "kiNeueZahlen": "Diese Zahlen und Abkürzungen stehen neu im Text und kamen vorher nirgends vor:", "kiAenderungen": "{n} Stellen wurden umformuliert.", "kiLuecken": "Das verlangt die Anzeige, und Ihr Lebenslauf belegt es nicht. Erfunden wird hier nichts — überlegen Sie, ob Sie etwas Passendes vergessen haben:", "kiLesenBitte": "Lesen Sie den zugeschnittenen Lebenslauf ganz durch, bevor Sie ihn verschicken. Sie unterschreiben ihn, nicht die Maschine.", "kiZurueckgenommen": "Der alte Stand ist wieder da.", "kiTitelPruefen": "Lebenslauf prüfen", "kiPruefText": "Der Lebenslauf wird gelesen wie von einer Personalabteilung: was auffällt, was stark ist, und welche Fragen im Gespräch daraus entstehen.", "kiStelleOptional": "Stellenanzeige (freiwillig — dann kommt die Passung dazu)", "kiPruefen": "Prüfen", "kiTitelAnalyse": "Das Ergebnis", "aPassung": "Passung", "pGut": "gute Passung", "pTeils": "teilweise Passung", "pDuenn": "dünne Passung", "aStaerken": "Das trägt", "aBefunde": "Das fällt auf", "aFragen": "Damit ist im Gespräch zu rechnen", "aNichts": "Nichts Auffälliges gefunden.", "gHoch": "wichtig", "gMittel": "mittel", "gKlein": "klein", "aWarum": "Auslöser", "aAntwort": "Antwort", "aFalle": "Falle", "aKopieren": "Als Text kopieren", "aKopiert": "Kopiert", "aKopierFehler": "Das Kopieren hat nicht geklappt.", "aFertig": "Fertig", "bLuecke": "Zwischen „{a}“ und „{b}“ fehlen {n}.", "bUeberschneidung": "„{a}“ und „{b}“ überschneiden sich zeitlich.", "bKurz": "„{a}“ dauerte nur {n}.", "bOhneEnde": "„{a}“ hat kein Enddatum.", "bOhneDatum": "„{a}“ hat gar keine Zeitangabe.", "bSeitdem": "Seit der letzten Station sind {n} vergangen.", "bJahre": "{j} Jahre", "bMonate": "{m} Monate", "bMonat": "1 Monat", "bJahr": "1 Jahr", "bUnd": "{a} und {b}", "kiLeseDatei": "Datei wird gelesen …", "kiErkannt": "{n} Zeichen erkannt", "kiKeinText": "Aus dieser Datei ist kein Text zu holen — vermutlich ein Scan. Die Datei wird zur Auswertung so übergeben; sicherer ist, den Text unten einzufügen.", "kiTestHinweis": "Testbetrieb: Diese Antwort ist erfunden und immer dieselbe. Echte Ergebnisse gibt es erst, wenn der KI-Dienst eingerichtet ist.", "kiEchtGefunden": "Echter KI-Dienst gefunden ({m}) — der Testbetrieb ist aus."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – type the title.", "neuSeite": "No room left on that page – the section is now on page {n}.", "erstKlicken": "Click into a section first, then clear its formatting.", "formatWeg": "Bold, italics and colours removed from this section.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "platzLeiste": "Section in the sidebar", "entwurfUmgebaut": "Draft carried over and fitted to the new layout.", "abbrechen": "Cancel", "kiFehler": "That did not work. Please try again.", "kiTitelHinweis": "One thing first", "kiHinweisLang": "For this feature your text leaves your device: it goes to our server and from there to {a}, is processed and comes back. We do not store it. Everything else in the editor stays in your browser as before. If you would rather it did not, simply do not use these two features — the editor does everything else without them.", "kiSenden": "Agreed, send it", "kiTitelUpload": "Read a CV", "kiUploadText": "Choose your existing CV. PDF, DOCX, ODT, XLSX or text. The entries are read out and placed into the layout you picked.", "kiDateiWaehlen": "Choose a file", "kiOderText": "or paste text", "kiEinfuegen": "Paste the text of your CV here …", "kiLesen": "Read it", "kiNichts": "Please choose a file or paste the text.", "kiLaeuft": "Reading …", "kiGelesen": "Advert read from {q}. Tailoring …", "kiNichtsGefunden": "No CV could be recognised in that file.", "kiGefunden": "Here is what I found:", "kiZahl": "{n} × {was}", "rBeruf": "work experience", "rAusbildung": "education", "rKenntnisse": "skills", "rSprachen": "languages", "kiErsetzt": "Applying this replaces what is on the sheet now. Layout, colours and font stay.", "kiUebernehmen": "Apply", "kiFertig": "Applied. Please read it all through — names, dates and figures included.", "kiKeinZip": "That file cannot be opened.", "kiZuGross": "The file is larger than 8 MB.", "kiLeer": "There was no text in the file.", "kiAltesWord": "I cannot read the old .doc format. Please save as DOCX or PDF.", "kiFormat": "I cannot read that format. PDF, DOCX, ODT, XLSX or text.", "kiTitelStelle": "Tailor to a job advert", "kiStelleText": "The advert is read and your CV is tailored to it: rephrased and reordered. Nothing is added — what you cannot show is not invented.", "kiOderAnzeige": "or paste the advert", "kiAnzeigeEinfuegen": "Paste the text of the job advert here …", "kiZuschneiden": "Tailor it", "kiNichtsStelle": "Please give a link or paste the text of the advert.", "kiBeanstandet": "The check found sentences that claim more than your CV supports. Please look at these closely:", "kiNeueZahlen": "These figures and abbreviations are new in the text and appeared nowhere before:", "kiAenderungen": "{n} passages were rephrased.", "kiLuecken": "The advert asks for this and your CV does not show it. Nothing is invented here — consider whether you left something out:", "kiLesenBitte": "Read the tailored CV all the way through before you send it. You are the one signing it, not the machine.", "kiZurueckgenommen": "The previous version is back.", "kiTitelPruefen": "Check the CV", "kiPruefText": "The CV is read the way a hiring desk reads it: what stands out, what carries weight, and which questions it invites in an interview.", "kiStelleOptional": "Job advert (optional — adds the fit score)", "kiPruefen": "Check it", "kiTitelAnalyse": "The result", "aPassung": "Fit", "pGut": "good fit", "pTeils": "partial fit", "pDuenn": "thin fit", "aStaerken": "What carries", "aBefunde": "What stands out", "aFragen": "Expect these in the interview", "aNichts": "Nothing stood out.", "gHoch": "important", "gMittel": "medium", "gKlein": "minor", "aWarum": "Trigger", "aAntwort": "Answer", "aFalle": "Trap", "aKopieren": "Copy as text", "aKopiert": "Copied", "aKopierFehler": "Copying did not work.", "aFertig": "Done", "bLuecke": "Between “{a}” and “{b}”, {n} are missing.", "bUeberschneidung": "“{a}” and “{b}” overlap in time.", "bKurz": "“{a}” lasted only {n}.", "bOhneEnde": "“{a}” has no end date.", "bOhneDatum": "“{a}” has no dates at all.", "bSeitdem": "{n} have passed since the last entry.", "bJahre": "{j} years", "bMonate": "{m} months", "bMonat": "1 month", "bJahr": "1 year", "bUnd": "{a} and {b}", "kiLeseDatei": "Reading the file …", "kiErkannt": "{n} characters recognised", "kiKeinText": "No text can be pulled out of this file — probably a scan. The file will be handed over as it is; pasting the text below is the safer route.", "kiTestHinweis": "Test mode: this answer is made up and always the same. Real results need the AI service set up.", "kiEchtGefunden": "Real AI service found ({m}) — test mode is off."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: escribe el título.", "neuSeite": "No quedaba sitio en esa página: la sección está ahora en la página {n}.", "erstKlicken": "Haz clic primero dentro de una sección.", "formatWeg": "Negrita, cursiva y colores eliminados de esta sección.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "platzLeiste": "Sección en la barra lateral", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño.", "abbrechen": "Cancelar", "kiFehler": "No ha funcionado. Inténtalo de nuevo.", "kiTitelHinweis": "Un momento", "kiHinweisLang": "Para esta función tu texto sale del dispositivo: va a nuestro servidor y de ahí a {a}, se procesa y vuelve. Nosotros no lo guardamos. Todo lo demás del editor sigue en tu navegador. Si prefieres que no salga, no uses estas dos funciones: el editor hace todo lo demás sin ellas.", "kiSenden": "De acuerdo, enviar", "kiTitelUpload": "Leer un CV", "kiUploadText": "Elige tu CV actual. PDF, DOCX, ODT, XLSX o texto. Los datos se extraen y se colocan en el diseño elegido.", "kiDateiWaehlen": "Elegir archivo", "kiOderText": "o pegar texto", "kiEinfuegen": "Pega aquí el texto de tu CV …", "kiLesen": "Leer", "kiNichts": "Elige un archivo o pega el texto.", "kiLaeuft": "Leyendo …", "kiGelesen": "Oferta leída de {q}. Adaptando …", "kiNichtsGefunden": "No se ha reconocido ningún CV en el archivo.", "kiGefunden": "Esto he encontrado:", "kiZahl": "{n} × {was}", "rBeruf": "experiencia", "rAusbildung": "formación", "rKenntnisse": "competencias", "rSprachen": "idiomas", "kiErsetzt": "Al aplicarlo se sustituye el contenido actual. El diseño, los colores y la tipografía se mantienen.", "kiUebernehmen": "Aplicar", "kiFertig": "Aplicado. Léelo todo con calma, también nombres, fechas y cifras.", "kiKeinZip": "Ese archivo no se puede abrir.", "kiZuGross": "El archivo supera los 8 MB.", "kiLeer": "No había texto en el archivo.", "kiAltesWord": "No puedo leer el formato .doc antiguo. Guárdalo como DOCX o PDF.", "kiFormat": "No puedo leer ese formato. PDF, DOCX, ODT, XLSX o texto.", "kiTitelStelle": "Adaptar a una oferta", "kiStelleText": "Se lee la oferta y se adapta tu CV: reformulado y reordenado. No se añade nada: lo que no puedes acreditar no se inventa.", "kiOderAnzeige": "o pegar la oferta", "kiAnzeigeEinfuegen": "Pega aquí el texto de la oferta …", "kiZuschneiden": "Adaptar", "kiNichtsStelle": "Indica un enlace o pega el texto de la oferta.", "kiBeanstandet": "La comprobación ha encontrado frases que afirman más de lo que dice tu CV. Míralas con atención:", "kiNeueZahlen": "Estas cifras y siglas son nuevas y antes no aparecían:", "kiAenderungen": "{n} pasajes reformulados.", "kiLuecken": "La oferta pide esto y tu CV no lo acredita. Aquí no se inventa nada: piensa si has olvidado algo:", "kiLesenBitte": "Lee el CV adaptado entero antes de enviarlo. Lo firmas tú, no la máquina.", "kiZurueckgenommen": "La versión anterior ha vuelto.", "kiTitelPruefen": "Revisar el CV", "kiPruefText": "El CV se lee como lo lee una persona de selección: qué llama la atención, qué sostiene la candidatura y qué preguntas provoca en la entrevista.", "kiStelleOptional": "Oferta de empleo (opcional: añade el ajuste)", "kiPruefen": "Revisar", "kiTitelAnalyse": "El resultado", "aPassung": "Ajuste", "pGut": "buen ajuste", "pTeils": "ajuste parcial", "pDuenn": "ajuste escaso", "aStaerken": "Lo que sostiene", "aBefunde": "Lo que llama la atención", "aFragen": "Cuenta con estas preguntas", "aNichts": "No se ha detectado nada llamativo.", "gHoch": "importante", "gMittel": "medio", "gKlein": "menor", "aWarum": "Motivo", "aAntwort": "Respuesta", "aFalle": "Trampa", "aKopieren": "Copiar como texto", "aKopiert": "Copiado", "aKopierFehler": "No se ha podido copiar.", "aFertig": "Listo", "bLuecke": "Entre «{a}» y «{b}» faltan {n}.", "bUeberschneidung": "«{a}» y «{b}» se solapan en el tiempo.", "bKurz": "«{a}» duró solo {n}.", "bOhneEnde": "«{a}» no tiene fecha de fin.", "bOhneDatum": "«{a}» no tiene fechas.", "bSeitdem": "Han pasado {n} desde la última etapa.", "bJahre": "{j} años", "bMonate": "{m} meses", "bMonat": "1 mes", "bJahr": "1 año", "bUnd": "{a} y {b}", "kiLeseDatei": "Leyendo el archivo …", "kiErkannt": "{n} caracteres reconocidos", "kiKeinText": "No se puede extraer texto de este archivo, probablemente sea un escaneo. Se enviará tal cual; pegar el texto abajo es más seguro.", "kiTestHinweis": "Modo de prueba: esta respuesta es inventada y siempre la misma. Para resultados reales hay que configurar el servicio de IA.", "kiEchtGefunden": "Servicio de IA real encontrado ({m}): el modo de prueba está desactivado."}};
+const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel eintippen.", "neuSeite": "Auf dieser Seite war kein Platz mehr – der Abschnitt steht jetzt auf Seite {n}.", "erstKlicken": "Erst in den Abschnitt klicken, dann das Format entfernen.", "formatWeg": "Fett, kursiv und Farben in diesem Abschnitt entfernt.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "platzLeiste": "Abschnitt in der Seitenleiste", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst.", "abbrechen": "Abbrechen", "kiFehler": "Das hat nicht geklappt. Bitte noch einmal versuchen.", "kiTitelHinweis": "Einmal kurz aufpassen", "kiHinweisLang": "Für diese Funktion verlässt Ihr Text das Gerät: Er wird an unseren Server und von dort an {a} geschickt, ausgewertet und zurückgegeben. Gespeichert wird er dabei von uns nicht. Alles andere im Editor bleibt wie bisher in Ihrem Browser. Wenn Sie das nicht möchten, benutzen Sie diese beiden Funktionen einfach nicht — der Editor kann alles übrige ohne sie.", "kiSenden": "Einverstanden, senden", "kiTitelUpload": "Lebenslauf einlesen", "kiUploadText": "Wählen Sie Ihren bisherigen Lebenslauf aus. PDF, DOCX, ODT, XLSX oder Text. Die Angaben werden ausgelesen und in das gewählte Layout gesetzt.", "kiDateiWaehlen": "Datei auswählen", "kiOderText": "oder Text einfügen", "kiEinfuegen": "Den Text Ihres Lebenslaufs hier einfügen …", "kiLesen": "Einlesen", "kiNichts": "Bitte eine Datei wählen oder den Text einfügen.", "kiLaeuft": "Wird gelesen …", "kiGelesen": "Anzeige von {q} gelesen. Wird zugeschnitten …", "kiNichtsGefunden": "In der Datei war kein Lebenslauf zu erkennen.", "kiGefunden": "Das habe ich gefunden:", "kiZahl": "{n} × {was}", "rBeruf": "Berufserfahrung", "rAusbildung": "Ausbildung", "rKenntnisse": "Kenntnisse", "rSprachen": "Sprachen", "kiErsetzt": "Beim Übernehmen wird der jetzige Inhalt des Blattes ersetzt. Layout, Farben und Schrift bleiben.", "kiUebernehmen": "Übernehmen", "kiFertig": "Eingesetzt. Bitte alles nachlesen — auch Namen, Daten und Zahlen.", "kiKeinZip": "Diese Datei lässt sich nicht öffnen.", "kiZuGross": "Die Datei ist größer als 8 MB.", "kiLeer": "In der Datei stand kein Text.", "kiAltesWord": "Das alte .doc-Format kann ich nicht lesen. Bitte als DOCX oder PDF speichern.", "kiFormat": "Dieses Format kann ich nicht lesen. PDF, DOCX, ODT, XLSX oder Text.", "kiTitelStelle": "Für eine Stelle zuschneiden", "kiStelleText": "Die Anzeige wird gelesen, und Ihr Lebenslauf wird darauf zugeschnitten: umformuliert und umsortiert. Inhaltlich kommt nichts hinzu — was Sie nicht vorweisen, wird nicht erfunden.", "kiOderAnzeige": "oder die Anzeige einfügen", "kiAnzeigeEinfuegen": "Den Text der Stellenanzeige hier einfügen …", "kiZuschneiden": "Zuschneiden", "kiNichtsStelle": "Bitte einen Link angeben oder den Text der Anzeige einfügen.", "kiBeanstandet": "Die Nachprüfung hat Sätze gefunden, die mehr behaupten als Ihr Lebenslauf hergibt. Bitte besonders genau ansehen:", "kiNeueZahlen": "Diese Zahlen und Abkürzungen stehen neu im Text und kamen vorher nirgends vor:", "kiAenderungen": "{n} Stellen wurden umformuliert.", "kiLuecken": "Das verlangt die Anzeige, und Ihr Lebenslauf belegt es nicht. Erfunden wird hier nichts — überlegen Sie, ob Sie etwas Passendes vergessen haben:", "kiLesenBitte": "Lesen Sie den zugeschnittenen Lebenslauf ganz durch, bevor Sie ihn verschicken. Sie unterschreiben ihn, nicht die Maschine.", "kiZurueckgenommen": "Der alte Stand ist wieder da.", "kiTitelPruefen": "Lebenslauf prüfen", "kiPruefText": "Der Lebenslauf wird gelesen wie von einer Personalabteilung: was auffällt, was stark ist, und welche Fragen im Gespräch daraus entstehen.", "kiStelleOptional": "Stellenanzeige (freiwillig — dann kommt die Passung dazu)", "kiPruefen": "Prüfen", "kiTitelAnalyse": "Das Ergebnis", "aPassung": "Passung", "pGut": "gute Passung", "pTeils": "teilweise Passung", "pDuenn": "dünne Passung", "aStaerken": "Das trägt", "aBefunde": "Das fällt auf", "aFragen": "Damit ist im Gespräch zu rechnen", "aNichts": "Nichts Auffälliges gefunden.", "gHoch": "wichtig", "gMittel": "mittel", "gKlein": "klein", "aWarum": "Auslöser", "aAntwort": "Antwort", "aFalle": "Falle", "aKopieren": "Als Text kopieren", "aKopiert": "Kopiert", "aKopierFehler": "Das Kopieren hat nicht geklappt.", "aFertig": "Fertig", "bLuecke": "Zwischen „{a}“ und „{b}“ fehlen {n}.", "bUeberschneidung": "„{a}“ und „{b}“ überschneiden sich zeitlich.", "bKurz": "„{a}“ dauerte nur {n}.", "bOhneEnde": "„{a}“ hat kein Enddatum.", "bOhneDatum": "„{a}“ hat gar keine Zeitangabe.", "bSeitdem": "Seit der letzten Station sind {n} vergangen.", "bJahre": "{j} Jahre", "bMonate": "{m} Monate", "bMonat": "1 Monat", "bJahr": "1 Jahr", "bUnd": "{a} und {b}", "kiLeseDatei": "Datei wird gelesen …", "kiErkannt": "{n} Zeichen erkannt", "kiKeinText": "In dieser PDF steht kein auslesbarer Text – sie ist als Bild gespeichert. Die Auswertung bekommt deshalb die Datei selbst; das klappt meist, dauert aber etwas länger.", "kiTestHinweis": "Testbetrieb: Diese Antwort ist erfunden und immer dieselbe. Echte Ergebnisse gibt es erst, wenn der KI-Dienst eingerichtet ist.", "kiEchtGefunden": "Echter KI-Dienst gefunden ({m}) — der Testbetrieb ist aus.", "fortsetzung": "(Fortsetzung)", "rProfil": "Kurzprofil", "kiWirrText": "Die Schrift dieser PDF lässt sich nicht in Text zurückübersetzen. Die Auswertung bekommt deshalb die Datei selbst; das klappt meist, dauert aber etwas länger."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – type the title.", "neuSeite": "No room left on that page – the section is now on page {n}.", "erstKlicken": "Click into a section first, then clear its formatting.", "formatWeg": "Bold, italics and colours removed from this section.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "platzLeiste": "Section in the sidebar", "entwurfUmgebaut": "Draft carried over and fitted to the new layout.", "abbrechen": "Cancel", "kiFehler": "That did not work. Please try again.", "kiTitelHinweis": "One thing first", "kiHinweisLang": "For this feature your text leaves your device: it goes to our server and from there to {a}, is processed and comes back. We do not store it. Everything else in the editor stays in your browser as before. If you would rather it did not, simply do not use these two features — the editor does everything else without them.", "kiSenden": "Agreed, send it", "kiTitelUpload": "Read a CV", "kiUploadText": "Choose your existing CV. PDF, DOCX, ODT, XLSX or text. The entries are read out and placed into the layout you picked.", "kiDateiWaehlen": "Choose a file", "kiOderText": "or paste text", "kiEinfuegen": "Paste the text of your CV here …", "kiLesen": "Read it", "kiNichts": "Please choose a file or paste the text.", "kiLaeuft": "Reading …", "kiGelesen": "Advert read from {q}. Tailoring …", "kiNichtsGefunden": "No CV could be recognised in that file.", "kiGefunden": "Here is what I found:", "kiZahl": "{n} × {was}", "rBeruf": "work experience", "rAusbildung": "education", "rKenntnisse": "skills", "rSprachen": "languages", "kiErsetzt": "Applying this replaces what is on the sheet now. Layout, colours and font stay.", "kiUebernehmen": "Apply", "kiFertig": "Applied. Please read it all through — names, dates and figures included.", "kiKeinZip": "That file cannot be opened.", "kiZuGross": "The file is larger than 8 MB.", "kiLeer": "There was no text in the file.", "kiAltesWord": "I cannot read the old .doc format. Please save as DOCX or PDF.", "kiFormat": "I cannot read that format. PDF, DOCX, ODT, XLSX or text.", "kiTitelStelle": "Tailor to a job advert", "kiStelleText": "The advert is read and your CV is tailored to it: rephrased and reordered. Nothing is added — what you cannot show is not invented.", "kiOderAnzeige": "or paste the advert", "kiAnzeigeEinfuegen": "Paste the text of the job advert here …", "kiZuschneiden": "Tailor it", "kiNichtsStelle": "Please give a link or paste the text of the advert.", "kiBeanstandet": "The check found sentences that claim more than your CV supports. Please look at these closely:", "kiNeueZahlen": "These figures and abbreviations are new in the text and appeared nowhere before:", "kiAenderungen": "{n} passages were rephrased.", "kiLuecken": "The advert asks for this and your CV does not show it. Nothing is invented here — consider whether you left something out:", "kiLesenBitte": "Read the tailored CV all the way through before you send it. You are the one signing it, not the machine.", "kiZurueckgenommen": "The previous version is back.", "kiTitelPruefen": "Check the CV", "kiPruefText": "The CV is read the way a hiring desk reads it: what stands out, what carries weight, and which questions it invites in an interview.", "kiStelleOptional": "Job advert (optional — adds the fit score)", "kiPruefen": "Check it", "kiTitelAnalyse": "The result", "aPassung": "Fit", "pGut": "good fit", "pTeils": "partial fit", "pDuenn": "thin fit", "aStaerken": "What carries", "aBefunde": "What stands out", "aFragen": "Expect these in the interview", "aNichts": "Nothing stood out.", "gHoch": "important", "gMittel": "medium", "gKlein": "minor", "aWarum": "Trigger", "aAntwort": "Answer", "aFalle": "Trap", "aKopieren": "Copy as text", "aKopiert": "Copied", "aKopierFehler": "Copying did not work.", "aFertig": "Done", "bLuecke": "Between “{a}” and “{b}”, {n} are missing.", "bUeberschneidung": "“{a}” and “{b}” overlap in time.", "bKurz": "“{a}” lasted only {n}.", "bOhneEnde": "“{a}” has no end date.", "bOhneDatum": "“{a}” has no dates at all.", "bSeitdem": "{n} have passed since the last entry.", "bJahre": "{j} years", "bMonate": "{m} months", "bMonat": "1 month", "bJahr": "1 year", "bUnd": "{a} and {b}", "kiLeseDatei": "Reading the file …", "kiErkannt": "{n} characters recognised", "kiKeinText": "This PDF holds no readable text - it is stored as an image. The file itself is handed to the analysis instead; that usually works, it just takes a little longer.", "kiTestHinweis": "Test mode: this answer is made up and always the same. Real results need the AI service set up.", "kiEchtGefunden": "Real AI service found ({m}) — test mode is off.", "fortsetzung": "(continued)", "rProfil": "Profile", "kiWirrText": "The font in this PDF cannot be translated back into text. The file itself is handed to the analysis instead; that usually works, it just takes a little longer."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: escribe el título.", "neuSeite": "No quedaba sitio en esa página: la sección está ahora en la página {n}.", "erstKlicken": "Haz clic primero dentro de una sección.", "formatWeg": "Negrita, cursiva y colores eliminados de esta sección.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "platzLeiste": "Sección en la barra lateral", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño.", "abbrechen": "Cancelar", "kiFehler": "No ha funcionado. Inténtalo de nuevo.", "kiTitelHinweis": "Un momento", "kiHinweisLang": "Para esta función tu texto sale del dispositivo: va a nuestro servidor y de ahí a {a}, se procesa y vuelve. Nosotros no lo guardamos. Todo lo demás del editor sigue en tu navegador. Si prefieres que no salga, no uses estas dos funciones: el editor hace todo lo demás sin ellas.", "kiSenden": "De acuerdo, enviar", "kiTitelUpload": "Leer un CV", "kiUploadText": "Elige tu CV actual. PDF, DOCX, ODT, XLSX o texto. Los datos se extraen y se colocan en el diseño elegido.", "kiDateiWaehlen": "Elegir archivo", "kiOderText": "o pegar texto", "kiEinfuegen": "Pega aquí el texto de tu CV …", "kiLesen": "Leer", "kiNichts": "Elige un archivo o pega el texto.", "kiLaeuft": "Leyendo …", "kiGelesen": "Oferta leída de {q}. Adaptando …", "kiNichtsGefunden": "No se ha reconocido ningún CV en el archivo.", "kiGefunden": "Esto he encontrado:", "kiZahl": "{n} × {was}", "rBeruf": "experiencia", "rAusbildung": "formación", "rKenntnisse": "competencias", "rSprachen": "idiomas", "kiErsetzt": "Al aplicarlo se sustituye el contenido actual. El diseño, los colores y la tipografía se mantienen.", "kiUebernehmen": "Aplicar", "kiFertig": "Aplicado. Léelo todo con calma, también nombres, fechas y cifras.", "kiKeinZip": "Ese archivo no se puede abrir.", "kiZuGross": "El archivo supera los 8 MB.", "kiLeer": "No había texto en el archivo.", "kiAltesWord": "No puedo leer el formato .doc antiguo. Guárdalo como DOCX o PDF.", "kiFormat": "No puedo leer ese formato. PDF, DOCX, ODT, XLSX o texto.", "kiTitelStelle": "Adaptar a una oferta", "kiStelleText": "Se lee la oferta y se adapta tu CV: reformulado y reordenado. No se añade nada: lo que no puedes acreditar no se inventa.", "kiOderAnzeige": "o pegar la oferta", "kiAnzeigeEinfuegen": "Pega aquí el texto de la oferta …", "kiZuschneiden": "Adaptar", "kiNichtsStelle": "Indica un enlace o pega el texto de la oferta.", "kiBeanstandet": "La comprobación ha encontrado frases que afirman más de lo que dice tu CV. Míralas con atención:", "kiNeueZahlen": "Estas cifras y siglas son nuevas y antes no aparecían:", "kiAenderungen": "{n} pasajes reformulados.", "kiLuecken": "La oferta pide esto y tu CV no lo acredita. Aquí no se inventa nada: piensa si has olvidado algo:", "kiLesenBitte": "Lee el CV adaptado entero antes de enviarlo. Lo firmas tú, no la máquina.", "kiZurueckgenommen": "La versión anterior ha vuelto.", "kiTitelPruefen": "Revisar el CV", "kiPruefText": "El CV se lee como lo lee una persona de selección: qué llama la atención, qué sostiene la candidatura y qué preguntas provoca en la entrevista.", "kiStelleOptional": "Oferta de empleo (opcional: añade el ajuste)", "kiPruefen": "Revisar", "kiTitelAnalyse": "El resultado", "aPassung": "Ajuste", "pGut": "buen ajuste", "pTeils": "ajuste parcial", "pDuenn": "ajuste escaso", "aStaerken": "Lo que sostiene", "aBefunde": "Lo que llama la atención", "aFragen": "Cuenta con estas preguntas", "aNichts": "No se ha detectado nada llamativo.", "gHoch": "importante", "gMittel": "medio", "gKlein": "menor", "aWarum": "Motivo", "aAntwort": "Respuesta", "aFalle": "Trampa", "aKopieren": "Copiar como texto", "aKopiert": "Copiado", "aKopierFehler": "No se ha podido copiar.", "aFertig": "Listo", "bLuecke": "Entre «{a}» y «{b}» faltan {n}.", "bUeberschneidung": "«{a}» y «{b}» se solapan en el tiempo.", "bKurz": "«{a}» duró solo {n}.", "bOhneEnde": "«{a}» no tiene fecha de fin.", "bOhneDatum": "«{a}» no tiene fechas.", "bSeitdem": "Han pasado {n} desde la última etapa.", "bJahre": "{j} años", "bMonate": "{m} meses", "bMonat": "1 mes", "bJahr": "1 año", "bUnd": "{a} y {b}", "kiLeseDatei": "Leyendo el archivo …", "kiErkannt": "{n} caracteres reconocidos", "kiKeinText": "Este PDF no contiene texto legible: está guardado como imagen. Por eso se envía el archivo a la evaluación; suele funcionar, solo tarda un poco más.", "kiTestHinweis": "Modo de prueba: esta respuesta es inventada y siempre la misma. Para resultados reales hay que configurar el servicio de IA.", "kiEchtGefunden": "Servicio de IA real encontrado ({m}): el modo de prueba está desactivado.", "fortsetzung": "(continuación)", "rProfil": "Perfil", "kiWirrText": "La tipografía de este PDF no se puede traducir de vuelta a texto. Por eso se envía el archivo a la evaluación; suele funcionar, solo tarda un poco más."}};
 const VARNAMEN = {"de": [["Diagonale links", "Original"], ["Diagonale rechts", "gespiegelt"], ["Gerades Band", "ohne Diagonale"], ["Ruhiger Kopf", "ohne Farbband"], ["Dunkler Kopf", "kräftig"], ["Farbige Leiste", "Leiste in Akzentfarbe"], ["Einspaltig", "ATS-sicher"], ["Datumsspalte", "klassisch tabellarisch"], ["Zeitstrahl", "Stationen an einer Linie"], ["Kopfblock", "dunkler Kopf"], ["Zentriert", "rundes Foto"], ["Feine Trennlinie", "zwei Spalten ohne Tönung"], ["Schlicht", "ohne Foto, ATS-sicher"], ["Kopfkarte", "gerahmter Kopf"], ["Breite Leiste", "viel Platz für Kenntnisse"], ["Akzentstreifen", "Farbkante am Rand"]], "en": [["Diagonal left", "original"], ["Diagonal right", "mirrored"], ["Solid banner", "no diagonal"], ["Quiet header", "no colour band"], ["Dark header", "bold"], ["Coloured sidebar", "accent fill"], ["Single column", "ATS-safe"], ["Date column", "classic tabular"], ["Timeline", "dots on a line"], ["Header block", "dark header"], ["Centred", "round photo"], ["Fine divider", "two columns, no tint"], ["Plain", "no photo, ATS-safe"], ["Header card", "framed header"], ["Wide sidebar", "room for skills"], ["Accent edge", "colour bar at the margin"]], "es": [["Diagonal izquierda", "original"], ["Diagonal derecha", "invertido"], ["Banda plana", "sin diagonal"], ["Cabecera sobria", "sin franja de color"], ["Cabecera oscura", "contrastada"], ["Barra en color", "barra con acento"], ["Una columna", "apto para ATS"], ["Columna de fechas", "tabular clásico"], ["Línea de tiempo", "puntos en una línea"], ["Bloque de cabecera", "cabecera oscura"], ["Centrado", "foto redonda"], ["Separador fino", "dos columnas sin fondo"], ["Sobrio", "sin foto, apto para ATS"], ["Cabecera enmarcada", "cabecera con marco"], ["Barra ancha", "espacio para competencias"], ["Borde de acento", "franja en el margen"]]};
 
 let sprache = 'de';
@@ -1160,11 +1162,16 @@ function grenzeVon(p){
 }
 /* Führt fn aus, während die Seite so aussieht wie im Druck: ohne die
    leeren Plätze, die nur der Bedienung dienen. */
+let messtiefe = 0;
 function inDruckmass(fn){
   const b = document.getElementById('blaetter');
-  b.classList.add('messen');                 /* Plätze weg, Zoom auf 1 */
-  void b.offsetHeight;                       /* Layout erzwingen */
-  try { return fn(); } finally { b.classList.remove('messen'); }
+  /* Verschachtelte Messungen — Teilen misst innerhalb des Verteilens —
+     dürfen das Druckmaß nicht schon nach der inneren wieder abräumen. */
+  if (!messtiefe++){
+    b.classList.add('messen');               /* Plätze weg, Zoom auf 1 */
+    void b.offsetHeight;                     /* Layout erzwingen */
+  }
+  try { return fn(); } finally { if (!--messtiefe) b.classList.remove('messen'); }
 }
 
 function laeuftUeber(p){
@@ -1268,73 +1275,265 @@ function flaechenAnpassen(){
   leisteKnopf();
 }
 
-/* Seite 2 erscheint, wenn Seite 1 überläuft, und verschwindet, sobald
-   nichts mehr darauf steht: ein leeres Blatt im PDF will niemand. */
-function seite2Anpassen(endgueltig){
-  const alle = [...seiten()];
-  const p1 = alle[0], p2 = alle[1];
-  if (!p1 || !p2) return;
-  if (p2.querySelector('.blk')){ p2.style.display = ''; return; }
-  p2.style.display = (!endgueltig && laeuftUeber(p1)) ? '' : 'none';
+/* ==================================================================
+   Seiten nach Bedarf
+   Ein Lebenslauf ist mal eine Seite lang, mal drei. Die Blätter richten
+   sich deshalb nach dem Inhalt: Seite 2 ist im Dokument angelegt und
+   bleibt verborgen, solange nichts darauf steht; jede weitere entsteht
+   als Kopie von ihr und verschwindet wieder, sobald sie leer ist.
+   ================================================================== */
+const HOECHSTSEITEN = 8;
+
+function seitenListe(){ return [...seiten()]; }
+function sichtbareSeiten(){ return seitenListe().filter(p => p.style.display !== 'none'); }
+function hatBloecke(p){ return !!p.querySelector('.blk'); }
+
+/* Eine weitere Seite: dieselbe Hülle wie Seite 2 — gleiche Ränder,
+   gleiche Spalten, kein Kopfband. */
+function seiteAnhaengen(){
+  const alle = seitenListe();
+  if (alle.length >= HOECHSTSEITEN) return null;
+  const vorlage = alle[1] || alle[0];
+  if (!vorlage) return null;
+  const p = vorlage.cloneNode(false);            /* nur die Hülle mit ihren Klassen */
+  p.removeAttribute('style');
+  p.classList.remove('p1', 'voll', 'leiste-leer', 'letzte');
+  p.classList.add('p2');
+  p.innerHTML = '<div class="randmarke"></div><div class="sidebg"></div>' +
+    '<div class="raster"><div class="spalte side"></div><div class="spalte main"></div></div>';
+  document.getElementById('blaetter').appendChild(p);
+  return p;
+}
+
+/* Die Seite nach dieser — notfalls eine neue. */
+function naechsteSeite(p){
+  const alle = seitenListe();
+  const i = alle.indexOf(p);
+  if (i < 0) return null;
+  const da = alle[i + 1];
+  if (da){ da.style.display = ''; return da; }
+  return seiteAnhaengen();
+}
+
+/* Leere Blätter am Ende weg: Seite 2 gehört zum Dokument und wird nur
+   verborgen, spätere werden entfernt. Die letzte sichtbare Seite bekommt
+   eine Marke — ohne sie schöbe der Seitenumbruch im Druck noch ein
+   leeres Blatt hinterher. */
+function seitenAufraeumen(){
+  const alle = seitenListe();
+  for (let i = alle.length - 1; i >= 1; i--){
+    if (hatBloecke(alle[i])) break;
+    if (i >= 2) alle[i].remove(); else alle[i].style.display = 'none';
+  }
+  const sichtbar = sichtbareSeiten();
+  seitenListe().forEach(p => p.classList.remove('letzte'));
+  if (sichtbar.length) sichtbar[sichtbar.length - 1].classList.add('letzte');
+}
+
+/* ==================================================================
+   Abschnitte teilen
+   Ein langer Abschnitt — meist die Berufserfahrung — passt selten am
+   Stück auf eine Seite. Ihn ganz auf die nächste zu schieben ließ die
+   erste fast leer stehen. Er wird deshalb an der Blattkante getrennt:
+   was noch passt, bleibt, der Rest läuft als Fortsetzung weiter.
+   ================================================================== */
+
+/* Die Teile, an denen ein Abschnitt getrennt werden darf: seine
+   Bauteile — Stationen, Abschlüsse, Zeilen. Besteht er aus einer
+   einzigen Liste, sind es deren Punkte. Ein Fließtext hat keine und
+   bleibt darum ganz. */
+function einheiten(b){
+  const inhalt = b.querySelector('.inhalt');
+  if (!inhalt) return [];
+  const kinder = [...inhalt.children].filter(k => k.tagName !== 'H2');
+  if (kinder.length === 1 && kinder[0].tagName === 'UL') return [...kinder[0].children];
+  return kinder;
+}
+
+/* Hängt Bauteile hinten an einen Abschnitt: Listenpunkte in dessen
+   letzte Liste, alles andere für sich. */
+function einheitenAnhaengen(b, teile){
+  const inhalt = b.querySelector('.inhalt');
+  if (!inhalt) return;
+  teile.forEach(t => {
+    if (t.tagName === 'LI'){
+      const listen = [...inhalt.querySelectorAll(':scope > ul')];
+      let ul = listen[listen.length - 1];
+      if (!ul){ ul = document.createElement('ul'); inhalt.appendChild(ul); }
+      ul.appendChild(t);
+    } else inhalt.appendChild(t);
+  });
+  inhalt.querySelectorAll('ul').forEach(u => { if (!u.children.length) u.remove(); });
+}
+
+const TEILEN_MINDEST = 22;       /* mm — kleinere Reste lohnen keinen Schnitt */
+
+/* Trennt den Abschnitt vor dem ersten Bauteil, das über die Grenze
+   ragt. Ergebnis ist die Fortsetzung — oder nichts, wenn kein
+   sinnvoller Schnitt bleibt (ein einziges Bauteil, oder schon das erste
+   passt nicht mehr). */
+function blockTeilen(b, grenze){
+  const teile = einheiten(b);
+  if (teile.length < 2) return null;
+  const seite = b.closest('.page');
+  const ab = inDruckmass(() => {
+    const proMm = seite ? seite.getBoundingClientRect().height / 297 : 3.78;
+    let schnitt = -1;
+    for (let i = 0; i < teile.length; i++)
+      if (teile[i].getBoundingClientRect().bottom > grenze){ schnitt = i; break; }
+    if (schnitt < 1) return -1;                   /* es bliebe nichts stehen */
+    /* Eine Überschrift mit einer einzigen Zeile darunter ist kein
+       Abschnitt, sondern ein Rest: dann wandert lieber alles. Umgekehrt
+       darf die Fortsetzung ruhig kurz sein — ein ganzer Abschnitt
+       weniger auf der Seite wöge schwerer. */
+    const bleibt = (teile[schnitt - 1].getBoundingClientRect().bottom
+                    - b.getBoundingClientRect().top) / proMm;
+    return bleibt < TEILEN_MINDEST ? -1 : schnitt;
+  });
+  if (ab < 1) return null;
+
+  const fort = b.cloneNode(false);
+  fort.classList.add('fort');
+  fort.classList.remove('ueberlauf', 'frisch', 'zieht');
+  const griff = b.querySelector('.griff');
+  if (griff) fort.appendChild(griff.cloneNode(true));
+  const inhalt = document.createElement('div');
+  inhalt.className = 'inhalt';
+  inhalt.setAttribute('contenteditable', 'true');
+  const titel = b.querySelector('h2.sec');
+  if (titel){
+    const kopf = titel.cloneNode(false);
+    kopf.setAttribute('data-fort', titel.textContent.trim());
+    kopf.textContent = titel.textContent.trim() + ' ' + T('fortsetzung');
+    inhalt.appendChild(kopf);
+  }
+  fort.appendChild(inhalt);
+  einheitenAnhaengen(fort, teile.slice(ab));
+  return fort;
+}
+
+/* Nimmt alle Trennungen zurück. Gerechnet wird immer mit ganzen
+   Abschnitten; geteilt wird erst wieder da, wo die Seite es verlangt.
+   Sonst wüchse mit jedem Durchlauf eine Fortsetzung aus der nächsten. */
+function fortAufloesen(){
+  document.querySelectorAll('#blaetter .blk.fort').forEach(f => {
+    const vor = f.previousElementSibling;
+    if (vor && vor.classList.contains('blk')){
+      einheitenAnhaengen(vor, einheiten(f));
+      f.remove();
+      return;
+    }
+    /* Der Abschnitt davor wurde gelöscht: dann steht die Fortsetzung für
+       sich und bekommt ihre alte Überschrift zurück. */
+    const kopf = f.querySelector('h2.sec');
+    if (kopf && kopf.dataset.fort){
+      kopf.textContent = kopf.dataset.fort;
+      kopf.removeAttribute('data-fort');
+    }
+    f.classList.remove('fort');
+  });
+}
+
+/* Holt alle Abschnitte auf die erste Seite zurück, in der Reihenfolge,
+   in der sie im Dokument stehen. Verteilt wird danach von vorn: nur so
+   bricht dasselbe Dokument immer gleich um, statt vom Weg dorthin
+   abzuhängen. */
+function zusammenlegen(){
+  const p1 = seitenListe()[0];
+  if (!p1) return;
+  ['side', 'main'].forEach(art => {
+    const ziel = zielZelle(p1, art);
+    if (!ziel) return;
+    seitenListe().forEach((p, i) => {
+      if (!i) return;
+      [...p.querySelectorAll('.spalte.' + art + ' > .blk')].forEach(b => {
+        const platz = ziel.querySelector(':scope > .platz');
+        if (platz) ziel.insertBefore(b, platz); else ziel.appendChild(b);
+      });
+    });
+  });
+}
+
+/* Räumt eine übervolle Seite, Spalte für Spalte — so, wie ein Text
+   umbricht: Alles bis zur Blattkante bleibt, der Abschnitt, der über sie
+   hinausragt, wird an der Kante getrennt, und was danach kommt, rückt
+   mit auf die nächste Seite. Ganze Abschnitte fortzuschieben, bis der
+   Rest passte, ließ die Seite dagegen halb leer stehen. */
+function seiteEntlasten(p){
+  let bewegt = false;
+  ['main', 'side'].forEach(art => {
+    const sp = spalte(p, art);
+    if (!sp) return;
+    const bloecke = [...sp.querySelectorAll(':scope > .blk')];
+    if (!bloecke.length) return;
+
+    const mass = inDruckmass(() => {
+      const grenze = grenzeVon(p);
+      const erster = bloecke.findIndex(b => b.getBoundingClientRect().bottom > grenze);
+      return { grenze: grenze, erster: erster,
+               oben: erster < 0 ? 0 : bloecke[erster].getBoundingClientRect().top };
+    });
+    if (mass.erster < 0) return;
+
+    const b = bloecke[mass.erster];
+    let ab = mass.erster;
+    /* Beginnt der Abschnitt noch auf dieser Seite, wird er geteilt;
+       beginnt er schon jenseits der Kante, wandert er ganz. */
+    const fort = mass.oben < mass.grenze ? blockTeilen(b, mass.grenze) : null;
+    if (fort) ab = mass.erster + 1;
+
+    /* Schon der erste Abschnitt der Spalte passt nicht und lässt sich
+       nicht teilen. Ihn weiterzuschieben hilft nur, wenn auf dieser
+       Seite noch etwas anderes steht oder ein Kopfband ihm den Platz
+       nimmt — sonst liefe er von Blatt zu Blatt und fände nirgends
+       Platz. Dann bleibt er hier, und checkFit sagt Bescheid. */
+    if (!fort && !ab){
+      const sonst = [...p.querySelectorAll('.blk')].some(x => bloecke.indexOf(x) < 0);
+      if (!sonst && !p.classList.contains('p1')) return;
+    }
+
+    const ziel = naechsteSeite(p);
+    const zielSp = ziel && zielZelle(ziel, art);
+    if (!zielSp) return;
+    const umzug = bloecke.slice(ab);
+    if (fort) umzug.unshift(fort);
+    if (!umzug.length) return;
+    const vor = zielSp.firstElementChild;          /* alles davor einfügen */
+    umzug.forEach(x => zielSp.insertBefore(x, vor));
+    bewegt = true;
+  });
+  return bewegt;
+}
+
+/* Verteilt den ganzen Inhalt auf so viele Seiten, wie er braucht. */
+function verteilen(){
+  if (!seitenListe().length) return;
+  /* Erst alles zurückholen, dann die Trennungen lösen: eine Fortsetzung
+     steht erst nach dem Zusammenlegen wieder neben dem Abschnitt, zu
+     dem sie gehört. */
+  zusammenlegen();
+  fortAufloesen();
+  for (let i = 0; i < HOECHSTSEITEN; i++){
+    const p = seitenListe()[i];
+    if (!p) break;
+    /* Zweimal je Seite: in einspaltigen Vorlagen steht die Seitenspalte
+       unter der Hauptspalte und rückt nach, sobald oben etwas weicht. */
+    for (let runde = 0; runde < 3 && laeuftUeber(p); runde++)
+      if (!seiteEntlasten(p)) break;
+  }
+  seitenAufraeumen();
+  plaetzeZeichnen();
 }
 
 /* Ein Durchlauf nach jeder Änderung am Aufbau. Zwei Runden, weil das
    Verteilen eine Spalte leeren kann und die Geometrie dann anders
    ausfällt. */
 function neuOrdnen(laut){
-  bandAnpassen();
-  for (let i = 0; i < 2; i++){ flaechenAnpassen(); seite2Anpassen(false); verteilen(); }
-  seite2Anpassen(true);
+  for (let i = 0; i < 2; i++){ bandAnpassen(); flaechenAnpassen(); verteilen(); }
   flaechenAnpassen();
   plaetzeZeichnen();
   checkFit(laut === true);
   vorschauen();
-}
-
-/* Schiebt überzählige Abschnitte auf Seite 2 und holt zurück, was wieder passt. */
-function verteilen(){
-  const ps = [...seiten()];
-  const p1 = ps[0], p2 = ps[1];
-  if (!p1 || !p2 || p2.style.display === 'none') return;
-
-  /* Was nicht mehr auf Seite 1 passt, wandert an den Anfang derselben
-     Spalte auf Seite 2 — von unten nach oben, damit die Reihenfolge
-     erhalten bleibt. */
-  let schutz = 0;
-  while (laeuftUeber(p1) && schutz++ < 30){
-    const b = inDruckmass(() => {
-      const g = grenzeVon(p1);
-      const drueber = [...p1.querySelectorAll('.blk')]
-        .filter(x => x.getBoundingClientRect().bottom > g);
-      return drueber[drueber.length - 1];
-    });
-    if (!b) break;
-    const art = b.parentElement.classList.contains('side') ? 'side' : 'main';
-    const ziel = zielZelle(p2, art);
-    if (!ziel) break;
-    ziel.insertBefore(b, ziel.firstElementChild);
-  }
-
-  /* Und zurück, solange etwas wieder passt. Jede Spalte für sich: ein
-     freier Rest rechts soll nicht leer bleiben, nur weil links nichts
-     mehr passt. */
-  ['main', 'side'].forEach(art => {
-    let s2 = 0;
-    while (s2++ < 30){
-      const erster = p2.querySelector('.spalte.' + art + ' > .blk');
-      if (!erster) break;
-      const heimat = zielZelle(p1, art);
-      if (!heimat) break;
-      const zurueck = erster.nextElementSibling, eltern = erster.parentElement;
-      const platz = heimat.querySelector(':scope > .platz');
-      if (platz) heimat.insertBefore(erster, platz); else heimat.appendChild(erster);
-      if (laeuftUeber(p1)){
-        if (zurueck) eltern.insertBefore(erster, zurueck); else eltern.appendChild(erster);
-        break;
-      }
-    }
-  });
-  plaetzeZeichnen();
 }
 
 /* Feste Schema-Vorschau je Layout, als SVG im A4-Verhältnis.
@@ -1456,26 +1655,58 @@ function melde(t, dauer){
    länger, lief er vorher über die Trennlinie in den Abschnitt darunter.
    Hier wird die Höhe nachgemessen und bei Bedarf angehoben; die
    Diagonale folgt mit (Band geteilt durch Wurzel 2). */
+const BAND_HOECHSTENS = 95;      /* mm — darüber bliebe von Seite 1 nichts */
+
 function bandAnpassen(){
   seiten().forEach(p => {
     if (!p.classList.contains('p1')) return;
-    const text = p.querySelector('.bandtext');
-    if (!text) return;
-    p.style.removeProperty('--band');
-    p.style.removeProperty('--diag');
-    const stil = getComputedStyle(p);
-    const basis = parseFloat(stil.getPropertyValue('--band'));
-    if (!basis) return;
-    const proMm = p.getBoundingClientRect().height / 297;
-    if (!proMm) return;
-    const oben = parseFloat(getComputedStyle(text).top) / proMm;
-    const hoch = text.scrollHeight / proMm;
-    const noetig = Math.ceil(oben + hoch + 5);        /* 5 mm Luft nach unten */
-    if (noetig > basis){
-      p.style.setProperty('--band', noetig + 'mm');
-      p.style.setProperty('--diag', (noetig / Math.SQRT2).toFixed(1) + 'mm');
+    /* Zwei Anläufe: wandert das Kurzprofil nach unten, ist der Kopf
+       danach ein anderer und will neu gemessen werden. */
+    for (let runde = 0; runde < 2; runde++){
+      const noetig = bandHoehe(p);
+      if (noetig === null) return;
+      const hoch = Math.min(noetig, BAND_HOECHSTENS);
+      const basis = parseFloat(getComputedStyle(p).getPropertyValue('--band'));
+      if (hoch > basis){
+        p.style.setProperty('--band', hoch + 'mm');
+        p.style.setProperty('--diag', (hoch / Math.SQRT2).toFixed(1) + 'mm');
+      }
+      if (noetig <= BAND_HOECHSTENS) return;
+      if (!profilAuslagern(p)) return;
     }
   });
+}
+
+/* Wie hoch der Kopfbereich sein müsste, damit sein Text hineinpasst. */
+function bandHoehe(p){
+  const text = p.querySelector('.bandtext');
+  if (!text) return null;
+  p.style.removeProperty('--band');
+  p.style.removeProperty('--diag');
+  const proMm = p.getBoundingClientRect().height / 297;
+  if (!proMm || !parseFloat(getComputedStyle(p).getPropertyValue('--band'))) return null;
+  const oben = parseFloat(getComputedStyle(text).top) / proMm;
+  return Math.ceil(oben + text.scrollHeight / proMm + 5);   /* 5 mm Luft nach unten */
+}
+
+/* Ein langes Kurzprofil im Kopf schob das Raster von Seite 1 immer
+   weiter nach unten — am Ende stand oben nur das Profil und der erste
+   Abschnitt begann auf Seite 2. Stößt der Kopf an seine Höhe, zieht das
+   Profil deshalb als eigener Abschnitt in die Hauptspalte. Name und
+   Rolle bleiben oben stehen, wo sie hingehören. */
+function profilAuslagern(p){
+  const text = p.querySelector('.bandtext');
+  if (!text) return false;
+  const absaetze = [...text.querySelectorAll(':scope > p')].filter(a => a.textContent.trim());
+  if (!absaetze.length) return false;
+  const ziel = spalte(p, 'main') || spalte(p, 'side');
+  if (!ziel) return false;
+  const b = blockBauen(T('rProfil'), '');
+  const inhalt = b.querySelector('.inhalt');
+  absaetze.forEach(a => inhalt.appendChild(a));
+  ziel.insertBefore(b, ziel.firstElementChild);
+  text.querySelectorAll(':scope > p').forEach(a => { if (!a.textContent.trim()) a.remove(); });
+  return true;
 }
 
 /* ---------------- Überlauf prüfen ---------------- */
@@ -1816,6 +2047,10 @@ function sauber(sel){
   return [...document.querySelectorAll(sel)].map(el => {
     const k = el.cloneNode(true);
     k.querySelectorAll('.griff').forEach(n => n.remove());
+    /* Fortsetzungen sind ein Mittel des Seitenumbruchs. Wo der Text
+       fortlaufend steht — im Word-Export — hat ihre Überschrift nichts
+       zu suchen, der Inhalt folgt ohnehin direkt auf den seinen. */
+    k.querySelectorAll('h2[data-fort]').forEach(n => n.remove());
     k.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
     return k.innerHTML;
   }).join('');
@@ -1931,6 +2166,9 @@ function inhaltSetzen(code){
   const d = code === 'de' ? INHALT_DE : INHALT[code];
   if (!d) return;
   document.querySelector('#blaetter > .page.p1 .bandtext').innerHTML = d.p1kopf;
+  /* Der Beispielinhalt kennt zwei Seiten. Was der Umbruch darüber
+     hinaus angelegt hatte, gehört nicht mehr dazu. */
+  seitenListe().slice(2).forEach(p => p.remove());
   rasterFuellen(document.querySelector('#blaetter > .page.p1'), d.p1side, d.p1main);
   rasterFuellen(document.querySelector('#blaetter > .page.p2'), d.p2side, d.p2main);
   plaetzeZeichnen();
@@ -2327,14 +2565,19 @@ async function dateiInhalt(datei){
        ganze Datei hochgeladen werden — schneller, billiger, und es verlässt
        weniger das Gerät. Erst wenn dabei nichts Brauchbares herauskommt
        (Scan, Schrift ohne Zuordnung), geht die Datei selbst hinaus. */
+    /* Warum es hier nicht geklappt hat, gehört ins Fenster: „kein Text“
+       und „Text, aber unlesbar“ sind für den, der die Datei ausgesucht
+       hat, zwei verschiedene Nachrichten. */
+    let grund = 'scan';
     if (window.pdfText){
       try {
         const text = await window.pdfText(new Uint8Array(await datei.arrayBuffer()));
         if (textBrauchbar(text)) return { text, quelle: 'pdf-lokal' };
-      } catch (e){ /* dann eben als Datei */ }
+        if (text && text.replace(/\s/g, '').length > 80) grund = 'wirr';
+      } catch (e){ grund = 'wirr'; }
     }
     return { datei: { name: datei.name, typ: datei.type || 'application/pdf',
-                      daten: await base64Von(datei) }, quelle: 'pdf-datei' };
+                      daten: await base64Von(datei) }, quelle: 'pdf-datei', grund };
   }
   if (/\.(docx|xlsx|odt)$/.test(name)){
     const bytes = new Uint8Array(await datei.arrayBuffer());
@@ -2392,8 +2635,10 @@ async function kiUpload(){
         schau.innerHTML = '<b>' + T('kiErkannt').replace('{n}', inhalt.text.length) + '</b>' +
           '<span>' + fluchten(inhalt.text.replace(/\s+/g, ' ').slice(0, 320)) + ' …</span>';
       } else {
-        schau.className = 'schau warn';
-        schau.textContent = T('kiKeinText');
+        /* Kein Fehler: die Datei geht gleich im Ganzen hinaus und wird
+           dort gelesen. Deshalb ein Hinweis, keine Warnung. */
+        schau.className = 'schau hinweis';
+        schau.textContent = T(inhalt.grund === 'wirr' ? 'kiWirrText' : 'kiKeinText');
       }
     } catch (e){
       kiVorbereitet = null;
