@@ -219,8 +219,11 @@ ABSOLUTE RULES
    stands under an entry belongs to that entry: a grade under a degree is one
    of its "punkte", a task under a position is one of its "punkte".
 4. Keep the order of the document.
-5. Do not translate. Do not shorten a bullet so that a fact disappears, and do
-   not merge two bullets into one.
+5. Do not translate, do not tighten, do not improve. A bullet is copied word
+   for word — not condensed, not merged with the next one, not rewritten into
+   better German. If the source puts it clumsily, it stays clumsy: the person
+   who wrote it decides what to change, and they cannot decide about a
+   sentence they never get to see.
 6. Dates keep the granularity of the source: "2019" stays "2019", "03/2019"
    stays "03/2019".
 7. A line you cannot place is still not dropped — put it in the nearest entry's

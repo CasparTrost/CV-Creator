@@ -1794,7 +1794,12 @@ function melde(t, dauer){
    länger, lief er vorher über die Trennlinie in den Abschnitt darunter.
    Hier wird die Höhe nachgemessen und bei Bedarf angehoben; die
    Diagonale folgt mit (Band geteilt durch Wurzel 2). */
-const BAND_HOECHSTENS = 95;      /* mm — darüber bliebe von Seite 1 nichts */
+/* Wie hoch das Kopfband werden darf. Es soll wachsen: In den Vorlagen mit
+   farbigem Kopf gehört das Kurzprofil dorthin, unter den Namen, und ein
+   langes Profil macht den Kopf eben größer — so ist der Entwurf gemeint.
+   Erst wenn für den Inhalt darunter nicht einmal mehr ein Drittel der Seite
+   bliebe, zieht das Profil nach unten. */
+const BAND_HOECHSTENS = 150;     /* mm */
 
 function bandAnpassen(){
   seiten().forEach(p => {
@@ -1806,17 +1811,21 @@ function bandAnpassen(){
       if (noetig === null) return;
       const hoch = Math.min(noetig, BAND_HOECHSTENS);
       const basis = parseFloat(getComputedStyle(p).getPropertyValue('--band'));
-      if (hoch > basis){
-        p.style.setProperty('--band', hoch + 'mm');
-        p.style.setProperty('--diag', (hoch / Math.SQRT2).toFixed(1) + 'mm');
-      }
+      /* Nur die Höhe wächst. Die Diagonale bleibt, wo sie ist: Ihr helles
+         Dreieck reicht genau bis an die Textspalte heran — wüchse sie mit,
+         stünde die Schrift am Ende hell auf hell. */
+      if (hoch > basis) p.style.setProperty('--band', hoch + 'mm');
       if (noetig <= BAND_HOECHSTENS) return;
       if (!profilAuslagern(p)) return;
     }
   });
 }
 
-/* Wie hoch der Kopfbereich sein müsste, damit sein Text hineinpasst. */
+/* Wie hoch der Kopfbereich sein müsste, damit sein Text hineinpasst.
+   Gemessen wird die Unterkante des letzten Absatzes, nicht scrollHeight:
+   Das meldet die Höhe ohne die Abstände zwischen den Absätzen und fällt
+   dadurch zu klein aus — die letzten Zeilen standen dann unterhalb der
+   Farbfläche, hell auf hell. */
 function bandHoehe(p){
   const text = p.querySelector('.bandtext');
   if (!text) return null;
@@ -1824,8 +1833,12 @@ function bandHoehe(p){
   p.style.removeProperty('--diag');
   const proMm = p.getBoundingClientRect().height / 297;
   if (!proMm || !parseFloat(getComputedStyle(p).getPropertyValue('--band'))) return null;
-  const oben = parseFloat(getComputedStyle(text).top) / proMm;
-  return Math.ceil(oben + text.scrollHeight / proMm + 5);   /* 5 mm Luft nach unten */
+  const oben = p.getBoundingClientRect().top;
+  const kinder = [...text.children];
+  const unten = kinder.length
+    ? Math.max(...kinder.map(k => k.getBoundingClientRect().bottom))
+    : text.getBoundingClientRect().bottom;
+  return Math.ceil((unten - oben) / proMm + 6);        /* 6 mm Luft nach unten */
 }
 
 /* Ein langes Kurzprofil im Kopf schob das Raster von Seite 1 immer

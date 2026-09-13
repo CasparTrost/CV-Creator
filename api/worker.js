@@ -372,6 +372,18 @@ function uebrigerVorspann(zeilen, kopf) {
    angekommen ist. Der Abschnitt ist klein genug, dass sich das beantworten
    lässt — beim ganzen Dokument war es Raten. */
 async function abschnittLesen(bereich, umgebung) {
+  /* Fließtext wird nicht gefragt, sondern genommen.
+
+     Ein Kurzprofil ist der Text, den jemand über sich geschrieben hat. Daran
+     gibt es nichts zu ordnen — es gibt nur die Möglichkeit, dass ein Modell
+     ihn „strafft“, und genau das ist passiert: Aus vierzehn Zeilen wurden
+     sechs, und niemand hatte darum gebeten. Hier werden die Zeilen des
+     Abschnitts deshalb einfach zusammengesetzt. Wort für Wort, ohne Umweg. */
+  if (bereich.art === 'profil' || bereich.art === 'text') {
+    return { titel: bereich.titel, art: bereich.art, nachgetragen: 0,
+             eintraege: fliesstextAus(bereich) };
+  }
+
   let eintraege = [];
   try {
     const antwort = await fragen(umgebung, ABSCHNITT,
@@ -389,6 +401,26 @@ async function abschnittLesen(bereich, umgebung) {
   const fehlt = fehlendeZeilen(pruefen.join('\n'), eintraege);
   fehlt.slice(0, 20).forEach(z => eintragNachtragen(bereich.art, eintraege, z));
   return { titel: bereich.titel, art: bereich.art, eintraege, nachgetragen: fehlt.length };
+}
+
+/* Die Zeilen eines Fließtext-Abschnitts, ohne seine Überschrift und ohne
+   Seitenzahlen — zusammengesetzt zu Absätzen. Ein Kurzprofil ist einer; bei
+   einem sonstigen Textabschnitt beginnt nach einem Satzende ein neuer, weil
+   dort wirklich mehrere stehen können. */
+function fliesstextAus(bereich) {
+  const zeilen = bereich.zeilen
+    .map(z => z.trim())
+    .filter(z => z && !NEBENSACHE.test(z) && !gleicheWorte(z, bereich.titel));
+  if (!zeilen.length) return [];
+  if (bereich.art === 'profil') return [zeilen.join(' ').replace(/\s+/g, ' ').trim()];
+
+  const absaetze = [];
+  zeilen.forEach(z => {
+    const vor = absaetze[absaetze.length - 1];
+    if (vor && !/[.!?]["'\u201c\u201d)]?$/.test(vor)) absaetze[absaetze.length - 1] = vor + ' ' + z;
+    else absaetze.push(z);
+  });
+  return absaetze;
 }
 
 const EINTRAG_FELDER = {
