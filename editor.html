@@ -1419,23 +1419,37 @@ const TEILEN_MINDEST = 22;       /* mm — kleinere Reste lohnen keinen Schnitt 
    passt nicht mehr). */
 function blockTeilen(b, grenze){
   const teile = einheiten(b);
-  if (teile.length < 2) return null;
+  if (!teile.length) return null;
   const seite = b.closest('.page');
-  const ab = inDruckmass(() => {
+
+  const mit = inDruckmass(() => {
     const proMm = seite ? seite.getBoundingClientRect().height / 297 : 3.78;
     let schnitt = -1;
     for (let i = 0; i < teile.length; i++)
       if (teile[i].getBoundingClientRect().bottom > grenze){ schnitt = i; break; }
-    if (schnitt < 1) return -1;                   /* es bliebe nichts stehen */
-    /* Eine Überschrift mit einer einzigen Zeile darunter ist kein
-       Abschnitt, sondern ein Rest: dann wandert lieber alles. Umgekehrt
-       darf die Fortsetzung ruhig kurz sein — ein ganzer Abschnitt
-       weniger auf der Seite wöge schwerer. */
+    if (schnitt < 0) return null;
+
+    /* Zuerst der Versuch, in der Station selbst zu trennen: Beginnt sie noch
+       auf dieser Seite und hat sie genug Platz vor sich, bleiben ihr Kopf und
+       ihre ersten Punkte stehen. Sonst wanderte eine einzelne lange Station
+       im Ganzen weiter und ließe eine halbe Seite leer. */
+    const kandidat = teile[schnitt];
+    const davor = (grenze - kandidat.getBoundingClientRect().top) / proMm;
+    if (davor >= TEILEN_MINDEST){
+      const rest = einheitTeilen(kandidat, grenze);
+      if (rest) return [rest].concat(teile.slice(schnitt + 1));
+    }
+
+    /* Sonst wandert sie ganz — aber nur, wenn davor etwas stehen bleibt, das
+       diesen Namen verdient. Eine Überschrift mit einer Zeile darunter ist
+       kein Abschnitt, sondern ein Rest. */
+    if (schnitt < 1) return null;
     const bleibt = (teile[schnitt - 1].getBoundingClientRect().bottom
                     - b.getBoundingClientRect().top) / proMm;
-    return bleibt < TEILEN_MINDEST ? -1 : schnitt;
+    if (bleibt < TEILEN_MINDEST) return null;
+    return teile.slice(schnitt);
   });
-  if (ab < 1) return null;
+  if (!mit || !mit.length) return null;
 
   const fort = b.cloneNode(false);
   fort.classList.add('fort');
@@ -1453,8 +1467,48 @@ function blockTeilen(b, grenze){
     inhalt.appendChild(kopf);
   }
   fort.appendChild(inhalt);
-  einheitenAnhaengen(fort, teile.slice(ab));
+  einheitenAnhaengen(fort, mit);
   return fort;
+}
+
+/* Der abgetrennte Teil einer Station kehrt in sie zurück: Seine Punkte gehen
+   an die Station, seine wiederholte Überschrift verfällt. Übrig bleibt, was
+   für sich steht — das hängt der Aufrufer an. */
+function stationZurueck(ziel, teile){
+  if (!teile.length || !(teile[0].dataset && teile[0].dataset.fortteil)) return teile;
+  const inhalt = ziel.querySelector('.inhalt');
+  const letzte = inhalt ? [...inhalt.children].filter(k => k.tagName !== 'H2').pop() : null;
+  const liste = letzte && letzte.tagName === teile[0].tagName
+    ? letzte.querySelector(':scope > ul') : null;
+  if (!liste){
+    /* Die Station davor ist weg — dann steht der Teil für sich, unter seinem
+       eigenen Namen, ohne den Zusatz. */
+    const name = teile[0].querySelector('.jobtitle') || teile[0].querySelector('.degree');
+    if (name) name.textContent = name.textContent.replace(' ' + T('fortsetzung'), '');
+    delete teile[0].dataset.fortteil;
+    return teile;
+  }
+  [...teile[0].querySelectorAll(':scope > ul > li')].forEach(li => liste.appendChild(li));
+  return teile.slice(1);
+}
+
+/* In einer Station trennen: Kopf, Firma und die Punkte, die noch passen,
+   bleiben; der Rest läuft mit derselben Überschrift weiter — so, wie es ein
+   Setzer machen würde. Gelohnt hat es sich nur, wenn oben mindestens zwei
+   Punkte stehen bleiben und unten mindestens einer ankommt. */
+function einheitTeilen(einheit, grenze){
+  const punkte = [...einheit.querySelectorAll(':scope > ul > li')];
+  if (punkte.length < 3) return null;
+  let ab = punkte.findIndex(li => li.getBoundingClientRect().bottom > grenze);
+  if (ab < 2 || ab >= punkte.length) return null;
+
+  const rest = einheit.cloneNode(true);
+  rest.dataset.fortteil = '1';
+  [...rest.querySelectorAll(':scope > ul > li')].slice(0, ab).forEach(li => li.remove());
+  punkte.slice(ab).forEach(li => li.remove());
+  const name = rest.querySelector('.jobtitle') || rest.querySelector('.degree');
+  if (name) name.textContent = name.textContent.trim() + ' ' + T('fortsetzung');
+  return rest;
 }
 
 /* Nimmt alle Trennungen zurück. Gerechnet wird immer mit ganzen
@@ -1464,7 +1518,7 @@ function fortAufloesen(){
   document.querySelectorAll('#blaetter .blk.fort').forEach(f => {
     const vor = f.previousElementSibling;
     if (vor && vor.classList.contains('blk')){
-      einheitenAnhaengen(vor, einheiten(f));
+      einheitenAnhaengen(vor, stationZurueck(vor, einheiten(f)));
       f.remove();
       return;
     }
