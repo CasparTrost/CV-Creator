@@ -359,7 +359,7 @@ function bereicheOrdnen(liste, zeilen) {
     }))
     .filter(a => a.von && a.bis >= a.von)
     .sort((a, b) => a.von - b.von || a.bis - b.bis)
-    .slice(0, 14);
+    .slice(0, 40);      /* nur gegen Ausreißer; gekappt wird erst am Ende */
 
   const aus = [];
   roh.forEach(a => {
@@ -377,29 +377,6 @@ function bereicheOrdnen(liste, zeilen) {
   });
   if (aus.length) aus[aus.length - 1].bis = anzahl;   /* bis zur letzten Zeile */
 
-  /* Eine Überschrift nennt eine Rubrik, keine Station.
-     „Sachbearbeiterin 02/2011 – 07/2016“ ist keine Rubrik, sondern die
-     Station selbst: Das Modell hat mitten in der Berufserfahrung einen neuen
-     Abschnitt aufgemacht. Auf dem Blatt steht dann jede Stelle als eigener
-     Abschnitt mit eigener Überschrift — und weil ein Abschnitt seinen Titel
-     nicht zweimal setzt, bleibt die halbe Seite darunter leer. */
-  const zusammen = [];
-  aus.forEach(a => {
-    const vor = zusammen[zusammen.length - 1];
-    const stationsHaft = vor && (vor.art === a.art
-      || (a.art === 'text' && (vor.art === 'beruf' || vor.art === 'ausbildung')));
-    if (stationsHaft && istStationsTitel(a.titel)) {
-      vor.bis = a.bis;
-      return;
-    }
-    zusammen.push(a);
-  });
-
-  /* Überschriften gehören niemandem — weder dem Abschnitt davor noch dem
-     Inhalt danach. Sonst endet das Kurzprofil auf „… und reisebereit.
-     KONTAKT“, und aus einer zweizeiligen Überschrift werden zwei
-     Stichpunkte („ZUSÄTZLICHE“, „QUALIFIKATIONEN“) unter der ersten
-     Ausbildung. Beides stand so auf dem Blatt. */
   /* Eine Aufzählung hat keine Zeiträume.
      Steht in einem Abschnitt mehrmals „09/2011 – 08/2014“, ist er keine
      Liste, sondern eine Folge von Stationen — und muss auch so gelesen
@@ -408,7 +385,7 @@ function bereicheOrdnen(liste, zeilen) {
      der Zuordnung ist nichts mehr übrig. Umgetauft wird nur, wenn die
      Überschrift sagt, wohin: „Zusätzliche Qualifikationen“ ist eine
      Ausbildung, „Publikationen“ bleibt eine Liste. */
-  zusammen.forEach(a => {
+  aus.forEach(a => {
     if (a.art !== 'liste' && a.art !== 'text') return;
     let mit = 0;
     for (let nr = a.von; nr <= a.bis; nr++) if (ZEITRAUM_ZEILE.test(zeilen[nr - 1] || '')) mit++;
@@ -417,16 +394,56 @@ function bereicheOrdnen(liste, zeilen) {
     if (nach === 'beruf' || nach === 'ausbildung' || nach === 'weiterbildung') a.art = nach;
   });
 
-  zusammen.forEach(a => { if (!a.titel) titelNachholen(a, zeilen); });
-  zusammen.forEach((a, i) => {
-    const naechster = zusammen[i + 1];
+  /* Zu jedem Abschnitt die Überschrift, die im Dokument steht — und die
+     Feststellung, ob es überhaupt eine gibt. */
+  /* Erst alle Überschriften suchen, dann abschneiden: Der Abschnitt davor
+     kann nur abgeben, was der nächste als seinen Titel kennt — und den kennt
+     er manchmal erst, nachdem er ihn im Dokument gefunden hat. */
+  aus.forEach(a => { a.eigene = ueberschriftSuchen(a, zeilen); });
+  aus.forEach((a, i) => {
+    const naechster = aus[i + 1];
     if (naechster) a.bis -= schlussZeilen(zeilen, a.bis, a.von, naechster.titel);
     /* „anfang“ ist der Anfang samt Überschrift. Was davor steht, ist der
        Vorspann des Dokuments — die Überschrift selbst gehört nicht dazu. */
     a.anfang = a.von;
-    ueberschriftFassen(a, zeilen);
+    if (ueberschriftFassen(a, zeilen)) a.eigene = true;
     if (a.bis < a.von) a.bis = a.von;
   });
+
+  /* Ein Abschnitt ohne Überschrift im Dokument ist keiner.
+   *
+   * Das ist die Regel, die alle Einzelfälle der letzten Tage ersetzt. Ein
+   * Modell, das die Berufserfahrung in fünf Abschnitte zerlegt, hat für vier
+   * davon keine Überschrift vorzuweisen — es hat die erste Zeile eines
+   * Eintrags dafür gehalten, manchmal sogar einen einzelnen Stichpunkt. Auf
+   * dem Blatt stand dann über jeder Stelle eine eigene fette Zeile, und weil
+   * ein Abschnitt seinen Titel nicht zweimal setzt, blieb die halbe Seite
+   * darunter leer.
+   *
+   * Zurückgelegt wird nur in einen Abschnitt derselben Art: Ein Kontaktblock
+   * ohne Überschrift hinter einem Kurzprofil ist ein eigener Abschnitt und
+   * bleibt einer. Und der erste Abschnitt hat keinen Vorgänger. */
+  const zusammen = [];
+  aus.forEach(a => {
+    const vor = zusammen[zusammen.length - 1];
+    const passt = vor && (vor.art === a.art
+      || (a.art === 'text' && (vor.art === 'beruf' || vor.art === 'ausbildung')));
+    if (passt && (!a.eigene || istStationsTitel(a.titel))) {
+      vor.bis = Math.max(vor.bis, a.bis);
+      return;
+    }
+    zusammen.push(a);
+  });
+
+  /* Gekappt wird erst hier, nach dem Zusammenlegen.
+     Vorher standen 14 Abschnitte als Obergrenze am Anfang — und ein Modell,
+     das den Lebenslauf in siebzehn Stücke zerlegt hatte, verlor damit das
+     Ende: „Interessen“ war der achtzehnte und fiel weg, samt Inhalt. Und der
+     letzte Abschnitt reicht bis zur letzten Zeile, damit nichts hinten
+     abbricht. */
+  const fertig = zusammen.slice(0, 16);
+  if (fertig.length) fertig[fertig.length - 1].bis = anzahl;
+
   return zusammen;
 }
 
@@ -475,13 +492,20 @@ function ueberschriftFassen(bereich, zeilen) {
     const zeile = String(zeilen[nr - 1] || '').trim();
     if (!istUeberschrift(zeile) || MARKE_VORN.test(zeile)) break;
     const w = worte(zeile);
-    if (!(w.length && w.every(x => teil.has(x))) && !istVersal(zeile)) break;
+    /* Aus Wörtern der Überschrift — aber aus weniger als der ganzen: Das ist
+       die zweite Zeile einer zweizeiligen Überschrift. Deckt sich die Zeile
+       genau mit dem Titel, beweist das nichts: Das Modell kann den Titel von
+       genau dieser Zeile abgeschrieben haben, obwohl sie eine Angabe ist. */
+    const ausTitel = w.length && w.length < teil.size && w.every(x => teil.has(x));
+    const rubrik = artVon(zeile) === bereich.art && w.length === 1;
+    if (!ausTitel && !rubrik && !istVersal(zeile)) break;
     gesammelt.push(zeile);
   }
-  if (!gesammelt.length) return;
+  if (!gesammelt.length) return false;
   bereich.von += gesammelt.length;
   const neu = gesammelt.join(' ');
   if (worte(neu).length >= teil.size) bereich.titel = sauberText(neu, 80);
+  return true;
 }
 
 const MARKE_VORN = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]/;
@@ -496,19 +520,35 @@ const MARKE_VORN = /^[\u2022\u00b7\u25cf\u25e6\u25aa\u2043*]/;
    steht die Überschrift beim Abschnitt davor. Erkannt wird sie daran, dass
    sie kurz ist, keine Zahl enthält und dieselbe Rubrik nennt wie der
    Abschnitt — „Nürnberg“ wird so nie zur Überschrift. */
-function titelNachholen(bereich, zeilen) {
+/* Steht die Überschrift dieses Abschnitts kurz vor seinem Anfang?
+ *
+ * Beim Abschneiden der Überlappungen rutscht der Anfang schon mal einen
+ * Schritt weiter, und dann steht die Überschrift beim Abschnitt davor.
+ * Gefunden wird sie hier — und wenn das Modell keinen Titel geliefert hat,
+ * wird sie sein Titel. Gibt es keine, ist das die Auskunft, auf die es
+ * ankommt: Dann ist dieser Abschnitt gar keiner. */
+function ueberschriftSuchen(bereich, zeilen) {
+  const eigen = new Set(worte(bereich.titel));
   for (let nr = bereich.von; nr >= Math.max(1, bereich.von - 2); nr--) {
     const zeile = String(zeilen[nr - 1] || '').trim();
     if (!istUeberschrift(zeile) || MARKE_VORN.test(zeile)) continue;
-    /* Ein Rubrikname allein ist eine Überschrift, zwei Wörter mit einem
-       Rubriknamen darin sind es nicht: „Annähernd muttersprachliche“ enthält
-       „sprach“ und ist trotzdem eine Angabe. Sie zum Titel zu machen hieße,
-       sie vom Blatt zu nehmen — in Versalien dagegen ist die Sache klar. */
-    const rubrik = artVon(zeile) === bereich.art && worte(zeile).length === 1;
+    const w = worte(zeile);
+    /* Zum Titel passen muss sie: Sonst ist es die letzte Angabe des
+       Abschnitts davor und nicht die Überschrift dieses hier. */
+    if (eigen.size && !w.some(x => eigen.has(x))) continue;
+    /* Und wie eine Überschrift aussehen muss sie auch — unabhängig davon, was
+       das Modell als Titel geliefert hat. Sonst genügt es, eine beliebige
+       Zeile zum Titel zu erklären, damit sie als Überschrift durchgeht: So
+       wurde „Technische Informatik“ zu einem Abschnitt und verschwand
+       gleichzeitig aus dem Inhalt. Überschrift heißt: in Versalien, oder ein
+       einzelner Rubrikname. Ein Rubrikname mitten in einer Angabe zählt
+       nicht — „Annähernd muttersprachliche“ enthält „sprach“. */
+    const rubrik = artVon(zeile) === bereich.art && w.length === 1;
     if (!rubrik && !istVersal(zeile)) continue;
-    bereich.titel = sauberText(zeile, 80);
-    return;
+    if (!bereich.titel) bereich.titel = sauberText(zeile, 80);
+    return true;
   }
+  return false;
 }
 
 /* Eine Überschrift ist kurz, trägt keine Zahl und keinen Trenner. „Realschule

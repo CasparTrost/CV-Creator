@@ -538,6 +538,14 @@ h2.sec[data-sym]::before{
 .page .photo{cursor:grab}
 .page .photo:active{cursor:grabbing}
 .page .photo.aktiv{outline:.5mm dashed var(--accent);outline-offset:1.5mm}
+/* Während ein Abschnitt gezogen wird, bekommt jeder Abschnitt einen
+   gestrichelten Umriss und jede Spalte einen blasseren. Ohne das zieht man
+   ins Ungefähre: Auf dem fertigen Blatt ist nicht zu sehen, wo ein Abschnitt
+   aufhört und der nächste anfängt, und erst recht nicht, wohin man ihn
+   überhaupt legen darf. Grau und gestrichelt, damit es nach Hilfslinie
+   aussieht und nicht nach Inhalt — und nur, solange gezogen wird. */
+#blaetter.umriss .spalte{outline:.4mm dashed rgba(0,0,0,.16)}
+#blaetter.umriss .blk:not(.ueberlauf){outline:.4mm dashed rgba(0,0,0,.3);outline-offset:1.5mm}
 .blk.zielvor{box-shadow:0 -2mm 0 -1.2mm var(--accent)}
 .side.zielende > .blk:last-child,.main.zielende > .blk:last-child{box-shadow:0 2mm 0 -1.2mm var(--accent)}
 .side.zielleer,.main.zielleer{box-shadow:inset 0 0 0 .5mm var(--accent)}
@@ -1976,11 +1984,13 @@ document.addEventListener('dragstart', e => {
   const b = e.target.closest('.blk');
   if (!b || b.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
   gezogen = b; b.classList.add('zieht');
+  document.getElementById('blaetter').classList.add('umriss');
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', 'blk');
 });
 document.addEventListener('dragend', () => {
   if (gezogen) gezogen.classList.remove('zieht');
+  document.getElementById('blaetter').classList.remove('umriss');
   gezogen = null; saubermachen();
   document.querySelectorAll('#blaetter .blk[draggable]').forEach(b => b.removeAttribute('draggable'));
   checkFit(false);
