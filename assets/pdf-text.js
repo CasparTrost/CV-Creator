@@ -48,10 +48,15 @@ async function pdfText(bytes) {
   const stuecke = [];
   for (const seite of seiten) {
     const schriften = await schriftTabellen(roh, bytes, objekte, seite.koerper);
+    /* Der Inhalt einer Seite kann auf viele Ströme verteilt sein — manche
+       Erzeuger schreiben je Textblock einen. Gemessen wird trotzdem die
+       ganze Seite, sonst sieht man die Spalten nicht. */
+    let laeufe = [];
     for (const nummer of inhaltsNummern(seite.koerper)) {
       const text = await stromText(roh, bytes, objekte, nummer);
-      if (text) stuecke.push(zeichenketten(text, schriften));
+      if (text) laeufe = laeufe.concat(zeichenketten(text, schriften));
     }
+    if (laeufe.length) stuecke.push(seiteZuText(laeufe).join('\n'));
   }
   return saeubern(stuecke.join('\n'));
 }
@@ -219,8 +224,8 @@ function zeichenketten(inhalt, schriften) {
   /* Chrome setzt jede Silbe einzeln und schiebt den Cursor dazwischen. Ein
      Zeilenumbruch bei jedem Vorschub ergäbe ein Wort je Zeile — umgebrochen
      wird deshalb nur, wenn sich die Höhe ändert. */
-  const zeilen = [];
-  let zeile = '', tabelle = null, letzteHoehe = null;
+  const laeufe = [];                     /* {x, y, text} je Textlauf */
+  let zeile = '', tabelle = null, letzteHoehe = null, x = 0, y = 0, zeileX = 0, zeileY = 0;
 
   const anweisung = new RegExp([
     '\\/([^\\s/]+)\\s+[\\d.]+\\s+Tf',                    /* 1 Schrift */
@@ -232,16 +237,22 @@ function zeichenketten(inhalt, schriften) {
     '(T\\*|ET|BT)',                                              /* 9 Zeile/Block */
   ].join('|'), 'g');
 
-  const umbruch = () => { if (zeile.trim()) zeilen.push(zeile.trim()); zeile = ''; };
+  const umbruch = () => {
+    if (zeile.trim()) laeufe.push({ x: zeileX, y: zeileY, text: zeile.trim() });
+    zeile = '';
+  };
   /* Jeder Textlauf beginnt mit einer Matrix, die seine Höhe nennt. Gleiche
      Höhe heißt gleiche Zeile — dort gehört ein Leerzeichen dazwischen, etwa
      zwischen einer Position und ihrem Zeitraum am rechten Rand. */
-  const hoehe = (wert) => {
-    const y = parseFloat(wert);
-    if (!isFinite(y)) return;
-    if (letzteHoehe === null || Math.abs(y - letzteHoehe) > 0.4) umbruch();
+  const hoehe = (wertX, wertY) => {
+    const neuY = parseFloat(wertY), neuX = parseFloat(wertX);
+    if (!isFinite(neuY)) return;
+    if (letzteHoehe === null || Math.abs(neuY - letzteHoehe) > 0.4) umbruch();
     else if (zeile && !/\s$/.test(zeile)) zeile += ' ';
-    letzteHoehe = y;
+    if (!zeile) { zeileX = isFinite(neuX) ? neuX : 0; zeileY = neuY; }
+    x = isFinite(neuX) ? neuX : x;
+    y = neuY;
+    letzteHoehe = neuY;
   };
 
   let treffer;
@@ -266,14 +277,91 @@ function zeichenketten(inhalt, schriften) {
          Sprung in der Höhe ist eine neue Zeile. */
       if (Math.abs(parseFloat(treffer[6])) > 0.4) umbruch();
     } else if (treffer[8] !== undefined) {
-      hoehe(treffer[8]);
+      hoehe(treffer[7], treffer[8]);
     } else if (treffer[9] !== undefined) {
       if (treffer[9] === 'T*') umbruch();
     }
   }
   umbruch();
-  return zeilen.join('\n');
+  return laeufe;
 }
+
+/* ------------------------------------------------------ Spalten erkennen */
+
+/* Ein Lebenslauf ist selten durchgehend ein- oder zweispaltig. Meistens ist
+   er beides: ein Kopf über die ganze Breite, darunter zwei Spalten, unten
+   vielleicht eine Unterschrift quer. Manche Erzeuger schreiben so etwas
+   zeilenweise quer über beide Spalten — „KONTAKT   ERFAHRUNG“ —, und das
+   kann niemand mehr entwirren, auch kein Modell.
+
+   Deshalb wird nicht nach einer Vorlage gesucht, sondern gemessen:
+     1. Gibt es einen senkrechten Graben ohne Text?
+     2. Auf welchen Höhen steht links UND rechts davon etwas? Das ist der
+        zweispaltige Bereich.
+     3. Alles darüber und darunter läuft über die ganze Breite und bleibt
+        in seiner Reihenfolge; der Bereich dazwischen wird Spalte für
+        Spalte gelesen.
+   Findet sich kein sauberer Graben, bleibt alles, wie es gesetzt wurde.
+   Eine falsch geteilte Seite wäre schlimmer als eine ungeteilte. */
+function seiteZuText(roheLaeufe) {
+  if (roheLaeufe.length < 8) return zeilenAus(roheLaeufe);
+  const laeufe = nachUntenGedreht(roheLaeufe);
+  const graben = grabenFinden(laeufe);
+  if (graben === null) return zeilenAus(laeufe);
+
+  const links = laeufe.filter(l => l.x < graben);
+  const rechts = laeufe.filter(l => l.x >= graben);
+  if (links.length < 4 || rechts.length < 4) return zeilenAus(laeufe);
+
+  /* Höhen, auf denen beide Seiten Text haben. */
+  const band = (l) => Math.round(l.y / 6);
+  const rechteBaender = new Set(rechts.map(band));
+  const gemeinsam = links.filter(l => rechteBaender.has(band(l))).map(l => l.y);
+  if (gemeinsam.length < 3) return zeilenAus(laeufe);
+
+  /* Ab der ersten gemeinsamen Höhe ist die Seite zweispaltig — bis unten.
+     Eine Spalte, die länger ist als die andere, gehört noch zu ihr; sie
+     hinten anzuhängen, hat „Englisch: B2“ hinter die Ausbildung gesetzt. */
+  const oben = Math.min(...gemeinsam) - 3;
+  const davor = laeufe.filter(l => l.y < oben).sort(nachOrt);
+  const drin = (l) => l.y >= oben;
+
+  return zeilenAus(davor)
+    .concat(zeilenAus(links.filter(drin).sort(nachOrt)))
+    .concat(zeilenAus(rechts.filter(drin).sort(nachOrt)));
+}
+
+/* Im PDF wächst y nach oben, im Browser nach unten, und die Erzeuger
+   verbiegen das Koordinatensystem unterschiedlich. Statt zu raten, wird
+   gezählt: Läuft y in der Reihenfolge des Schreibens meistens abwärts, war
+   oben oben. Danach heißt „größeres y“ immer „weiter unten“. */
+function nachUntenGedreht(laeufe) {
+  let steigt = 0, faellt = 0;
+  for (let i = 1; i < laeufe.length; i++) {
+    if (laeufe[i].y > laeufe[i - 1].y) steigt++;
+    else if (laeufe[i].y < laeufe[i - 1].y) faellt++;
+  }
+  if (steigt >= faellt) return laeufe;
+  return laeufe.map(l => ({ x: l.x, y: -l.y, text: l.text }));
+}
+
+/* Die breiteste senkrechte Lücke im mittleren Teil der Seite. */
+function grabenFinden(laeufe) {
+  const xs = [...new Set(laeufe.map(l => Math.round(l.x)))].sort((a, b) => a - b);
+  const breite = xs[xs.length - 1] - xs[0];
+  if (breite < 100) return null;
+  let stelle = null, luecke = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const mitte = (xs[i] + xs[i - 1]) / 2;
+    if (mitte < xs[0] + breite * 0.2 || mitte > xs[0] + breite * 0.8) continue;
+    if (xs[i] - xs[i - 1] > luecke) { luecke = xs[i] - xs[i - 1]; stelle = mitte; }
+  }
+  return luecke >= breite * 0.12 ? stelle : null;
+}
+
+function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
+
+function zeilenAus(laeufe) { return laeufe.map(l => l.text); }
 
 /* Eine Kette aus ( ) ist bei einer Schrift mit Tabelle ebenfalls kodiert. */
 function entziffern(s, tabelle) {
@@ -324,7 +412,9 @@ async function ohneSeiten(roh, bytes, objekte) {
   const stuecke = [];
   for (const nummer of objekte.keys()) {
     const text = await stromText(roh, bytes, objekte, nummer);
-    if (text && /\b(Tj|TJ)\b/.test(text)) stuecke.push(zeichenketten(text, new Map()));
+    if (text && /\b(Tj|TJ)\b/.test(text)) {
+      stuecke.push(seiteZuText(zeichenketten(text, new Map())).join('\n'));
+    }
   }
   return saeubern(stuecke.join('\n'));
 }

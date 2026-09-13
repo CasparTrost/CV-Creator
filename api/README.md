@@ -77,7 +77,15 @@ Ausgabenlimit. Die Bremse oben ersetzt das nicht.
 ## PDF
 
 `pdf.js` holt den Text selbst heraus: Seiten, Schriftressourcen,
-`ToUnicode`-Tabellen, Flate-Ströme. Dieselbe Datei läuft im Browser —
+`ToUnicode`-Tabellen, Flate-Ströme, gepackte Objektströme.
+
+Nichts daran ist auf eine Vorlage zugeschnitten, weil es keine zwei gleichen
+Lebensläufe gibt. Gemessen wird die Geometrie: Wo ist ein senkrechter Graben
+ohne Text? Auf welchen Höhen steht links und rechts davon etwas? In welche
+Richtung wächst y bei diesem Erzeuger? Daraus ergibt sich die Lesereihenfolge
+— Kopf über die ganze Breite, darunter Spalte für Spalte. Ist der Befund
+nicht eindeutig, bleibt die Seite, wie sie gesetzt wurde: eine falsch
+geteilte Seite wäre schlimmer als eine ungeteilte. Dieselbe Datei läuft im Browser —
 `tools/build.py` erzeugt daraus `assets/pdf-text.js` —, und dort ist sie mehr
 wert: Was schon im Browser zu Text wird, muss nicht als ganze Datei den
 Rechner verlassen. Der Worker behält seinen eigenen Weg für den Fall, dass
