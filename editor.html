@@ -2285,12 +2285,10 @@ async function base64Von(datei){
   return btoa(s);
 }
 
-/* Taugt der gelesene Text? Ein Scan liefert nichts, eine Schrift ohne
-   Zuordnung liefert Zeichensalat. Beides sieht man am Anteil der Buchstaben. */
+/* Die Prüfung steht in assets/pdf-text.js (erzeugt aus api/pdf.js) — dort
+   ist auch begründet, warum der Anteil der Buchstaben allein nicht reicht. */
 function textBrauchbar(text){
-  if (!text || text.length < 150) return false;
-  const buchstaben = (text.match(/[A-Za-zÄÖÜäöüßÀ-ÿ]/g) || []).length;
-  return buchstaben / text.length > 0.55;
+  return window.textTaugt ? window.textTaugt(text, 150) : !!(text && text.length > 150);
 }
 
 async function dateiInhalt(datei){

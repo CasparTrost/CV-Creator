@@ -18,6 +18,9 @@
  *   - TextDecoder('latin1') ist nach der Norm windows-1252 und macht aus
  *     dem Byte 0x9C ein 'œ'. Gesucht wird deshalb im Text, geschnitten in
  *     den Bytes.
+ *   - Word, Acrobat und InDesign legen die meisten Objekte in gepackte
+ *     Objektströme. Wer nur den Klartext durchsucht, findet dort weder
+ *     Seiten noch Schrifttabellen — und bekommt Zeichensalat statt Text.
  */
 
 const WIN1252_SONDER = {
@@ -30,11 +33,12 @@ const WIN1252_SONDER = {
 async function pdfText(bytes) {
   const roh = new TextDecoder('windows-1252').decode(bytes);   /* nur zum Suchen */
   const objekte = objektIndex(roh);
+  await objektStroemeOeffnen(roh, bytes, objekte);
   const seiten = [];
 
-  for (const [nummer, stelle] of objekte) {
-    const koerper = objektKoerper(roh, stelle);
-    if (!/\/Type\s*\/Page[^s]/.test(koerper)) continue;
+  for (const [nummer, eintrag] of objekte) {
+    const koerper = koerperVon(roh, eintrag);
+    if (!/\/Type\s*\/Page(?![a-zA-Z])/.test(koerper)) continue;
     seiten.push({ nummer, koerper });
   }
   /* Kein /Type /Page gefunden (verschachtelte Objektströme): dann wird jeder
@@ -59,14 +63,49 @@ function objektIndex(roh) {
   const marke = /(?:^|[^0-9])(\d+)\s+0\s+obj\b/g;
   let treffer;
   while ((treffer = marke.exec(roh)) !== null) {
-    index.set(parseInt(treffer[1], 10), treffer.index + treffer[0].indexOf(treffer[1]));
+    index.set(parseInt(treffer[1], 10),
+              { stelle: treffer.index + treffer[0].indexOf(treffer[1]) });
   }
   return index;
 }
 
-function objektKoerper(roh, stelle) {
-  const ende = roh.indexOf('endobj', stelle);
-  return roh.slice(stelle, ende < 0 ? stelle + 4000 : ende);
+/* Ein Objektstrom enthält weitere Objekte, gepackt. Sein Anfang ist eine
+   Liste aus Nummer und Versatz, danach kommen ab /First die Körper. Ohne
+   diesen Schritt bleiben bei Word- und Acrobat-Dateien Seiten, Schriften
+   und Zeichentabellen unsichtbar — das Ergebnis ist dann Zeichensalat. */
+async function objektStroemeOeffnen(roh, bytes, objekte) {
+  const stroeme = [...objekte.entries()]
+    .filter(([, e]) => e.stelle !== undefined &&
+                       /\/Type\s*\/ObjStm/.test(koerperVon(roh, e)));
+  for (const [nummer] of stroeme) {
+    const inhalt = await stromText(roh, bytes, objekte, nummer);
+    if (!inhalt) continue;
+    const koerper = koerperVon(roh, objekte.get(nummer));
+    const anzahl = zahlAus(koerper, 'N');
+    const erstes = zahlAus(koerper, 'First');
+    if (!anzahl || erstes === null) continue;
+    const kopf = inhalt.slice(0, erstes).trim().split(/\s+/).map(Number);
+    for (let i = 0; i < anzahl; i++) {
+      const num = kopf[i * 2], versatz = kopf[i * 2 + 1];
+      if (!isFinite(num) || !isFinite(versatz)) continue;
+      const bis = i + 1 < anzahl && isFinite(kopf[i * 2 + 3])
+        ? erstes + kopf[i * 2 + 3] : inhalt.length;
+      if (objekte.has(num) && objekte.get(num).stelle !== undefined) continue;
+      objekte.set(num, { text: inhalt.slice(erstes + versatz, bis) });
+    }
+  }
+}
+
+function zahlAus(koerper, name) {
+  const t = new RegExp('/' + name + '\\s+(\\d+)').exec(koerper);
+  return t ? parseInt(t[1], 10) : null;
+}
+
+function koerperVon(roh, eintrag) {
+  if (!eintrag) return '';
+  if (eintrag.text !== undefined) return eintrag.text;
+  const ende = roh.indexOf('endobj', eintrag.stelle);
+  return roh.slice(eintrag.stelle, ende < 0 ? eintrag.stelle + 4000 : ende);
 }
 
 function verweis(koerper, name) {
@@ -85,12 +124,12 @@ function inhaltsNummern(seite) {
 /* --------------------------------------------------------------- Ströme */
 
 async function stromBytes(roh, bytes, objekte, nummer) {
-  const stelle = objekte.get(nummer);
-  if (stelle === undefined) return null;
-  const koerper = objektKoerper(roh, stelle);
+  const eintrag = objekte.get(nummer);
+  if (!eintrag || eintrag.stelle === undefined) return null;   /* im Objektstrom: nie ein Strom */
+  const koerper = koerperVon(roh, eintrag);
   const marke = /(?:^|[^A-Za-z])stream\r?\n/.exec(koerper);
   if (!marke) return null;
-  const von = stelle + marke.index + marke[0].length;
+  const von = eintrag.stelle + marke.index + marke[0].length;
   const bis = roh.indexOf('endstream', von);
   if (bis < 0) return null;
   let ende = bis;
@@ -118,7 +157,7 @@ async function schriftTabellen(roh, bytes, objekte, seite) {
   const tabellen = new Map();
   let quelle = seite;
   const ressourcen = verweis(seite, 'Resources');
-  if (ressourcen !== null && objekte.has(ressourcen)) quelle = objektKoerper(roh, objekte.get(ressourcen));
+  if (ressourcen !== null && objekte.has(ressourcen)) quelle = koerperVon(roh, objekte.get(ressourcen));
 
   const block = /\/Font\s*<<([\s\S]*?)>>/.exec(quelle);
   if (!block) return tabellen;
@@ -126,7 +165,7 @@ async function schriftTabellen(roh, bytes, objekte, seite) {
   for (const t of block[1].matchAll(/\/([^\s/]+)\s+(\d+)\s+0\s+R/g)) {
     const name = t[1], nummer = parseInt(t[2], 10);
     if (!objekte.has(nummer)) continue;
-    const schrift = objektKoerper(roh, objekte.get(nummer));
+    const schrift = koerperVon(roh, objekte.get(nummer));
     const zuUnicode = verweis(schrift, 'ToUnicode');
     if (zuUnicode !== null) {
       const cmap = await stromText(roh, bytes, objekte, zuUnicode);
@@ -290,6 +329,28 @@ async function ohneSeiten(roh, bytes, objekte) {
   return saeubern(stuecke.join('\n'));
 }
 
+/* Taugt der gelesene Text, oder ist es Zeichensalat?
+ *
+ * Der Anteil der Buchstaben allein sagt nichts: Eine Schrift, deren Codes um
+ * ein paar Stellen verschoben sind, liefert „&DVSDU%HLVSLHO“ — fast lauter
+ * Buchstaben und trotzdem wertlos. Zwei Merkmale trennen das zuverlässig:
+ * Echter Text hat Leerzeichen (etwa jedes sechste Zeichen), und seine Wörter
+ * haben Vokale. Verschobene Codes haben meist weder das eine noch das andere.
+ */
+function textTaugt(text, mindestens) {
+  if (!text || text.length < (mindestens || 150)) return false;
+  const buchstaben = (text.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+  if (buchstaben / text.length < 0.5) return false;
+
+  const luecken = (text.match(/[ \n]/g) || []).length;
+  if (luecken / text.length < 0.08) return false;
+
+  const woerter = text.split(/[^A-Za-zÀ-ÿ]+/).filter(w => w.length >= 4);
+  if (woerter.length < 12) return false;
+  const mitVokal = woerter.filter(w => /[aeiouäöüàéèAEIOUÄÖÜ]/.test(w)).length;
+  return mitVokal / woerter.length > 0.75;
+}
+
 function saeubern(text) {
   const zeilen = text.replace(/[ \t]+/g, ' ')
                      .split('\n').map(z => z.trim()).filter(Boolean);
@@ -322,4 +383,5 @@ function zusammenfuegen(zeilen) {
 }
 
 window.pdfText = pdfText;
+window.textTaugt = textTaugt;
 })();

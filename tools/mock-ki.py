@@ -20,14 +20,27 @@ import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
+# Die Reihenfolge ist die Prüfreihenfolge, und sie ist der ganze Trick:
+# „Sprachkenntnisse“ enthält „kenntnis“ und ist trotzdem keine Rubrik
+# „Kenntnisse“. Das Genauere steht deshalb vor dem Allgemeineren.
 RUBRIKEN = [
-    ('berufserfahrung', r'berufserfahrung|berufliche|werdegang|praxis|experience|employment|experiencia'),
-    ('ausbildung', r'ausbildung|bildungsweg|studium|schul|education|academic|formaci'),
+    ('profil', r'profil|[üu]ber mich|kurzprofil|zusammenfassung|summary|about me|perfil'),
+    ('sprachen', r'sprach|languages|idiomas'),
     ('weiterbildung', r'weiterbildung|fortbildung|zertifikat|training|certificat'),
-    ('kenntnisse', r'kenntnis|kompetenz|f[äa]higkeit|skills|edv|it-|competenc'),
-    ('sprachen', r'^sprachen|languages|idiomas'),
+    ('ausbildung', r'ausbildung|bildungsweg|studium|schul|education|academic|formaci'),
+    ('berufserfahrung', r'berufserfahrung|berufliche|werdegang|praxis|experience|employment|experiencia'),
+    ('kenntnisse', r'kenntnis|kompetenz|f[äa]higkeit|skills|edv|it-|competenc|tools'),
     ('kontakt', r'pers[öo]nliche daten|kontakt|personal details|contact|datos'),
 ]
+
+
+def ist_fliesstext(zeile):
+    """Ein Satz ist keine Aufzählung. „Erfahrener Professional mit über 16
+    Jahren Berufserfahrung, davon vier Jahre …“ an den Kommas zu zerlegen
+    ergibt fünf unsinnige Kenntnisse."""
+    if len(zeile) < 60 or ZEITRAUM.search(zeile):
+        return False
+    return zeile.endswith('.') or '. ' in zeile or len(zeile.split()) > 12
 ZEITRAUM = re.compile(
     r'(\d{1,2}[./]\d{4}|\d{4})\s*(?:–|-|bis|to|—)\s*(\d{1,2}[./]\d{4}|\d{4}|heute|jetzt|present|now)',
     re.I)
@@ -43,7 +56,9 @@ def rubrik_von(zeile):
     Rubrik — deshalb zählt nur, was kurz ist, aus wenigen Wörtern besteht
     und nicht wie eine Einrichtung aussieht. Versalien gelten immer.
     """
-    if len(zeile) > 45 or FIRMA.search(zeile):
+    # „Deutsch: Muttersprache“ enthält „sprach“ und ist eine Angabe, keine
+    # Überschrift. Ein Doppelpunkt mit Text dahinter schließt das aus.
+    if len(zeile) > 45 or FIRMA.search(zeile) or re.search(r':\s*\S', zeile):
         return None
     versal = zeile == zeile.upper() and len(zeile) > 3
     if not versal and len(zeile.split()) > 3:
@@ -151,19 +166,32 @@ def lebenslauf_aus(text):
                     eintrag['punkte'].append(z.lstrip('•-–· '))
                 continue
 
+        if rubrik == 'profil' or (rubrik is None and ist_fliesstext(z)):
+            aus['kopf']['profil'] = (aus['kopf']['profil'] + ' ' + z).strip()
+            continue
+
         if rubrik == 'kenntnisse':
+            if ist_fliesstext(z):
+                aus['kopf']['profil'] = (aus['kopf']['profil'] + ' ' + z).strip()
+                continue
             for teil in re.split(r'\s*[,;|]\s*', z):
                 if teil.strip():
                     aus['kenntnisse'].append(teil.strip().lstrip('•-–· '))
             continue
+
         if rubrik == 'sprachen':
-            teile = re.split(r'\s*[:–-]\s*', z, 1)
-            aus['sprachen'].append({'sprache': teile[0].lstrip('•-–· '),
-                                    'niveau': teile[1] if len(teile) > 1 else ''})
+            if ist_fliesstext(z):
+                aus['kopf']['profil'] = (aus['kopf']['profil'] + ' ' + z).strip()
+                continue
+            for teil in re.split(r'\s{2,}|\s*[,;|]\s*', z):
+                teil = teil.strip().lstrip('•-–· ')
+                if not teil:
+                    continue
+                stufe = re.split(r'\s*[:–—-]\s*|\s+\(', teil, 1)
+                aus['sprachen'].append({'sprache': stufe[0].strip(),
+                                        'niveau': stufe[1].strip(' )') if len(stufe) > 1 else ''})
             continue
-        if rubrik is None and len(z) > 90 and not aus['kopf']['profil']:
-            aus['kopf']['profil'] = z
-            continue
+
         if rubrik is None and len(zeilen) > 3:
             continue
 

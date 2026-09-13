@@ -16,7 +16,7 @@
  *   /status                                      -> Selbstauskunft, ohne Geheimnisse
  */
 import { PARSE, TAILOR, PRUEFER, ANALYSE } from './prompts.js';
-import { pdfText } from './pdf.js';
+import { pdfText, textTaugt } from './pdf.js';
 
 const GRENZEN = {
   koerper: 6 * 1024 * 1024,   /* Anfrage insgesamt */
@@ -357,10 +357,8 @@ function base64Aus(s) {
   return feld;
 }
 
-/* Taugt der Text? Ein Scan liefert nichts, eine Schrift ohne Zuordnung
-   liefert Zeichensalat. Beides erkennt man am Anteil echter Buchstaben. */
+/* Taugt der Text? Siehe textTaugt() in api/pdf.js — dort steht, warum der
+   Anteil der Buchstaben allein nicht reicht. */
 function brauchbar(text) {
-  if (!text || text.length < 200) return false;
-  const buchstaben = (text.match(/[A-Za-zÄÖÜäöüß]/g) || []).length;
-  return buchstaben / text.length > 0.55;
+  return textTaugt(text, 200);
 }
