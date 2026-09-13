@@ -182,6 +182,10 @@ body{display:flex;align-items:flex-start;background:#eceae8}
 .gruppe:last-child{margin-bottom:0}
 .feld > span:first-child{white-space:nowrap}
 
+/* Muss vor der Grundregel stehen und mit !important: „#seitenleiste button“
+   ist spezifischer als die Browserregel [hidden]{display:none}, und damit
+   wären ausgeblendete Knöpfe trotzdem zu sehen. */
+#seitenleiste [hidden]{display:none !important}
 #seitenleiste button{font:600 12.5px/1 inherit;cursor:pointer;height:32px;padding:0 10px;
   border:1px solid #ded7d3;border-radius:7px;background:#fff;color:#3b3532;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
@@ -266,6 +270,71 @@ body{display:flex;align-items:flex-start;background:#eceae8}
   color:#9a8d86;margin-bottom:4px}
 #kiFenster .kiDiff .vorher{display:block;color:#8b807b;text-decoration:line-through}
 #kiFenster .kiDiff .nachher{display:block;color:#2b2523}
+
+/* Die Analyse braucht mehr Breite als ein Dialog mit zwei Zeilen. */
+#kiFenster .kasten.weit{width:min(720px,100%)}
+
+/* Passung: eine Zahl, ein Wort, ein Balken. Die Farbe trägt nichts allein —
+   neben dem Wert steht immer das Urteil. */
+#kiFenster .passung{display:flex;align-items:center;gap:18px;margin-bottom:14px;
+  padding-bottom:16px;border-bottom:1px solid #f0eae7}
+#kiFenster .passung .wert{font:600 40px/1 Arial,sans-serif;color:#2b2523;
+  font-variant-numeric:tabular-nums}
+#kiFenster .passung .wert span{font-size:17px;color:#9a8d86;margin-left:2px}
+#kiFenster .passung .balkenfeld{flex:1 1 auto;min-width:0}
+#kiFenster .passung .stufe{font:600 11px/1 Arial,sans-serif;letter-spacing:.09em;
+  text-transform:uppercase;color:#8b807b;margin-bottom:7px}
+#kiFenster .passung .balken{height:8px;border-radius:4px;background:#efe9e6;overflow:hidden}
+#kiFenster .passung .balken i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+#kiFenster .passung .urteil{margin:9px 0 0;color:#5c534f}
+#kiFenster .abgleich{list-style:none;margin:0 0 16px;padding:0;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+#kiFenster .abgleich li{display:flex;gap:8px;align-items:flex-start;font-size:12.5px}
+#kiFenster .abgleich .zeichen{flex:0 0 16px;text-align:center;font-weight:700;line-height:1.5}
+#kiFenster .abgleich .zeichen.ja{color:#2F6F6B}
+#kiFenster .abgleich .zeichen.nein{color:#b0a49d}
+#kiFenster .abgleich .beleg{color:#8b807b}
+
+#kiFenster .abschnitt{display:flex;align-items:center;gap:8px;margin:18px 0 9px;
+  font:700 10.5px/1 Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#9a8d86}
+#kiFenster .abschnitt .anzahl{background:#f2ece9;color:#6b615c;border-radius:9px;
+  padding:2px 7px;font-size:10px;letter-spacing:0}
+#kiFenster .staerken{list-style:none;margin:0;padding:0}
+#kiFenster .staerken li{padding-left:20px;position:relative;margin-bottom:5px}
+#kiFenster .staerken li::before{content:"✓";position:absolute;left:0;color:#2F6F6B;font-weight:700}
+#kiFenster .ruhig{color:#6b7a3a}
+
+/* Befunde: nach Gewicht sortiert, und nur das schwerste trägt Farbe. Eine
+   Ampel aus drei Tönen liest sich als Dekoration, nicht als Rangfolge. */
+#kiFenster .befunde{list-style:none;margin:0;padding:0}
+#kiFenster .befunde li{border-top:1px solid #f0eae7;padding:11px 0}
+#kiFenster .befunde .kopfzeile{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+#kiFenster .befunde .punkt{width:8px;height:8px;border-radius:50%;background:#cbc0ba;flex:0 0 auto}
+#kiFenster .befunde li.hoch .punkt{background:#b4524b}
+#kiFenster .befunde .gewicht{font:700 10px/1 Arial,sans-serif;letter-spacing:.09em;
+  text-transform:uppercase;color:#9a8d86}
+#kiFenster .befunde li.hoch .gewicht{color:#b4524b}
+#kiFenster .befunde .wo{font-size:11.5px;color:#8b807b;margin-left:auto;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+#kiFenster .befunde .befund{margin:0 0 4px;color:#2b2523}
+#kiFenster .befunde .rat{margin:0;color:#5c534f;padding-left:16px;border-left:2px solid #e8e1dd}
+
+#kiFenster .fragen details{border-top:1px solid #f0eae7}
+#kiFenster .fragen summary{cursor:pointer;padding:11px 0;font-weight:600;color:#2b2523;
+  list-style:none;display:flex;gap:9px;align-items:baseline}
+#kiFenster .fragen summary::-webkit-details-marker{display:none}
+#kiFenster .fragen summary::before{content:"?";color:var(--accent);font-weight:700;flex:0 0 auto}
+#kiFenster .fragen details[open] summary{padding-bottom:6px}
+#kiFenster .fragen p{margin:0 0 8px;padding-left:18px}
+#kiFenster .fragen .warum{font-size:12px;color:#8b807b}
+#kiFenster .fragen .antwort{color:#3b3532}
+#kiFenster .fragen .falle{color:#6d3a36;font-size:12.5px}
+#kiFenster .fragen details:last-child{border-bottom:1px solid #f0eae7;padding-bottom:6px}
+
+@media (max-width:600px){
+  #kiFenster .abgleich{grid-template-columns:1fr}
+  #kiFenster .passung{gap:12px}
+}
 
 /* Bühne mit den Blättern */
 #buehne{flex:1 1 auto;min-width:0;padding:0 0 44px;display:flex;
@@ -735,6 +804,7 @@ h2.sec[data-sym]::before{
       <div class="reihe">
         <button data-t="kiUpload" onclick="kiUpload()">Lebenslauf hochladen</button>
         <button data-t="kiStelle" onclick="kiStelle()">Für eine Stelle optimieren</button>
+        <button data-t="kiPruefen" onclick="kiPruefen()">Lebenslauf prüfen</button>
         <button id="kiZurueck" class="leise" data-t="kiZurueck" hidden>Zuschnitt zurücknehmen</button>
       </div>
     </div>
@@ -1034,8 +1104,8 @@ const VARS = [
 ];
 const EINSPALTIG = ['t7','t8','t9','t10','t11','t13','t14','t16'];
 const INHALT = {"en": {"p1kopf": "<h1>John Doe</h1><div class=\"role\">Digital Transformation Project Manager</div><p>Project manager, eight years, taking IT initiatives from first concept to rollout. Focus on process analysis, requirements management and steering external suppliers.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Personal details</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>12 Sample Street, 90402 Nuremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>john.doe@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14 May 1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Education</h2><div class=\"edu\"><div class=\"degree\">Master of Science</div><div>Business Information Systems</div><div><strong>Sample University</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Final grade 1.7 (German scale)</li></ul></div><div class=\"edu\"><div class=\"degree\">Bachelor of Arts</div><div>Business Administration</div><div><strong>Example University of Applied Sciences</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Final grade 2.1 (German scale)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Work experience</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Digital Transformation Project Manager</span><span class=\"jobdate\">03/2021 – present</span></div><div class=\"company\"><strong>Example GmbH</strong> – Nuremberg</div><ul><li>Led four parallel digitalisation projects with budgets of up to €500,000</li><li>Gathered and prioritised requirements together with six departments</li><li>Managed external service providers including acceptance testing and invoice review</li><li>Introduced consistent reporting for the management board</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Project Officer</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Sample AG</strong> – Fürth</div><ul><li>Prepared decision papers and cost-benefit analyses</li><li>Coordinated deadlines, milestones and project documentation</li><li>Analysed existing workflows and proposed improvements</li><li>Point of contact for user questions during two system rollouts</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Working Student, Process Management</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Example Trading KG</strong> – Erlangen</div><ul><li>Documented and visualised core business processes</li><li>Produced analyses and reports for the division head</li><li>Supported the introduction of a ticketing system</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Skills</h2><ul><li>Project management, agile and traditional</li><li>Requirements and process analysis</li><li>Jira &amp; Confluence – confident daily use</li><li>SAP – working knowledge</li><li>Microsoft Office – advanced</li><li>Presenting and facilitating</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Languages</h2><div class=\"lang\"><strong>English</strong>: native speaker</div><div class=\"lang\"><strong>German</strong>: C1</div><div class=\"lang\"><strong>Spanish</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Intern, Management Consulting</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Munich</div><ul><li>Supported a procurement process review at an industrial client</li><li>Produced presentations and result documentation</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Further training</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">IPMA Level D Project Management</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>German Association for Project Management</strong></div></div></div></section>"}, "es": {"p1kopf": "<h1>Juan Pérez</h1><div class=\"role\">Jefe de proyecto de digitalización</div><p>Jefe de proyecto con ocho años de experiencia en iniciativas de TI, del concepto a la implantación. Especializado en análisis de procesos y gestión de proveedores.</p>", "p1side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Datos personales</h2><div class=\"contact\"><span class=\"ic ic-ort\"></span><span>Calle Ejemplo 12, 90402 Núremberg</span></div><div class=\"contact\"><span class=\"ic ic-tel\"></span><span>+49 170 123 45 67</span></div><div class=\"contact\"><span class=\"ic ic-mail\"></span><span>juan.perez@example.com</span></div><div class=\"contact\"><span class=\"ic ic-datum\"></span><span>14/05/1990</span></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación</h2><div class=\"edu\"><div class=\"degree\">Máster</div><div>Sistemas de Información Empresarial</div><div><strong>Universidad de Ejemplo</strong></div><div class=\"date\">2015 – 2017</div><ul><li>Nota final 1,7 (escala alemana)</li></ul></div><div class=\"edu\"><div class=\"degree\">Grado</div><div>Administración de Empresas</div><div><strong>Escuela Superior de Ejemplo</strong></div><div class=\"date\">2011 – 2015</div><ul><li>Nota final 2,1 (escala alemana)</li></ul></div></div></div></section>", "p1main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Experiencia profesional</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Jefe de proyecto de digitalización</span><span class=\"jobdate\">03/2021 – actualidad</span></div><div class=\"company\"><strong>Ejemplo GmbH</strong> – Núremberg</div><ul><li>Dirección de cuatro proyectos de digitalización simultáneos con presupuestos de hasta 500.000 €</li><li>Recogida y priorización de requisitos junto a seis departamentos</li><li>Gestión de proveedores externos, incluidas recepción y revisión de facturas</li><li>Implantación de un sistema de informes unificado para la dirección</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Técnico de proyectos</span><span class=\"jobdate\">08/2017 – 02/2021</span></div><div class=\"company\"><strong>Empresa Ejemplo AG</strong> – Fürth</div><ul><li>Elaboración de propuestas de decisión y análisis de rentabilidad</li><li>Coordinación de plazos, hitos y documentación del proyecto</li><li>Análisis de procesos existentes y propuestas de mejora</li><li>Persona de contacto para los usuarios durante dos implantaciones de sistemas</li></ul></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Estudiante en prácticas, gestión de procesos</span><span class=\"jobdate\">10/2015 – 07/2017</span></div><div class=\"company\"><strong>Comercial Ejemplo KG</strong> – Erlangen</div><ul><li>Documentación y representación gráfica de los procesos clave</li><li>Análisis e informes para la dirección de área</li><li>Apoyo en la implantación de un sistema de tickets</li></ul></div></div></section>", "p2side": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Competencias</h2><ul><li>Gestión de proyectos, ágil y clásica</li><li>Análisis de requisitos y de procesos</li><li>Jira &amp; Confluence – uso habitual</li><li>SAP – conocimientos básicos</li><li>Microsoft Office – nivel avanzado</li><li>Presentación y moderación</li></ul></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Idiomas</h2><div class=\"lang\"><strong>Español</strong>: lengua materna</div><div class=\"lang\"><strong>Inglés</strong>: C1</div><div class=\"lang\"><strong>Alemán</strong>: B1</div></div></section>", "p2main": "<section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Prácticas en consultoría</span><span class=\"jobdate\">03/2015 – 08/2015</span></div><div class=\"company\"><strong>Consult &amp; Partner GmbH</strong> – Múnich</div><ul><li>Colaboración en un análisis de procesos de compras en un cliente industrial</li><li>Elaboración de presentaciones y documentación de resultados</li></ul></div></div></section><section class=\"blk\"><div class=\"griff\" contenteditable=\"false\"><span class=\"zieh\" title=\"&#8942;\">&#9776;</span><span class=\"weg\" onclick=\"blockWeg(this)\">&#10005;</span></div><div class=\"inhalt\" contenteditable=\"true\"><h2 class=\"sec\">Formación continua</h2><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Professional Scrum Master I</span><span class=\"jobdate\">2022</span></div><div class=\"company\"><strong>Scrum.org</strong></div></div><div class=\"job\"><div class=\"jobhead\"><span class=\"jobtitle\">Gestión de proyectos IPMA nivel D</span><span class=\"jobdate\">2019</span></div><div class=\"company\"><strong>Asociación Alemana de Gestión de Proyectos</strong></div></div></div></section>"}};
-const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Formatierung löschen", "abschnitt": "+ Abschnitt", "abschnittLeiste": "+ in Seitenleiste", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "neuOrdnen": "Neu ordnen", "symbole": "Symbole ein / aus", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto", "neuStart": "Von vorn beginnen", "zurueck": "Vorlagen", "ratgeber": "Ratgeber", "gKi": "KI-Hilfe", "kiUpload": "Lebenslauf hochladen", "kiStelle": "Für eine Stelle optimieren", "kiZurueck": "Zuschnitt zurücknehmen"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "abschnittLeiste": "+ in sidebar", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "neuOrdnen": "Rearrange", "symbole": "Icons on / off", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo", "neuStart": "Start over", "zurueck": "Templates", "ratgeber": "Guides", "gKi": "AI help", "kiUpload": "Upload a CV", "kiStelle": "Tailor to a job advert", "kiZurueck": "Undo the tailoring"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "abschnittLeiste": "+ en barra lateral", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "neuOrdnen": "Reordenar", "symbole": "Símbolos sí / no", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia", "neuStart": "Empezar de nuevo", "zurueck": "Plantillas", "ratgeber": "Guías", "gKi": "Ayuda con IA", "kiUpload": "Subir un CV", "kiStelle": "Adaptar a una oferta", "kiZurueck": "Deshacer la adaptación"}};
-const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel eintippen.", "neuSeite": "Auf dieser Seite war kein Platz mehr – der Abschnitt steht jetzt auf Seite {n}.", "erstKlicken": "Erst in den Abschnitt klicken, dann das Format entfernen.", "formatWeg": "Fett, kursiv und Farben in diesem Abschnitt entfernt.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "platzLeiste": "Abschnitt in der Seitenleiste", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst.", "abbrechen": "Abbrechen", "kiFehler": "Das hat nicht geklappt. Bitte noch einmal versuchen.", "kiTitelHinweis": "Einmal kurz aufpassen", "kiHinweisLang": "Für diese Funktion verlässt Ihr Text das Gerät: Er wird an unseren Server und von dort an {a} geschickt, ausgewertet und zurückgegeben. Gespeichert wird er dabei von uns nicht. Alles andere im Editor bleibt wie bisher in Ihrem Browser. Wenn Sie das nicht möchten, benutzen Sie diese beiden Funktionen einfach nicht — der Editor kann alles übrige ohne sie.", "kiSenden": "Einverstanden, senden", "kiTitelUpload": "Lebenslauf einlesen", "kiUploadText": "Wählen Sie Ihren bisherigen Lebenslauf aus. PDF, DOCX, ODT, XLSX oder Text. Die Angaben werden ausgelesen und in das gewählte Layout gesetzt.", "kiDateiWaehlen": "Datei auswählen", "kiOderText": "oder Text einfügen", "kiEinfuegen": "Den Text Ihres Lebenslaufs hier einfügen …", "kiLesen": "Einlesen", "kiNichts": "Bitte eine Datei wählen oder den Text einfügen.", "kiLaeuft": "Wird gelesen …", "kiGelesen": "Anzeige von {q} gelesen. Wird zugeschnitten …", "kiNichtsGefunden": "In der Datei war kein Lebenslauf zu erkennen.", "kiGefunden": "Das habe ich gefunden:", "kiZahl": "{n} × {was}", "rBeruf": "Berufserfahrung", "rAusbildung": "Ausbildung", "rKenntnisse": "Kenntnisse", "rSprachen": "Sprachen", "kiErsetzt": "Beim Übernehmen wird der jetzige Inhalt des Blattes ersetzt. Layout, Farben und Schrift bleiben.", "kiUebernehmen": "Übernehmen", "kiFertig": "Eingesetzt. Bitte alles nachlesen — auch Namen, Daten und Zahlen.", "kiKeinZip": "Diese Datei lässt sich nicht öffnen.", "kiZuGross": "Die Datei ist größer als 8 MB.", "kiLeer": "In der Datei stand kein Text.", "kiAltesWord": "Das alte .doc-Format kann ich nicht lesen. Bitte als DOCX oder PDF speichern.", "kiFormat": "Dieses Format kann ich nicht lesen. PDF, DOCX, ODT, XLSX oder Text.", "kiTitelStelle": "Für eine Stelle zuschneiden", "kiStelleText": "Die Anzeige wird gelesen, und Ihr Lebenslauf wird darauf zugeschnitten: umformuliert und umsortiert. Inhaltlich kommt nichts hinzu — was Sie nicht vorweisen, wird nicht erfunden.", "kiOderAnzeige": "oder die Anzeige einfügen", "kiAnzeigeEinfuegen": "Den Text der Stellenanzeige hier einfügen …", "kiZuschneiden": "Zuschneiden", "kiNichtsStelle": "Bitte einen Link angeben oder den Text der Anzeige einfügen.", "kiBeanstandet": "Die Nachprüfung hat Sätze gefunden, die mehr behaupten als Ihr Lebenslauf hergibt. Bitte besonders genau ansehen:", "kiNeueZahlen": "Diese Zahlen und Abkürzungen stehen neu im Text und kamen vorher nirgends vor:", "kiAenderungen": "{n} Stellen wurden umformuliert.", "kiLuecken": "Das verlangt die Anzeige, und Ihr Lebenslauf belegt es nicht. Erfunden wird hier nichts — überlegen Sie, ob Sie etwas Passendes vergessen haben:", "kiLesenBitte": "Lesen Sie den zugeschnittenen Lebenslauf ganz durch, bevor Sie ihn verschicken. Sie unterschreiben ihn, nicht die Maschine.", "kiZurueckgenommen": "Der alte Stand ist wieder da."}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – type the title.", "neuSeite": "No room left on that page – the section is now on page {n}.", "erstKlicken": "Click into a section first, then clear its formatting.", "formatWeg": "Bold, italics and colours removed from this section.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "platzLeiste": "Section in the sidebar", "entwurfUmgebaut": "Draft carried over and fitted to the new layout.", "abbrechen": "Cancel", "kiFehler": "That did not work. Please try again.", "kiTitelHinweis": "One thing first", "kiHinweisLang": "For this feature your text leaves your device: it goes to our server and from there to {a}, is processed and comes back. We do not store it. Everything else in the editor stays in your browser as before. If you would rather it did not, simply do not use these two features — the editor does everything else without them.", "kiSenden": "Agreed, send it", "kiTitelUpload": "Read a CV", "kiUploadText": "Choose your existing CV. PDF, DOCX, ODT, XLSX or text. The entries are read out and placed into the layout you picked.", "kiDateiWaehlen": "Choose a file", "kiOderText": "or paste text", "kiEinfuegen": "Paste the text of your CV here …", "kiLesen": "Read it", "kiNichts": "Please choose a file or paste the text.", "kiLaeuft": "Reading …", "kiGelesen": "Advert read from {q}. Tailoring …", "kiNichtsGefunden": "No CV could be recognised in that file.", "kiGefunden": "Here is what I found:", "kiZahl": "{n} × {was}", "rBeruf": "work experience", "rAusbildung": "education", "rKenntnisse": "skills", "rSprachen": "languages", "kiErsetzt": "Applying this replaces what is on the sheet now. Layout, colours and font stay.", "kiUebernehmen": "Apply", "kiFertig": "Applied. Please read it all through — names, dates and figures included.", "kiKeinZip": "That file cannot be opened.", "kiZuGross": "The file is larger than 8 MB.", "kiLeer": "There was no text in the file.", "kiAltesWord": "I cannot read the old .doc format. Please save as DOCX or PDF.", "kiFormat": "I cannot read that format. PDF, DOCX, ODT, XLSX or text.", "kiTitelStelle": "Tailor to a job advert", "kiStelleText": "The advert is read and your CV is tailored to it: rephrased and reordered. Nothing is added — what you cannot show is not invented.", "kiOderAnzeige": "or paste the advert", "kiAnzeigeEinfuegen": "Paste the text of the job advert here …", "kiZuschneiden": "Tailor it", "kiNichtsStelle": "Please give a link or paste the text of the advert.", "kiBeanstandet": "The check found sentences that claim more than your CV supports. Please look at these closely:", "kiNeueZahlen": "These figures and abbreviations are new in the text and appeared nowhere before:", "kiAenderungen": "{n} passages were rephrased.", "kiLuecken": "The advert asks for this and your CV does not show it. Nothing is invented here — consider whether you left something out:", "kiLesenBitte": "Read the tailored CV all the way through before you send it. You are the one signing it, not the machine.", "kiZurueckgenommen": "The previous version is back."}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: escribe el título.", "neuSeite": "No quedaba sitio en esa página: la sección está ahora en la página {n}.", "erstKlicken": "Haz clic primero dentro de una sección.", "formatWeg": "Negrita, cursiva y colores eliminados de esta sección.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "platzLeiste": "Sección en la barra lateral", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño.", "abbrechen": "Cancelar", "kiFehler": "No ha funcionado. Inténtalo de nuevo.", "kiTitelHinweis": "Un momento", "kiHinweisLang": "Para esta función tu texto sale del dispositivo: va a nuestro servidor y de ahí a {a}, se procesa y vuelve. Nosotros no lo guardamos. Todo lo demás del editor sigue en tu navegador. Si prefieres que no salga, no uses estas dos funciones: el editor hace todo lo demás sin ellas.", "kiSenden": "De acuerdo, enviar", "kiTitelUpload": "Leer un CV", "kiUploadText": "Elige tu CV actual. PDF, DOCX, ODT, XLSX o texto. Los datos se extraen y se colocan en el diseño elegido.", "kiDateiWaehlen": "Elegir archivo", "kiOderText": "o pegar texto", "kiEinfuegen": "Pega aquí el texto de tu CV …", "kiLesen": "Leer", "kiNichts": "Elige un archivo o pega el texto.", "kiLaeuft": "Leyendo …", "kiGelesen": "Oferta leída de {q}. Adaptando …", "kiNichtsGefunden": "No se ha reconocido ningún CV en el archivo.", "kiGefunden": "Esto he encontrado:", "kiZahl": "{n} × {was}", "rBeruf": "experiencia", "rAusbildung": "formación", "rKenntnisse": "competencias", "rSprachen": "idiomas", "kiErsetzt": "Al aplicarlo se sustituye el contenido actual. El diseño, los colores y la tipografía se mantienen.", "kiUebernehmen": "Aplicar", "kiFertig": "Aplicado. Léelo todo con calma, también nombres, fechas y cifras.", "kiKeinZip": "Ese archivo no se puede abrir.", "kiZuGross": "El archivo supera los 8 MB.", "kiLeer": "No había texto en el archivo.", "kiAltesWord": "No puedo leer el formato .doc antiguo. Guárdalo como DOCX o PDF.", "kiFormat": "No puedo leer ese formato. PDF, DOCX, ODT, XLSX o texto.", "kiTitelStelle": "Adaptar a una oferta", "kiStelleText": "Se lee la oferta y se adapta tu CV: reformulado y reordenado. No se añade nada: lo que no puedes acreditar no se inventa.", "kiOderAnzeige": "o pegar la oferta", "kiAnzeigeEinfuegen": "Pega aquí el texto de la oferta …", "kiZuschneiden": "Adaptar", "kiNichtsStelle": "Indica un enlace o pega el texto de la oferta.", "kiBeanstandet": "La comprobación ha encontrado frases que afirman más de lo que dice tu CV. Míralas con atención:", "kiNeueZahlen": "Estas cifras y siglas son nuevas y antes no aparecían:", "kiAenderungen": "{n} pasajes reformulados.", "kiLuecken": "La oferta pide esto y tu CV no lo acredita. Aquí no se inventa nada: piensa si has olvidado algo:", "kiLesenBitte": "Lee el CV adaptado entero antes de enviarlo. Lo firmas tú, no la máquina.", "kiZurueckgenommen": "La versión anterior ha vuelto."}};
+const UITXT = {"de": {"marke": "Lebenslauf-Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Farben", "gSchrift": "Schrift", "gFoto": "Foto", "gAnsicht": "Ansicht", "gSprache": "Sprache", "format": "Formatierung löschen", "abschnitt": "+ Abschnitt", "abschnittLeiste": "+ in Seitenleiste", "akzent": "Akzent", "leiste": "Seitenleiste", "textfarbe": "Text", "schriftart": "Schriftart", "groesse": "Größe", "fotoform": "Eckig / rund", "fotoan": "Foto ein / aus", "fotoreset": "Neu ausrichten", "zoom": "Zoom", "neuOrdnen": "Neu ordnen", "symbole": "Symbole ein / aus", "pruefen": "Prüfen", "reset": "Farben &amp; Schrift zurücksetzen", "pdf": "Als PDF speichern", "word": "Word", "sichern": "Sichern", "datei": "Eigenes Foto", "neuStart": "Von vorn beginnen", "zurueck": "Vorlagen", "ratgeber": "Ratgeber", "gKi": "KI-Hilfe", "kiUpload": "Lebenslauf hochladen", "kiStelle": "Für eine Stelle optimieren", "kiZurueck": "Zuschnitt zurücknehmen", "kiPruefen": "Lebenslauf prüfen"}, "en": {"marke": "CV Editor", "gText": "Text", "gLayout": "Layout", "gFarben": "Colours", "gSchrift": "Font", "gFoto": "Photo", "gAnsicht": "View", "gSprache": "Language", "format": "Clear formatting", "abschnitt": "+ Section", "abschnittLeiste": "+ in sidebar", "akzent": "Accent", "leiste": "Sidebar", "textfarbe": "Text", "schriftart": "Typeface", "groesse": "Size", "fotoform": "Square / round", "fotoan": "Photo on / off", "fotoreset": "Reset position", "zoom": "Zoom", "neuOrdnen": "Rearrange", "symbole": "Icons on / off", "pruefen": "Check", "reset": "Reset colours &amp; font", "pdf": "Save as PDF", "word": "Word", "sichern": "Save file", "datei": "Own photo", "neuStart": "Start over", "zurueck": "Templates", "ratgeber": "Guides", "gKi": "AI help", "kiUpload": "Upload a CV", "kiStelle": "Tailor to a job advert", "kiZurueck": "Undo the tailoring", "kiPruefen": "Check the CV"}, "es": {"marke": "Editor de CV", "gText": "Texto", "gLayout": "Diseño", "gFarben": "Colores", "gSchrift": "Tipografía", "gFoto": "Foto", "gAnsicht": "Vista", "gSprache": "Idioma", "format": "Quitar formato", "abschnitt": "+ Sección", "abschnittLeiste": "+ en barra lateral", "akzent": "Acento", "leiste": "Barra lateral", "textfarbe": "Texto", "schriftart": "Tipo de letra", "groesse": "Tamaño", "fotoform": "Cuadrada / redonda", "fotoan": "Foto sí / no", "fotoreset": "Restablecer", "zoom": "Zoom", "neuOrdnen": "Reordenar", "symbole": "Símbolos sí / no", "pruefen": "Comprobar", "reset": "Restablecer colores y tipografía", "pdf": "Guardar como PDF", "word": "Word", "sichern": "Guardar archivo", "datei": "Foto propia", "neuStart": "Empezar de nuevo", "zurueck": "Plantillas", "ratgeber": "Guías", "gKi": "Ayuda con IA", "kiUpload": "Subir un CV", "kiStelle": "Adaptar a una oferta", "kiZurueck": "Deshacer la adaptación", "kiPruefen": "Revisar el CV"}};
+const MSG = {"de": {"markieren": "Erst Text markieren, dann A− / A+ nutzen.", "passt": "Alles passt auf die Seiten.", "zuviel": "Zu viel Inhalt auf {s} – die rot markierten Abschnitte am Griff oben rechts anfassen und verschieben.", "weg": "„{t}“ wirklich entfernen?", "neuerTitel": "Neuer Abschnitt", "neuerPunkt": "Erster Punkt", "neu": "Abschnitt angelegt – Titel eintippen.", "neuSeite": "Auf dieser Seite war kein Platz mehr – der Abschnitt steht jetzt auf Seite {n}.", "erstKlicken": "Erst in den Abschnitt klicken, dann das Format entfernen.", "formatWeg": "Fett, kursiv und Farben in diesem Abschnitt entfernt.", "fotoweg": "Foto steht wieder an der Position des Layouts.", "gesichert": "Gesichert – die Datei liegt im Download-Ordner.", "seite": "Seite", "und": " und ", "wechsel": "Sprache wechseln? Der Beispielinhalt wird ersetzt, eigene Texte gehen verloren.", "entwurf": "Entwurf von diesem Gerät wiederhergestellt.", "entwurfWeg": "Alles verwerfen und mit dem Beispiel neu beginnen?", "entwurfGross": "Der Entwurf ist zu groß für den Browserspeicher – bitte „Sichern“ benutzen.", "platzLeer": "Abschnitt", "platzLeiste": "Abschnitt in der Seitenleiste", "entwurfUmgebaut": "Entwurf übernommen und an das neue Layout angepasst.", "abbrechen": "Abbrechen", "kiFehler": "Das hat nicht geklappt. Bitte noch einmal versuchen.", "kiTitelHinweis": "Einmal kurz aufpassen", "kiHinweisLang": "Für diese Funktion verlässt Ihr Text das Gerät: Er wird an unseren Server und von dort an {a} geschickt, ausgewertet und zurückgegeben. Gespeichert wird er dabei von uns nicht. Alles andere im Editor bleibt wie bisher in Ihrem Browser. Wenn Sie das nicht möchten, benutzen Sie diese beiden Funktionen einfach nicht — der Editor kann alles übrige ohne sie.", "kiSenden": "Einverstanden, senden", "kiTitelUpload": "Lebenslauf einlesen", "kiUploadText": "Wählen Sie Ihren bisherigen Lebenslauf aus. PDF, DOCX, ODT, XLSX oder Text. Die Angaben werden ausgelesen und in das gewählte Layout gesetzt.", "kiDateiWaehlen": "Datei auswählen", "kiOderText": "oder Text einfügen", "kiEinfuegen": "Den Text Ihres Lebenslaufs hier einfügen …", "kiLesen": "Einlesen", "kiNichts": "Bitte eine Datei wählen oder den Text einfügen.", "kiLaeuft": "Wird gelesen …", "kiGelesen": "Anzeige von {q} gelesen. Wird zugeschnitten …", "kiNichtsGefunden": "In der Datei war kein Lebenslauf zu erkennen.", "kiGefunden": "Das habe ich gefunden:", "kiZahl": "{n} × {was}", "rBeruf": "Berufserfahrung", "rAusbildung": "Ausbildung", "rKenntnisse": "Kenntnisse", "rSprachen": "Sprachen", "kiErsetzt": "Beim Übernehmen wird der jetzige Inhalt des Blattes ersetzt. Layout, Farben und Schrift bleiben.", "kiUebernehmen": "Übernehmen", "kiFertig": "Eingesetzt. Bitte alles nachlesen — auch Namen, Daten und Zahlen.", "kiKeinZip": "Diese Datei lässt sich nicht öffnen.", "kiZuGross": "Die Datei ist größer als 8 MB.", "kiLeer": "In der Datei stand kein Text.", "kiAltesWord": "Das alte .doc-Format kann ich nicht lesen. Bitte als DOCX oder PDF speichern.", "kiFormat": "Dieses Format kann ich nicht lesen. PDF, DOCX, ODT, XLSX oder Text.", "kiTitelStelle": "Für eine Stelle zuschneiden", "kiStelleText": "Die Anzeige wird gelesen, und Ihr Lebenslauf wird darauf zugeschnitten: umformuliert und umsortiert. Inhaltlich kommt nichts hinzu — was Sie nicht vorweisen, wird nicht erfunden.", "kiOderAnzeige": "oder die Anzeige einfügen", "kiAnzeigeEinfuegen": "Den Text der Stellenanzeige hier einfügen …", "kiZuschneiden": "Zuschneiden", "kiNichtsStelle": "Bitte einen Link angeben oder den Text der Anzeige einfügen.", "kiBeanstandet": "Die Nachprüfung hat Sätze gefunden, die mehr behaupten als Ihr Lebenslauf hergibt. Bitte besonders genau ansehen:", "kiNeueZahlen": "Diese Zahlen und Abkürzungen stehen neu im Text und kamen vorher nirgends vor:", "kiAenderungen": "{n} Stellen wurden umformuliert.", "kiLuecken": "Das verlangt die Anzeige, und Ihr Lebenslauf belegt es nicht. Erfunden wird hier nichts — überlegen Sie, ob Sie etwas Passendes vergessen haben:", "kiLesenBitte": "Lesen Sie den zugeschnittenen Lebenslauf ganz durch, bevor Sie ihn verschicken. Sie unterschreiben ihn, nicht die Maschine.", "kiZurueckgenommen": "Der alte Stand ist wieder da.", "kiTitelPruefen": "Lebenslauf prüfen", "kiPruefText": "Der Lebenslauf wird gelesen wie von einer Personalabteilung: was auffällt, was stark ist, und welche Fragen im Gespräch daraus entstehen.", "kiStelleOptional": "Stellenanzeige (freiwillig — dann kommt die Passung dazu)", "kiPruefen": "Prüfen", "kiTitelAnalyse": "Das Ergebnis", "aPassung": "Passung", "pGut": "gute Passung", "pTeils": "teilweise Passung", "pDuenn": "dünne Passung", "aStaerken": "Das trägt", "aBefunde": "Das fällt auf", "aFragen": "Damit ist im Gespräch zu rechnen", "aNichts": "Nichts Auffälliges gefunden.", "gHoch": "wichtig", "gMittel": "mittel", "gKlein": "klein", "aWarum": "Auslöser", "aAntwort": "Antwort", "aFalle": "Falle", "aKopieren": "Als Text kopieren", "aKopiert": "Kopiert", "aKopierFehler": "Das Kopieren hat nicht geklappt.", "aFertig": "Fertig", "bLuecke": "Zwischen „{a}“ und „{b}“ fehlen {n}.", "bUeberschneidung": "„{a}“ und „{b}“ überschneiden sich zeitlich.", "bKurz": "„{a}“ dauerte nur {n}.", "bOhneEnde": "„{a}“ hat kein Enddatum.", "bOhneDatum": "„{a}“ hat gar keine Zeitangabe.", "bSeitdem": "Seit der letzten Station sind {n} vergangen.", "bJahre": "{j} Jahre", "bMonate": "{m} Monate", "bMonat": "1 Monat", "bJahr": "1 Jahr", "bUnd": "{a} und {b}"}, "en": {"markieren": "Select some text first, then use A− / A+.", "passt": "Everything fits on the pages.", "zuviel": "Too much content on {s} – grab the sections marked in red by the handle and move them.", "weg": "Remove “{t}”?", "neuerTitel": "New section", "neuerPunkt": "First point", "neu": "Section added – type the title.", "neuSeite": "No room left on that page – the section is now on page {n}.", "erstKlicken": "Click into a section first, then clear its formatting.", "formatWeg": "Bold, italics and colours removed from this section.", "fotoweg": "The photo is back in its layout position.", "gesichert": "Saved – the file is in your downloads folder.", "seite": "page", "und": " and ", "wechsel": "Switch language? The sample content will be replaced and your own text will be lost.", "entwurf": "Draft restored from this device.", "entwurfWeg": "Discard everything and start again from the example?", "entwurfGross": "The draft is too large for browser storage — please use Save file.", "platzLeer": "Section", "platzLeiste": "Section in the sidebar", "entwurfUmgebaut": "Draft carried over and fitted to the new layout.", "abbrechen": "Cancel", "kiFehler": "That did not work. Please try again.", "kiTitelHinweis": "One thing first", "kiHinweisLang": "For this feature your text leaves your device: it goes to our server and from there to {a}, is processed and comes back. We do not store it. Everything else in the editor stays in your browser as before. If you would rather it did not, simply do not use these two features — the editor does everything else without them.", "kiSenden": "Agreed, send it", "kiTitelUpload": "Read a CV", "kiUploadText": "Choose your existing CV. PDF, DOCX, ODT, XLSX or text. The entries are read out and placed into the layout you picked.", "kiDateiWaehlen": "Choose a file", "kiOderText": "or paste text", "kiEinfuegen": "Paste the text of your CV here …", "kiLesen": "Read it", "kiNichts": "Please choose a file or paste the text.", "kiLaeuft": "Reading …", "kiGelesen": "Advert read from {q}. Tailoring …", "kiNichtsGefunden": "No CV could be recognised in that file.", "kiGefunden": "Here is what I found:", "kiZahl": "{n} × {was}", "rBeruf": "work experience", "rAusbildung": "education", "rKenntnisse": "skills", "rSprachen": "languages", "kiErsetzt": "Applying this replaces what is on the sheet now. Layout, colours and font stay.", "kiUebernehmen": "Apply", "kiFertig": "Applied. Please read it all through — names, dates and figures included.", "kiKeinZip": "That file cannot be opened.", "kiZuGross": "The file is larger than 8 MB.", "kiLeer": "There was no text in the file.", "kiAltesWord": "I cannot read the old .doc format. Please save as DOCX or PDF.", "kiFormat": "I cannot read that format. PDF, DOCX, ODT, XLSX or text.", "kiTitelStelle": "Tailor to a job advert", "kiStelleText": "The advert is read and your CV is tailored to it: rephrased and reordered. Nothing is added — what you cannot show is not invented.", "kiOderAnzeige": "or paste the advert", "kiAnzeigeEinfuegen": "Paste the text of the job advert here …", "kiZuschneiden": "Tailor it", "kiNichtsStelle": "Please give a link or paste the text of the advert.", "kiBeanstandet": "The check found sentences that claim more than your CV supports. Please look at these closely:", "kiNeueZahlen": "These figures and abbreviations are new in the text and appeared nowhere before:", "kiAenderungen": "{n} passages were rephrased.", "kiLuecken": "The advert asks for this and your CV does not show it. Nothing is invented here — consider whether you left something out:", "kiLesenBitte": "Read the tailored CV all the way through before you send it. You are the one signing it, not the machine.", "kiZurueckgenommen": "The previous version is back.", "kiTitelPruefen": "Check the CV", "kiPruefText": "The CV is read the way a hiring desk reads it: what stands out, what carries weight, and which questions it invites in an interview.", "kiStelleOptional": "Job advert (optional — adds the fit score)", "kiPruefen": "Check it", "kiTitelAnalyse": "The result", "aPassung": "Fit", "pGut": "good fit", "pTeils": "partial fit", "pDuenn": "thin fit", "aStaerken": "What carries", "aBefunde": "What stands out", "aFragen": "Expect these in the interview", "aNichts": "Nothing stood out.", "gHoch": "important", "gMittel": "medium", "gKlein": "minor", "aWarum": "Trigger", "aAntwort": "Answer", "aFalle": "Trap", "aKopieren": "Copy as text", "aKopiert": "Copied", "aKopierFehler": "Copying did not work.", "aFertig": "Done", "bLuecke": "Between “{a}” and “{b}”, {n} are missing.", "bUeberschneidung": "“{a}” and “{b}” overlap in time.", "bKurz": "“{a}” lasted only {n}.", "bOhneEnde": "“{a}” has no end date.", "bOhneDatum": "“{a}” has no dates at all.", "bSeitdem": "{n} have passed since the last entry.", "bJahre": "{j} years", "bMonate": "{m} months", "bMonat": "1 month", "bJahr": "1 year", "bUnd": "{a} and {b}"}, "es": {"markieren": "Selecciona primero el texto y usa A− / A+.", "passt": "Todo cabe en las páginas.", "zuviel": "Demasiado contenido en {s}: arrastra por el asa las secciones marcadas en rojo.", "weg": "¿Eliminar «{t}»?", "neuerTitel": "Nueva sección", "neuerPunkt": "Primer punto", "neu": "Sección añadida: escribe el título.", "neuSeite": "No quedaba sitio en esa página: la sección está ahora en la página {n}.", "erstKlicken": "Haz clic primero dentro de una sección.", "formatWeg": "Negrita, cursiva y colores eliminados de esta sección.", "fotoweg": "La foto ha vuelto a su posición.", "gesichert": "Guardado: el archivo está en tu carpeta de descargas.", "seite": "página", "und": " y ", "wechsel": "¿Cambiar de idioma? Se sustituirá el contenido de ejemplo y perderás tus textos.", "entwurf": "Borrador restaurado desde este dispositivo.", "entwurfWeg": "¿Descartar todo y empezar de nuevo con el ejemplo?", "entwurfGross": "El borrador es demasiado grande para el almacenamiento del navegador: usa «Guardar archivo».", "platzLeer": "Sección", "platzLeiste": "Sección en la barra lateral", "entwurfUmgebaut": "Borrador adoptado y adaptado al nuevo diseño.", "abbrechen": "Cancelar", "kiFehler": "No ha funcionado. Inténtalo de nuevo.", "kiTitelHinweis": "Un momento", "kiHinweisLang": "Para esta función tu texto sale del dispositivo: va a nuestro servidor y de ahí a {a}, se procesa y vuelve. Nosotros no lo guardamos. Todo lo demás del editor sigue en tu navegador. Si prefieres que no salga, no uses estas dos funciones: el editor hace todo lo demás sin ellas.", "kiSenden": "De acuerdo, enviar", "kiTitelUpload": "Leer un CV", "kiUploadText": "Elige tu CV actual. PDF, DOCX, ODT, XLSX o texto. Los datos se extraen y se colocan en el diseño elegido.", "kiDateiWaehlen": "Elegir archivo", "kiOderText": "o pegar texto", "kiEinfuegen": "Pega aquí el texto de tu CV …", "kiLesen": "Leer", "kiNichts": "Elige un archivo o pega el texto.", "kiLaeuft": "Leyendo …", "kiGelesen": "Oferta leída de {q}. Adaptando …", "kiNichtsGefunden": "No se ha reconocido ningún CV en el archivo.", "kiGefunden": "Esto he encontrado:", "kiZahl": "{n} × {was}", "rBeruf": "experiencia", "rAusbildung": "formación", "rKenntnisse": "competencias", "rSprachen": "idiomas", "kiErsetzt": "Al aplicarlo se sustituye el contenido actual. El diseño, los colores y la tipografía se mantienen.", "kiUebernehmen": "Aplicar", "kiFertig": "Aplicado. Léelo todo con calma, también nombres, fechas y cifras.", "kiKeinZip": "Ese archivo no se puede abrir.", "kiZuGross": "El archivo supera los 8 MB.", "kiLeer": "No había texto en el archivo.", "kiAltesWord": "No puedo leer el formato .doc antiguo. Guárdalo como DOCX o PDF.", "kiFormat": "No puedo leer ese formato. PDF, DOCX, ODT, XLSX o texto.", "kiTitelStelle": "Adaptar a una oferta", "kiStelleText": "Se lee la oferta y se adapta tu CV: reformulado y reordenado. No se añade nada: lo que no puedes acreditar no se inventa.", "kiOderAnzeige": "o pegar la oferta", "kiAnzeigeEinfuegen": "Pega aquí el texto de la oferta …", "kiZuschneiden": "Adaptar", "kiNichtsStelle": "Indica un enlace o pega el texto de la oferta.", "kiBeanstandet": "La comprobación ha encontrado frases que afirman más de lo que dice tu CV. Míralas con atención:", "kiNeueZahlen": "Estas cifras y siglas son nuevas y antes no aparecían:", "kiAenderungen": "{n} pasajes reformulados.", "kiLuecken": "La oferta pide esto y tu CV no lo acredita. Aquí no se inventa nada: piensa si has olvidado algo:", "kiLesenBitte": "Lee el CV adaptado entero antes de enviarlo. Lo firmas tú, no la máquina.", "kiZurueckgenommen": "La versión anterior ha vuelto.", "kiTitelPruefen": "Revisar el CV", "kiPruefText": "El CV se lee como lo lee una persona de selección: qué llama la atención, qué sostiene la candidatura y qué preguntas provoca en la entrevista.", "kiStelleOptional": "Oferta de empleo (opcional: añade el ajuste)", "kiPruefen": "Revisar", "kiTitelAnalyse": "El resultado", "aPassung": "Ajuste", "pGut": "buen ajuste", "pTeils": "ajuste parcial", "pDuenn": "ajuste escaso", "aStaerken": "Lo que sostiene", "aBefunde": "Lo que llama la atención", "aFragen": "Cuenta con estas preguntas", "aNichts": "No se ha detectado nada llamativo.", "gHoch": "importante", "gMittel": "medio", "gKlein": "menor", "aWarum": "Motivo", "aAntwort": "Respuesta", "aFalle": "Trampa", "aKopieren": "Copiar como texto", "aKopiert": "Copiado", "aKopierFehler": "No se ha podido copiar.", "aFertig": "Listo", "bLuecke": "Entre «{a}» y «{b}» faltan {n}.", "bUeberschneidung": "«{a}» y «{b}» se solapan en el tiempo.", "bKurz": "«{a}» duró solo {n}.", "bOhneEnde": "«{a}» no tiene fecha de fin.", "bOhneDatum": "«{a}» no tiene fechas.", "bSeitdem": "Han pasado {n} desde la última etapa.", "bJahre": "{j} años", "bMonate": "{m} meses", "bMonat": "1 mes", "bJahr": "1 año", "bUnd": "{a} y {b}"}};
 const VARNAMEN = {"de": [["Diagonale links", "Original"], ["Diagonale rechts", "gespiegelt"], ["Gerades Band", "ohne Diagonale"], ["Ruhiger Kopf", "ohne Farbband"], ["Dunkler Kopf", "kräftig"], ["Farbige Leiste", "Leiste in Akzentfarbe"], ["Einspaltig", "ATS-sicher"], ["Datumsspalte", "klassisch tabellarisch"], ["Zeitstrahl", "Stationen an einer Linie"], ["Kopfblock", "dunkler Kopf"], ["Zentriert", "rundes Foto"], ["Feine Trennlinie", "zwei Spalten ohne Tönung"], ["Schlicht", "ohne Foto, ATS-sicher"], ["Kopfkarte", "gerahmter Kopf"], ["Breite Leiste", "viel Platz für Kenntnisse"], ["Akzentstreifen", "Farbkante am Rand"]], "en": [["Diagonal left", "original"], ["Diagonal right", "mirrored"], ["Solid banner", "no diagonal"], ["Quiet header", "no colour band"], ["Dark header", "bold"], ["Coloured sidebar", "accent fill"], ["Single column", "ATS-safe"], ["Date column", "classic tabular"], ["Timeline", "dots on a line"], ["Header block", "dark header"], ["Centred", "round photo"], ["Fine divider", "two columns, no tint"], ["Plain", "no photo, ATS-safe"], ["Header card", "framed header"], ["Wide sidebar", "room for skills"], ["Accent edge", "colour bar at the margin"]], "es": [["Diagonal izquierda", "original"], ["Diagonal derecha", "invertido"], ["Banda plana", "sin diagonal"], ["Cabecera sobria", "sin franja de color"], ["Cabecera oscura", "contrastada"], ["Barra en color", "barra con acento"], ["Una columna", "apto para ATS"], ["Columna de fechas", "tabular clásico"], ["Línea de tiempo", "puntos en una línea"], ["Bloque de cabecera", "cabecera oscura"], ["Centrado", "foto redonda"], ["Separador fino", "dos columnas sin fondo"], ["Sobrio", "sin foto, apto para ATS"], ["Cabecera enmarcada", "cabecera con marco"], ["Barra ancha", "espacio para competencias"], ["Borde de acento", "franja en el margen"]]};
 
 let sprache = 'de';
@@ -2580,6 +2650,7 @@ function kiErgebnis(fenst, vorher, antwort){
       eigene.map(fluchten).join(' · ') + '</p>');
   }
 
+  if (antwort.passung) teile.unshift(passungHtml(antwort.passung));
   const aenderungen = antwort.aenderungen || [];
   teile.push('<p>' + T('kiAenderungen').replace('{n}', aenderungen.length) + '</p>');
   if (aenderungen.length){
@@ -2624,6 +2695,244 @@ function kiRueckgaengig(zurueck){
     plaetzeZeichnen(); neuOrdnen(); markiere(); kopfNameSetzen();
     melde(T('kiZurueckgenommen'));
   };
+}
+
+/* ---------------- Lebenslauf prüfen ---------------- */
+
+/* Was sich rechnen lässt, wird gerechnet und nicht geraten: Lücken,
+   Überschneidungen, sehr kurze Stationen, fehlende Daten. Das Modell
+   beurteilt diese Befunde, es sucht sie nicht. */
+function datumLesen(wert){
+  const s = String(wert || '').trim();
+  if (!s) return null;
+  if (/^(heute|laufend|present|current|actualidad|now|jetzt)$/i.test(s)) return { jetzt: true };
+  const mitMonat = /^(\d{1,2})[.\/-](\d{4})$/.exec(s);
+  if (mitMonat) return { jahr: +mitMonat[2], monat: +mitMonat[1] };
+  const monatZuerst = /^(\d{4})[.\/-](\d{1,2})$/.exec(s);
+  if (monatZuerst) return { jahr: +monatZuerst[1], monat: +monatZuerst[2] };
+  const nurJahr = /(^|\D)(19|20)(\d{2})(\D|$)/.exec(s);
+  if (nurJahr) return { jahr: +((nurJahr[2] + nurJahr[3])), monat: null };
+  return null;
+}
+
+function inMonaten(d){
+  if (!d) return null;
+  if (d.jetzt){ const heute = new Date(); return heute.getFullYear() * 12 + heute.getMonth() + 1; }
+  return d.jahr * 12 + (d.monat || 1);
+}
+
+function zeitspanne(eintrag){
+  const von = datumLesen(eintrag.von), bis = datumLesen(eintrag.bis);
+  /* „2017“ ist kein Monat. Bei Jahresangaben wird großzügiger gerechnet,
+     sonst meldet jede Ausbildung ohne Monat eine Lücke, die es nicht gibt. */
+  const grob = !!((von && von.monat === null) || (bis && !bis.jetzt && bis.monat === null));
+  return { von: inMonaten(von), bis: inMonaten(bis), grob,
+           offen: !!(bis && bis.jetzt), name: eintrag.titel || eintrag.abschluss || '' };
+}
+
+function befundeRechnen(lebenslauf){
+  const befunde = [];
+  const stationen = [...(lebenslauf.berufserfahrung || []), ...(lebenslauf.ausbildung || [])]
+    .map(zeitspanne).filter(z => z.von !== null)
+    .sort((a, b) => a.von - b.von);
+
+  /* Alle Sätze sind so gebaut, dass die Grundform passt („fehlen 6 Monate“,
+     „dauerte nur 4 Monate“) — sonst bräuchte jede Sprache zwei Fälle. */
+  const monate = (n) => n === 1 ? T('bMonat') : T('bMonate').replace('{m}', n);
+  const jahre = (n) => n === 1 ? T('bJahr') : T('bJahre').replace('{j}', n);
+  const alsText = (zahl) => {
+    const j = Math.floor(zahl / 12), rest = zahl % 12;
+    if (j && rest) return T('bUnd').replace('{a}', jahre(j)).replace('{b}', monate(rest));
+    if (j) return jahre(j);
+    return monate(zahl);
+  };
+
+  let bisher = null, bisherName = '', bisherGrob = false;
+  stationen.forEach(z => {
+    /* Gezählt werden die leeren Monate dazwischen: von 02/2020 bis 09/2020
+       sind das März bis August, also sechs — nicht sieben. */
+    const leer = bisher === null ? 0 : z.von - bisher - 1;
+    const schwelle = (z.grob || bisherGrob) ? 12 : 3;
+    if (bisher !== null && leer >= schwelle){
+      befunde.push(T('bLuecke').replace('{n}', alsText(leer))
+        .replace('{a}', bisherName).replace('{b}', z.name));
+    }
+    if (bisher !== null && bisher - z.von > 1 && z.bis !== null && !z.grob && !bisherGrob){
+      befunde.push(T('bUeberschneidung').replace('{a}', bisherName).replace('{b}', z.name));
+    }
+    /* Dauer einschließlich beider Monate: 03/2017 bis 06/2017 sind vier. */
+    const dauer = z.bis === null ? null : z.bis - z.von + 1;
+    if (dauer !== null && dauer > 0 && dauer <= 6 && !z.offen && !z.grob){
+      befunde.push(T('bKurz').replace('{a}', z.name).replace('{n}', alsText(dauer)));
+    }
+    if (z.bis === null && !z.offen){
+      befunde.push(T('bOhneEnde').replace('{a}', z.name));
+    }
+    if (z.bis !== null && (bisher === null || z.bis > bisher)){
+      bisher = z.bis; bisherName = z.name; bisherGrob = z.grob;
+    }
+  });
+
+  const heute = inMonaten({ jetzt: true });
+  const laeuft = stationen.some(z => z.offen);
+  if (!laeuft && bisher !== null && heute - bisher > 3){
+    befunde.push(T('bSeitdem').replace('{n}', alsText(heute - bisher)));
+  }
+  (lebenslauf.berufserfahrung || []).forEach(j => {
+    if (!j.von && !j.bis) befunde.push(T('bOhneDatum').replace('{a}', j.titel || '—'));
+  });
+  return befunde;
+}
+
+async function kiPruefen(){
+  if (!kiBereit()) return;
+  if (!await kiZustimmung()) return;
+  const rumpf = document.createElement('div');
+  rumpf.innerHTML =
+    '<p>' + T('kiPruefText') + '</p>' +
+    '<p class="oder">' + T('kiStelleOptional') + '</p>' +
+    '<textarea id="kiPruefStelle" rows="5" placeholder="' + T('kiAnzeigeEinfuegen') + '"></textarea>';
+  fenster(T('kiTitelPruefen'), rumpf, [
+    { text: T('abbrechen'), tun: f => f.remove() },
+    { text: T('kiPruefen'), haupt: true, tun: f => kiPruefenStarten(f) },
+  ]);
+}
+
+async function kiPruefenStarten(fenst){
+  const stelle = (fenst.querySelector('#kiPruefStelle').value || '').trim();
+  fensterStand(fenst, T('kiLaeuft'), true);
+  try {
+    const lebenslauf = lebenslaufAuslesen();
+    const antwort = await kiRufen('/analyse', {
+      lebenslauf, stelle, hinweise: befundeRechnen(lebenslauf),
+    });
+    kiAnalyseZeigen(fenst, antwort);
+  } catch (e){
+    fensterStand(fenst, e.message || T('kiFehler'), false);
+    fenst.querySelectorAll('.knoepfe button').forEach(b => b.disabled = false);
+  }
+}
+
+/* ---------------- Darstellung der Analyse ---------------- */
+
+/* Ein Wert ohne Maßstab ist eine Zahl ohne Aussage. Deshalb steht neben der
+   Prozentzahl immer das Urteil in Worten — und die Farbe trägt nichts allein. */
+function passungHtml(passung){
+  if (!passung || typeof passung.wert !== 'number') return '';
+  const wert = Math.max(0, Math.min(100, Math.round(passung.wert)));
+  const stufe = wert >= 75 ? T('pGut') : wert >= 50 ? T('pTeils') : T('pDuenn');
+  const treffer = (passung.treffer || []).slice(0, 6).map(t =>
+    '<li><span class="zeichen ja">✓</span><span><b>' + fluchten(t.anforderung) + '</b>' +
+    (t.beleg ? '<br><span class="beleg">' + fluchten(t.beleg) + '</span>' : '') + '</span></li>').join('');
+  const offen = (passung.offen || []).slice(0, 6).map(t =>
+    '<li><span class="zeichen nein">–</span><span><b>' + fluchten(t.anforderung) + '</b>' +
+    (t.rat ? '<br><span class="beleg">' + fluchten(t.rat) + '</span>' : '') + '</span></li>').join('');
+  return '<div class="passung">' +
+    '<div class="wert"><b>' + wert + '</b><span>%</span></div>' +
+    '<div class="balkenfeld">' +
+      '<div class="stufe">' + fluchten(stufe) + '</div>' +
+      '<div class="balken"><i style="width:' + wert + '%"></i></div>' +
+      (passung.urteil ? '<p class="urteil">' + fluchten(passung.urteil) + '</p>' : '') +
+    '</div></div>' +
+    (treffer || offen ? '<ul class="abgleich">' + treffer + offen + '</ul>' : '');
+}
+
+function analyseHtml(daten){
+  const teile = [];
+  if (daten.passung) teile.push(passungHtml(daten.passung));
+
+  if ((daten.staerken || []).length){
+    teile.push('<h4 class="abschnitt">' + T('aStaerken') + '</h4><ul class="staerken">' +
+      daten.staerken.map(s => '<li>' + fluchten(s) + '</li>').join('') + '</ul>');
+  }
+
+  const auff = daten.auffaelligkeiten || [];
+  teile.push('<h4 class="abschnitt">' + T('aBefunde') +
+    '<span class="anzahl">' + auff.length + '</span></h4>');
+  if (!auff.length){
+    teile.push('<p class="ruhig">' + T('aNichts') + '</p>');
+  } else {
+    teile.push('<ul class="befunde">' + auff.map(b => {
+      const g = b.gewicht === 'hoch' ? 'hoch' : (b.gewicht === 'klein' ? 'klein' : 'mittel');
+      const wort = g === 'hoch' ? T('gHoch') : g === 'klein' ? T('gKlein') : T('gMittel');
+      return '<li class="' + g + '">' +
+        '<div class="kopfzeile"><span class="punkt"></span><span class="gewicht">' + wort + '</span>' +
+        (b.wo ? '<span class="wo">' + fluchten(b.wo) + '</span>' : '') + '</div>' +
+        '<p class="befund">' + fluchten(b.befund) + '</p>' +
+        (b.rat ? '<p class="rat">' + fluchten(b.rat) + '</p>' : '') + '</li>';
+    }).join('') + '</ul>');
+  }
+
+  const fragen = daten.fragen || [];
+  if (fragen.length){
+    teile.push('<h4 class="abschnitt">' + T('aFragen') +
+      '<span class="anzahl">' + fragen.length + '</span></h4>');
+    teile.push('<div class="fragen">' + fragen.map((f, i) =>
+      '<details' + (i === 0 ? ' open' : '') + '>' +
+        '<summary>' + fluchten(f.frage) + '</summary>' +
+        (f.warum ? '<p class="warum">' + fluchten(f.warum) + '</p>' : '') +
+        (f.antwort ? '<p class="antwort">' + fluchten(f.antwort) + '</p>' : '') +
+        (f.falle ? '<p class="falle">' + fluchten(f.falle) + '</p>' : '') +
+      '</details>').join('') + '</div>');
+  }
+  return teile.join('');
+}
+
+/* Als Text zum Mitnehmen — für die Vorbereitung auf das Gespräch ist eine
+   Datei oder ein Zettel mehr wert als ein Fenster, das sich schließt. */
+function analyseText(daten){
+  const zeilen = [];
+  if (daten.passung){
+    zeilen.push(T('aPassung') + ': ' + Math.round(daten.passung.wert) + ' %' +
+      (daten.passung.urteil ? ' — ' + daten.passung.urteil : ''), '');
+    (daten.passung.treffer || []).forEach(t => zeilen.push('  + ' + t.anforderung +
+      (t.beleg ? ' (' + t.beleg + ')' : '')));
+    (daten.passung.offen || []).forEach(t => zeilen.push('  – ' + t.anforderung +
+      (t.rat ? ' → ' + t.rat : '')));
+    zeilen.push('');
+  }
+  if ((daten.staerken || []).length){
+    zeilen.push(T('aStaerken').toUpperCase(), ...daten.staerken.map(s => '  · ' + s), '');
+  }
+  if ((daten.auffaelligkeiten || []).length){
+    zeilen.push(T('aBefunde').toUpperCase());
+    daten.auffaelligkeiten.forEach(b => {
+      zeilen.push('  [' + (b.gewicht || 'mittel') + '] ' + (b.wo ? b.wo + ' — ' : '') + b.befund);
+      if (b.rat) zeilen.push('      → ' + b.rat);
+    });
+    zeilen.push('');
+  }
+  if ((daten.fragen || []).length){
+    zeilen.push(T('aFragen').toUpperCase());
+    daten.fragen.forEach(f => {
+      zeilen.push('  ? ' + f.frage);
+      if (f.warum) zeilen.push('      ' + T('aWarum') + ': ' + f.warum);
+      if (f.antwort) zeilen.push('      ' + T('aAntwort') + ': ' + f.antwort);
+      if (f.falle) zeilen.push('      ' + T('aFalle') + ': ' + f.falle);
+      zeilen.push('');
+    });
+  }
+  return zeilen.join('\n');
+}
+
+function kiAnalyseZeigen(fenst, daten){
+  fenst.querySelector('.kasten').classList.add('weit');
+  fenst.querySelector('h3').textContent = T('kiTitelAnalyse');
+  fenst.querySelector('.rumpf').innerHTML = analyseHtml(daten);
+  const leiste = fenst.querySelector('.knoepfe');
+  leiste.innerHTML = '';
+  const kopieren = document.createElement('button');
+  kopieren.textContent = T('aKopieren');
+  kopieren.onclick = async () => {
+    try { await navigator.clipboard.writeText(analyseText(daten)); kopieren.textContent = T('aKopiert'); }
+    catch (e){ melde(T('aKopierFehler')); }
+  };
+  const schliessen = document.createElement('button');
+  schliessen.className = 'prim';
+  schliessen.textContent = T('aFertig');
+  schliessen.onclick = () => fenst.remove();
+  leiste.appendChild(kopieren);
+  leiste.appendChild(schliessen);
 }
 
 /* Jede Änderung am Blatt zählt: Tippen, Ziehen, Abschnitt löschen,

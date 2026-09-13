@@ -301,10 +301,10 @@ slot and assert the section appears in that slot's own column, and print the
 same resume from two different window widths and diff the PDFs — they must
 be byte-for-byte the same story.
 
-## The two AI features
+## The three AI features
 
-The editor can read an existing CV into a layout, and it can tailor a CV to
-one job advert. Both are off until `assets/site-config.js` has the address of
+The editor can read an existing CV into a layout, tailor a CV to one job
+advert, and review a finished CV. Both are off until `assets/site-config.js` has the address of
 the worker in `api/` — without it the buttons are not rendered at all, and the
 editor is exactly what it was: a page with no server.
 
@@ -334,6 +334,22 @@ Three things check the result, because one is not enough:
 Whatever survives all three is still shown as a diff — what was there before,
 what it says now, and why — and the dialog says plainly that the applicant is
 the one signing it.
+
+**The review.** *Lebenslauf prüfen* returns three things and no filler: what
+carries the application, what stands out (ranked, most serious first, each
+with the spot in the document and one concrete instruction), and the questions
+this CV invites in an interview — each with the entry that provokes it and a
+line of argument built only from what the CV already says. With a job advert
+pasted in, it adds a fit score: the share of the advert's requirements the CV
+actually evidences, musts weighted double, rounded to five, with every
+requirement listed as met or open. The same score appears after a tailoring
+run.
+
+Gaps, overlaps, four-month stints and missing end dates are **computed in the
+browser** from the dates and handed to the model as given facts. Date
+arithmetic is the one job a language model reliably gets wrong and code never
+does; judgement is the one it is for. And the advice on a gap is never to
+conceal it — name it in a line and move on.
 
 **Uploads.** DOCX, ODT and XLSX are unpacked in the browser itself
 (`DecompressionStream`, no library), so only the extracted text is sent. PDFs

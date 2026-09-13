@@ -1,8 +1,9 @@
 # Der KI-Teil
 
-Zwei Funktionen im Editor brauchen ein Sprachmodell: einen vorhandenen
-Lebenslauf einlesen und einen Lebenslauf auf eine Stellenanzeige zuschneiden.
-Beides läuft über diesen Worker.
+Drei Funktionen im Editor brauchen ein Sprachmodell: einen vorhandenen
+Lebenslauf einlesen, ihn auf eine Stellenanzeige zuschneiden und ihn prüfen
+lassen (Auffälligkeiten, Gesprächsfragen, Passung). Alle drei laufen über
+diesen Worker.
 
 ## Warum überhaupt ein Server
 
@@ -20,6 +21,11 @@ npx wrangler login
 npx wrangler secret put COMETAPI_KEY      # der Schlüssel von cometapi.com
 npx wrangler deploy
 ```
+
+Zum Ausprobieren auf dem eigenen Rechner liest `wrangler dev` den Schlüssel
+aus `api/.dev.vars`. Diese Datei steht in `.gitignore` und darf dort bleiben —
+ein Schlüssel im Repository ist ein veröffentlichter Schlüssel. Für den
+Betrieb zählt nur das Secret oben.
 
 `wrangler deploy` nennt am Ende die Adresse, etwa
 `https://plainsheet-ki.<konto>.workers.dev`. Diese Adresse gehört in
@@ -59,6 +65,7 @@ Ausgabenlimit. Die Bremse oben ersetzt das nicht.
 | --- | --- | --- |
 | `POST /api/parse` | `{text}` oder `{datei:{name,typ,daten}}` (Base64) | `{lebenslauf}` |
 | `POST /api/tailor` | `{lebenslauf, stelle}` | `{lebenslauf, aenderungen, luecken, beanstandet}` |
+| `POST /api/analyse` | `{lebenslauf, stelle?, hinweise[]}` | `{staerken, auffaelligkeiten, fragen, passung}` |
 | `POST /api/stelle` | `{url}` | `{text, titel, quelle}` |
 | `GET /api/status` | – | Selbstauskunft, ohne Geheimnisse |
 
@@ -77,6 +84,21 @@ nicht, dass „etwas schiefgelaufen" ist.
 Firmenseiten gut. Große Jobbörsen sperren fremde Zugriffe oder laden die
 Anzeige erst per Skript nach; dann kommt eine klare Meldung zurück, und der
 Benutzer fügt den Text ein. Das ist Absicht: Diese Seite umgeht keine Sperren.
+
+## Was die Analyse nicht tut
+
+`/api/analyse` bekommt die Befunde mitgeliefert, die der Browser aus den
+Datumsangaben **gerechnet** hat: Lücken auf den Monat genau, Überschneidungen,
+sehr kurze Stationen, fehlende Enddaten. Das Modell soll sie beurteilen, nicht
+suchen — Datumsarithmetik ist die eine Aufgabe, bei der ein Sprachmodell
+zuverlässig danebenliegt und Code nie.
+
+Der Rest ist Urteil, und dafür gilt dieselbe Grundregel wie beim Zuschneiden:
+Die Analyse darf keine Tatsache über den Bewerber erfinden und ihm keine
+vorschlagen. Bei Lücken heißt das ausdrücklich: nie verdecken, nie zurück-
+datieren, nie eine Beschäftigung strecken. Der Rat ist, die Lücke in einer
+Zeile zu benennen — und dass im deutschsprachigen Raum niemand einem
+Arbeitgeber die Einzelheiten einer Krankheit oder einer Trennung schuldet.
 
 ## Die Systemprompts
 

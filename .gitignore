@@ -4,3 +4,6 @@ node_modules/
 *.log
 __pycache__/
 *.pyc
+
+# Schlüssel für die lokale Entwicklung (wrangler dev). Gehört nie ins Repository.
+api/.dev.vars

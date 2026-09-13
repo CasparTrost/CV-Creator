@@ -4,9 +4,11 @@ main = "worker.js"
 compatibility_date = "2026-01-01"
 
 [vars]
-# Das Modell. Günstig und für Auslesen und Umformulieren ausreichend.
-# Andere Kandidaten: "gpt-5-mini", "claude-haiku-4-5", "deepseek-v3".
-MODELL = "gemini-3.5-flash"
+# Das Modell. Die günstigste Stufe, die für Auslesen, Umformulieren und
+# Analysieren reicht. Wird die Arbeit unsauber — erfundene Zahlen, ignorierte
+# Regeln —, ist ein stärkeres Modell eine Zeile: "gpt-5-mini",
+# "claude-haiku-4-5", "gemini-3.5-flash".
+MODELL = "gpt-4.1-nano-2025-04-14"
 BASIS = "https://api.cometapi.com/v1"
 # Von welchen Adressen der Browser den Worker rufen darf, mit Komma getrennt.
 HERKUNFT = "https://YOUR-DOMAIN.example"

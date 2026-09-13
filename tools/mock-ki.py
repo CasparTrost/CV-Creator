@@ -87,6 +87,11 @@ class Griff(BaseHTTPRequestHandler):
                                   list(erste.get('punkte') or [])[1:]
             return self._senden({
                 'lebenslauf': neu,
+                'passung': {'wert': 72, 'urteil': 'Die Projektsteuerung sitzt, die Branchenerfahrung fehlt.',
+                            'treffer': [{'anforderung': 'Steuerung externer Dienstleister',
+                                         'beleg': 'Aktuelle Station, Punkt 1'}],
+                            'offen': [{'anforderung': 'SAP S/4HANA',
+                                       'rat': 'Nur Grundkenntnisse vorhanden — nicht aufwerten.'}]},
                 'aenderungen': [{'wo': 'Berufserfahrung 1, Punkt 1',
                                  'vorher': 'Steuerung externer Dienstleister',
                                  'nachher': 'Steuerung von sieben externen Dienstleistern',
@@ -95,6 +100,49 @@ class Griff(BaseHTTPRequestHandler):
                 'beanstandet': [{'nachher': 'Steuerung von sieben externen Dienstleistern',
                                  'grund': 'Das Original nennt keine Anzahl'}],
             })
+
+        if weg == '/analyse':
+            hinweise = daten.get('hinweise') or []
+            befunde = [{'art': 'luecke', 'wo': '02/2020 – 09/2020',
+                        'befund': hinweise[0] if hinweise else 'Zwischen zwei Stationen fehlen sieben Monate.',
+                        'rat': 'Eine Zeile in den Lebenslauf: „07/2020 – 09/2020 Weiterbildung Projektmanagement“. '
+                               'Nicht erklären, nur benennen.',
+                        'gewicht': 'hoch'},
+                       {'art': 'inhalt', 'wo': 'Projektreferent, 2017–2021',
+                        'befund': 'Drei von vier Punkten beschreiben Aufgaben, kein Ergebnis.',
+                        'rat': 'Aus „Koordination von Terminen“ wird „Koordination von Terminen für zwei '
+                               'Systemeinführungen“ — nur wenn das stimmt.',
+                        'gewicht': 'mittel'},
+                       {'art': 'formales', 'wo': 'Kenntnisse',
+                        'befund': '„SAP – Grundkenntnisse“ steht neben „Microsoft Office – fortgeschritten“.',
+                        'rat': 'Reihenfolge nach Relevanz für die Stelle, nicht nach Können.',
+                        'gewicht': 'klein'}]
+            fragen = [{'frage': 'Was haben Sie zwischen Februar und September 2020 gemacht?',
+                       'warum': 'Die Lücke zwischen Musterfirma AG und der nächsten Station.',
+                       'antwort': 'Kurz benennen, was in der Zeit war, und auf die Weiterbildung verweisen, '
+                                  'die im Lebenslauf schon steht.',
+                       'falle': 'Nicht ausweichen und keine Beschäftigung erfinden, die sich prüfen lässt.'},
+                      {'frage': 'Sie führen „Verantwortung für Budgetziele“ auf — wie hoch war das Budget?',
+                       'warum': 'Der Punkt bei Projektmanager Digitalisierung nennt keine Größe.',
+                       'antwort': 'Die Zahl nennen, die im Lebenslauf steht (bis 500.000 €), und sagen, '
+                                  'worauf sich das bezog.'},
+                      {'frage': 'Warum der Wechsel vom Werkstudenten in die Beratung?',
+                       'warum': 'Der Sprung zwischen 2015 und 2017.',
+                       'antwort': 'Aus den beiden Stationen erzählen, was inhaltlich zusammengehört.'}]
+            passung = None
+            if (daten.get('stelle') or '').strip():
+                passung = {'wert': 72, 'urteil': 'Die Projektsteuerung sitzt, die Branchenerfahrung fehlt.',
+                           'treffer': [{'anforderung': 'Mehrjährige Projektleitung',
+                                        'beleg': 'Projektmanager Digitalisierung seit 03/2021'},
+                                       {'anforderung': 'Steuerung externer Dienstleister',
+                                        'beleg': 'Punkt 3 der aktuellen Station'}],
+                           'offen': [{'anforderung': 'SAP S/4HANA',
+                                      'rat': 'Im Lebenslauf steht nur „SAP – Grundkenntnisse“. Nicht aufwerten.'},
+                                     {'anforderung': 'Erfahrung im Anlagenbau',
+                                      'rat': 'Fehlt. Im Anschreiben auf die Branchenwechsel eingehen.'}]}
+            return self._senden({'staerken': ['Acht Jahre ohne Bruch in einer Linie.',
+                                              'Jede Station mit Zahlen belegt.'],
+                                 'auffaelligkeiten': befunde, 'fragen': fragen, 'passung': passung})
 
         if weg == '/stelle':
             return self._senden({'text': 'Wir suchen eine Projektleitung. ' * 20,

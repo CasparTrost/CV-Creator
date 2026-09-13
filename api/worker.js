@@ -15,7 +15,7 @@
  *   /stelle  {url}                               -> {text, titel}
  *   /status                                      -> Selbstauskunft, ohne Geheimnisse
  */
-import { PARSE, TAILOR, PRUEFER } from './prompts.js';
+import { PARSE, TAILOR, PRUEFER, ANALYSE } from './prompts.js';
 import { pdfText } from './pdf.js';
 
 const GRENZEN = {
@@ -56,6 +56,7 @@ export default {
     try {
       if (weg === '/parse') return antwort(await lesen(daten, umgebung), 200, kopf);
       if (weg === '/tailor') return antwort(await zuschneiden(daten, umgebung), 200, kopf);
+      if (weg === '/analyse') return antwort(await ansehen(daten, umgebung), 200, kopf);
       if (weg === '/stelle') return antwort(await stelleHolen(daten), 200, kopf);
       return antwort({ fehler: 'Unbekannter Endpunkt.' }, 404, kopf);
     } catch (e) {
@@ -237,9 +238,36 @@ async function zuschneiden(daten, umgebung) {
 
   return {
     lebenslauf: ergebnis.lebenslauf || lebenslauf,
+    passung: ergebnis.passung || null,
     aenderungen: Array.isArray(ergebnis.aenderungen) ? ergebnis.aenderungen : [],
     luecken: Array.isArray(ergebnis.luecken) ? ergebnis.luecken : [],
     beanstandet,
+  };
+}
+
+/* ---------------------------------------------------------------- ansehen */
+
+async function ansehen(daten, umgebung) {
+  const lebenslauf = daten.lebenslauf;
+  if (!lebenslauf || typeof lebenslauf !== 'object') throw fehler('Kein Lebenslauf übergeben.', 400);
+  const stelle = String(daten.stelle || '').trim().slice(0, GRENZEN.stelle);
+  /* Die Hinweise sind im Browser aus den Datumsangaben gerechnet, nicht
+     geraten. Das Modell soll sie beurteilen, nicht noch einmal suchen. */
+  const hinweise = Array.isArray(daten.hinweise) ? daten.hinweise.slice(0, 20) : [];
+
+  const eingabe =
+    'LEBENSLAUF (JSON)\n---\n' + JSON.stringify(lebenslauf) +
+    (hinweise.length ? '\n\nBERECHNETE BEFUNDE (gegeben, nicht zu prüfen)\n---\n'
+                       + hinweise.map(h => '- ' + h).join('\n') : '') +
+    (stelle ? '\n\nSTELLENANZEIGE\n---\n' + stelle : '\n\n(keine Stellenanzeige)');
+
+  const ergebnis = await fragen(umgebung, ANALYSE, eingabe, 0.4);
+  const liste = (feld, grenze) => Array.isArray(ergebnis[feld]) ? ergebnis[feld].slice(0, grenze) : [];
+  return {
+    staerken: liste('staerken', 3),
+    auffaelligkeiten: liste('auffaelligkeiten', 6),
+    fragen: liste('fragen', 8),
+    passung: stelle ? (ergebnis.passung || null) : null,
   };
 }
 
