@@ -299,8 +299,11 @@ async function nachGliederung(text, umgebung, ueberschriften) {
        zweimal hat — es heißt, dass das Modell einen Abschnitt zerschnitten
        hat. Auf dem Blatt standen sonst zwei „PERSONAL DATA“: eines in der
        Leiste mit der Anschrift, eines in der breiten Spalte mit dem
-       Geburtsdatum. */
-    const gleicher = a.titel && abschnitte.find(x => x.art === a.art && gleicheWorte(x.titel, a.titel));
+       Geburtsdatum. Auf die Art kommt es dabei nicht an: Hält das Modell
+       das eine für Kontaktdaten und das andere für Fließtext, ist es erst
+       recht derselbe Abschnitt — und die beiden landeten dann sogar in
+       verschiedenen Spalten. */
+    const gleicher = a.titel && abschnitte.find(x => gleicheWorte(x.titel, a.titel));
     if (gleicher) { gleicher.eintraege = gleicher.eintraege.concat(a.eintraege); return; }
     if (a.art === 'profil') {
       /* Ein Kurzprofil gibt es einmal. Findet das Modell es in zwei Stücken —
@@ -335,7 +338,7 @@ async function nachGliederung(text, umgebung, ueberschriften) {
   const offen = fehlendeZeilen(text, lebenslauf).filter(z => !bekannt.some(t => gleicheWorte(z, t)));
   if (offen.length) {
     abschnitte.push({ titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de,
-                      art: 'liste', eintraege: offen.slice(0, 40) });
+                      art: 'liste', eintraege: offen.slice(0, 40).map(ohneMarke) });
   }
   return { lebenslauf, nachgetragen, offen: offen.length, deckung: deckungVon(text, lebenslauf) };
 }
@@ -414,10 +417,20 @@ function bereicheAusUeberschriften(liste, zeilen) {
 }
 
 function artNachInhalt(a, zeilen) {
-  if (a.art !== 'liste' && a.art !== 'text') return;
-  let mit = 0;
-  for (let nr = a.von; nr <= a.bis; nr++) if (ZEITRAUM_ZEILE.test(zeilen[nr - 1] || '')) mit++;
-  if (mit < 2) return;
+  if (a.art !== 'liste' && a.art !== 'text' && a.art !== 'profil') return;
+  let mitZeit = 0, mitMarke = 0, gesamt = 0;
+  for (let nr = a.von; nr <= a.bis; nr++) {
+    const z = zeilen[nr - 1] || '';
+    if (!z.trim()) continue;
+    gesamt++;
+    if (ZEITRAUM_ZEILE.test(z)) mitZeit++;
+    if (MARKE_AM_ANFANG.test(z)) mitMarke++;
+  }
+  /* Was der Setzer aufgezählt hat, ist eine Aufzählung — auch wenn das Modell
+     „Text“ dazu sagt. Sonst werden aus neunzehn Kenntnissen ein Absatz, in dem
+     die Aufzählungszeichen als Zeichen mitten im Satz stehen. */
+  if (gesamt && mitMarke >= gesamt / 2) { a.art = 'liste'; return; }
+  if (mitZeit < 2 || a.art === 'profil') return;
   const nach = artVon(a.titel);
   if (nach === 'beruf' || nach === 'ausbildung' || nach === 'weiterbildung') a.art = nach;
 }
@@ -459,14 +472,7 @@ function bereicheOrdnen(liste, zeilen) {
      der Zuordnung ist nichts mehr übrig. Umgetauft wird nur, wenn die
      Überschrift sagt, wohin: „Zusätzliche Qualifikationen“ ist eine
      Ausbildung, „Publikationen“ bleibt eine Liste. */
-  aus.forEach(a => {
-    if (a.art !== 'liste' && a.art !== 'text') return;
-    let mit = 0;
-    for (let nr = a.von; nr <= a.bis; nr++) if (ZEITRAUM_ZEILE.test(zeilen[nr - 1] || '')) mit++;
-    if (mit < 2) return;
-    const nach = artVon(a.titel);
-    if (nach === 'beruf' || nach === 'ausbildung' || nach === 'weiterbildung') a.art = nach;
-  });
+  aus.forEach(a => artNachInhalt(a, zeilen));
 
   /* Zu jedem Abschnitt die Überschrift, die im Dokument steht — und die
      Feststellung, ob es überhaupt eine gibt. */
@@ -744,7 +750,7 @@ async function abschnittLesen(bereich, umgebung) {
    dort wirklich mehrere stehen können. */
 function fliesstextAus(bereich) {
   const zeilen = bereich.zeilen
-    .map(z => z.trim())
+    .map(z => ohneMarke(z))
     .filter(z => z && !NEBENSACHE.test(z) && !gleicheWorte(z, bereich.titel));
   if (!zeilen.length) return [];
   if (bereich.art === 'profil') return [zeilen.join(' ').replace(/\s+/g, ' ').trim()];
@@ -815,11 +821,24 @@ const KONTAKTARTEN = ['ort', 'tel', 'mail', 'datum', 'web', 'sonst'];
 /* Was vom Modell kommt, wird nicht durchgereicht: Nur die Felder, die es zu
    dieser Art gibt, und nur als Text. Der Editor setzt das später in HTML — was
    hier durchrutscht, steht dort auf dem Blatt. */
+/* Ein Aufzählungszeichen ist Auszeichnung, kein Text.
+   Steht es im Stichpunkt drin, setzt der Editor sein eigenes davor, und auf
+   dem Blatt steht „• · Globale Ansprechpartnerin …“. Das Zeichen kommt aus
+   der Datei und gehört dort auch hin — hier nicht mehr. */
+const MARKE_AM_ANFANG = /^\s*[\u2022\u00b7\u25cf\u25e6\u25aa\u2043\u2219\u00b7*\u2013\u2014-]\s+/;
+
+function ohneMarke(text) {
+  let t = String(text || '');
+  for (let i = 0; i < 3 && MARKE_AM_ANFANG.test(t); i++) t = t.replace(MARKE_AM_ANFANG, '');
+  return t.trim();
+}
+
 function eintraegeSaeubern(art, eintraege) {
   const liste = eintraege.slice(0, 60);
   if (art === 'liste' || art === 'profil' || art === 'text') {
     return liste
       .map(e => sauberText(typeof e === 'string' ? e : (e && (e.wert || e.text || e.titel)), 3000))
+      .map(e => (art === 'liste' ? ohneMarke(e) : e))
       .filter(Boolean);
   }
   const felder = EINTRAG_FELDER[art] || EINTRAG_FELDER.weiterbildung;
@@ -838,6 +857,7 @@ function eintraegeSaeubern(art, eintraege) {
           || (typeof e.beschreibung === 'string' && e.beschreibung ? [e.beschreibung] : []);
         aus.punkte = roh
           .map(p => sauberText(typeof p === 'string' ? p : (p && (p.text || p.punkt)), 1200))
+          .map(ohneMarke)
           .filter(Boolean).slice(0, 40);
       } else {
         aus[f] = sauberText(e[f], 200);
@@ -874,7 +894,8 @@ function istNote(wert) {
   return /^(abschluss|note|notendurchschnitt|durchschnitt|grade|gpa)?\s*[:\-\u2013]?\s*\d[\d.,]*\s*(\/\s*\d[\d.,]*)?$/i.test(t);
 }
 
-function ersatzEintrag(art, text) {
+function ersatzEintrag(art, roh) {
+  const text = ohneMarke(roh);
   if (art === 'kontakt') return { art: 'sonst', wert: text };
   if (art === 'sprachen') {
     const teile = text.split(/\s*[:–-]\s*/);
@@ -914,7 +935,8 @@ function nachtragVerteilen(art, eintraege, zeilen, fehlt) {
  * für verloren, weil das Wort fehlt. Beides nebeneinander, und die Note steht
  * zweimal auf dem Blatt. Die längere Fassung ist die vollständigere: Sie
  * tritt an die Stelle der kürzeren, statt sich danebenzustellen. */
-function punktEinfuegen(punkte, zeile) {
+function punktEinfuegen(punkte, roh) {
+  const zeile = ohneMarke(roh);
   const neu = stuecke(zeile);
   if (!neu.length) return;
   const stelle = punkte.findIndex(p => {
@@ -959,7 +981,8 @@ function nenntEintrag(eintrag, zeile) {
 /* Eine Zeile, die sich nirgends einordnen ließ, kommt dorthin, wo sie am
    wenigsten Schaden anrichtet: an den Eintrag darüber. Sichtbar an der
    falschen Stelle ist besser als unsichtbar an gar keiner. */
-function eintragNachtragen(art, eintraege, zeile) {
+function eintragNachtragen(art, eintraege, roh) {
+  const zeile = art === 'profil' || art === 'text' ? roh : ohneMarke(roh);
   if (art === 'liste' || art === 'profil' || art === 'text') { eintraege.push(zeile); return; }
   const letzter = eintraege[eintraege.length - 1];
   if ((art === 'beruf' || art === 'ausbildung') && letzter) {
@@ -1083,7 +1106,7 @@ async function amStueck(text, umgebung) {
   const fehlt = fehlendeZeilen(text, lebenslauf, true);
   if (fehlt.length) {
     const rest = { titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de, art: 'liste',
-                   eintraege: fehlt.slice(0, 40) };
+                   eintraege: fehlt.slice(0, 40).map(ohneMarke) };
     lebenslauf.abschnitte.push(rest);
   }
   return { lebenslauf, nachgetragen: 0, offen: fehlt.length,
