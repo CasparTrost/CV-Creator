@@ -237,7 +237,10 @@ LANGS = {
                        'the editor itself carries none.'),
         'date_fmt': '%d %B %Y',
         'cta_head': 'Now put it on a page',
-        'cta_text': ('The editor opens with a filled-in example. Replace the text, pick a '
+        'cta_text': (('The editor opens with a filled-in example. Replace the text, pick a '
+                      'layout, print to PDF. Nothing costs anything, and nothing leaves your '
+                      'device unless you ask the AI to read it.') if CFG['ki'] else
+                     'The editor opens with a filled-in example. Replace the text, pick a '
                      'layout, print to PDF. Nothing is uploaded and nothing costs anything.'),
         'resume_word': 'resume',
     },
@@ -294,7 +297,11 @@ LANGS = {
                        'Werbung; der Editor selbst enthält keine.'),
         'date_fmt': '%d. %B %Y',
         'cta_head': 'Jetzt auf die Seite bringen',
-        'cta_text': ('Der Editor startet mit einem ausgefüllten Beispiel. Text ersetzen, '
+        'cta_text': (('Der Editor startet mit einem ausgefüllten Beispiel. Text ersetzen, '
+                      'Layout wählen, als PDF drucken. Nichts kostet etwas, und nichts '
+                      'verlässt Ihr Gerät, außer Sie lassen es von der KI einlesen.')
+                     if CFG['ki'] else
+                     'Der Editor startet mit einem ausgefüllten Beispiel. Text ersetzen, '
                      'Layout wählen, als PDF drucken. Nichts wird hochgeladen, nichts '
                      'kostet etwas.'),
         'resume_word': 'Lebenslauf',
@@ -624,10 +631,12 @@ def page_index():
         '  <div class="wrap">',
         '    <div>' + ic('blatt') + '<strong>Nothing to pay</strong><p>The PDF is free at the end, not after a '
         'trial. There is no download button to put a price behind.</p></div>',
-        '    <div>' + ic('schild') + '<strong>Nothing uploaded</strong><p>The editor is one page of code running '
-        'on your machine. No server sees your employment history'
-        + (', unless you ask the AI features to read or tailor it.' if CFG['ki'] else '.')
-        + '</p></div>',
+        '    <div>' + ic('schild')
+        + ('<strong>Nothing leaves unasked</strong><p>The editor runs on your machine: what you '
+           'type, the layout and the PDF stay there. The three AI features are the exception, '
+           'and they ask before the first time.</p></div>' if CFG['ki'] else
+           '<strong>Nothing uploaded</strong><p>The editor is one page of code running on your '
+           'machine. No server sees your employment history.</p></div>'),
         '    <div>' + ic('raster') + '<strong>Sixteen layouts, one text</strong><p>Switch the design whenever you '
         'like. What you wrote stays where it is.</p></div>',
         '  </div>',
@@ -1425,10 +1434,12 @@ def page_index_de():
         '    <div>' + ic('blatt') + '<strong>Nichts zu bezahlen</strong><p>Das PDF ist am Ende kostenlos, nicht '
         'nach einer Testphase. Es gibt keinen Download-Knopf, hinter den ein Preis passt.</p>'
         '</div>',
-        '    <div>' + ic('schild') + '<strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, '
-        'die auf Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang'
-        + (' – außer Sie lassen ihn von der KI einlesen oder zuschneiden.' if CFG['ki'] else '.')
-        + '</p></div>',
+        '    <div>' + ic('schild')
+        + ('<strong>Nichts geht ungefragt hinaus</strong><p>Der Editor läuft auf Ihrem Gerät: '
+           'Was Sie tippen, das Layout und das PDF bleiben dort. Die drei KI-Funktionen sind '
+           'die Ausnahme — sie fragen vor dem ersten Mal.</p></div>' if CFG['ki'] else
+           '<strong>Nichts wird hochgeladen</strong><p>Der Editor ist eine Seite Code, die auf '
+           'Ihrem Gerät läuft. Kein Server sieht Ihren Werdegang.</p></div>'),
         '    <div>' + ic('raster') + '<strong>Sechzehn Layouts, ein Text</strong><p>Wechseln Sie das Design, wann '
         'Sie wollen. Was Sie geschrieben haben, bleibt stehen.</p></div>',
         '  </div>',
@@ -1574,15 +1585,15 @@ def ki_abschnitt(lang):
     if lang == 'de':
         return [
             '',
-            '    <h2>Die beiden KI-Funktionen</h2>',
-            '    <p>Der Editor bietet zwei Funktionen an, bei denen Text Ihr Gerät verlässt: '
-            'einen vorhandenen Lebenslauf einlesen und einen Lebenslauf auf eine '
-            'Stellenanzeige zuschneiden. Beide laufen nur, wenn Sie sie anklicken, und beim '
-            'ersten Mal werden Sie vorher gefragt. Wer sie nicht benutzt, für den bleibt der '
-            'Editor eine Seite ohne Server.</p>',
+            '    <h2>Die drei KI-Funktionen</h2>',
+            '    <p>Der Editor bietet drei Funktionen an, bei denen Text Ihr Gerät verlässt: '
+            'einen vorhandenen Lebenslauf einlesen, einen Lebenslauf auf eine '
+            'Stellenanzeige zuschneiden und einen Lebenslauf prüfen lassen. Alle drei laufen '
+            'nur, wenn Sie sie anklicken, und beim ersten Mal werden Sie vorher gefragt. Wer '
+            'sie nicht benutzt, für den bleibt der Editor eine Seite ohne Server.</p>',
             '    <p><strong>Was gesendet wird:</strong> der Text Ihres Lebenslaufs '
-            '(beziehungsweise die hochgeladene Datei) und, beim Zuschneiden, der Text der '
-            'Stellenanzeige. <strong>Wohin:</strong> an unseren Vermittlungsdienst und von '
+            '(beziehungsweise die hochgeladene Datei) und, beim Zuschneiden und beim Prüfen, '
+            'der Text der Stellenanzeige, sofern Sie ihn angeben. <strong>Wohin:</strong> an unseren Vermittlungsdienst und von '
             'dort an %s, der das Sprachmodell betreibt. <strong>Wie lange:</strong> Wir '
             'speichern nichts davon; die Anfrage wird beantwortet und ist damit erledigt. '
             'Welche Speicherfristen beim Modellanbieter gelten, steht in dessen '
@@ -1600,13 +1611,13 @@ def ki_abschnitt(lang):
         ]
     return [
         '',
-        '    <h2>The two AI features</h2>',
-        '    <p>The editor offers two features where text leaves your device: reading in an '
-        'existing CV, and tailoring a CV to a job advert. Both run only when you click them, '
-        'and the first time you are asked beforehand. If you never use them, the editor stays '
-        'a page without a server.</p>',
+        '    <h2>The three AI features</h2>',
+        '    <p>The editor offers three features where text leaves your device: reading in an '
+        'existing CV, tailoring a CV to a job advert, and having a CV reviewed. All three run '
+        'only when you click them, and the first time you are asked beforehand. If you never '
+        'use them, the editor stays a page without a server.</p>',
         '    <p><strong>What is sent:</strong> the text of your CV (or the file you upload) '
-        'and, when tailoring, the text of the job advert. <strong>Where to:</strong> our own '
+        'and, when tailoring or reviewing, the text of the job advert if you give one. <strong>Where to:</strong> our own '
         'relay, and from there to %s, who run the language model. <strong>For how long:</strong> '
         'we store none of it; the request is answered and that is the end of it. The model '
         'provider\'s own retention terms are in their privacy notice.</p>' % dienst,
@@ -1636,7 +1647,7 @@ def page_privacy():
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Privacy and cookies</h1>',
         '    <p class="lead">The short version: your resume never leaves your device'
-        + (' unless you use one of the two AI features, which ask first' if CFG['ki'] else '')
+        + (' unless you use one of the three AI features, which ask first' if CFG['ki'] else '')
         + ', the site sets no cookie until you say yes, and declining costs you nothing but '
         'the ads.</p>',
         '    <div class="callout warn"><strong>Before you publish this site</strong>',
@@ -1884,7 +1895,7 @@ def page_privacy_de():
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Datenschutzerklärung</h1>',
         '    <p class="lead">Kurz: Ihr Lebenslauf verlässt Ihr Gerät nicht'
-        + (' – außer Sie benutzen eine der beiden KI-Funktionen, die vorher fragen' if CFG['ki'] else '')
+        + (' – außer Sie benutzen eine der drei KI-Funktionen, die vorher fragen' if CFG['ki'] else '')
         + ', die Seite setzt kein Cookie, bevor Sie zustimmen, und eine Ablehnung kostet Sie '
         'nichts außer der Werbung.</p>',
         '    <div class="callout warn"><strong>Vor der Veröffentlichung</strong>',
