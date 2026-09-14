@@ -739,7 +739,11 @@ async function abschnittLesen(bereich, umgebung) {
   /* Die Überschrift selbst steht in keinem Eintrag — sie fehlt also nicht. */
   const pruefen = bereich.zeilen.filter(z => !gleicheWorte(z, bereich.titel));
   const fehlt = fehlendeZeilen(pruefen.join('\n'), eintraege);
-  nachtragVerteilen(bereich.art, eintraege, pruefen, fehlt.slice(0, 40));
+  /* Nachgetragen wird, was fehlt — und nicht nur die ersten vierzig Zeilen.
+     Eine Berufserfahrung über zwei Seiten hat leicht fünfzig; der Rest fiel
+     still durch und tauchte am Ende unter „Weitere Angaben“ wieder auf,
+     losgelöst von seiner Station. Die Grenze ist jetzt der Abschnitt selbst. */
+  nachtragVerteilen(bereich.art, eintraege, pruefen, fehlt.slice(0, pruefen.length));
   if (bereich.art === 'ausbildung') eintraege.forEach(notenRuecken);
   return { titel: bereich.titel, art: bereich.art, eintraege, nachgetragen: fehlt.length };
 }
@@ -1066,6 +1070,11 @@ function istDrin(zeile, folge, einzeln, engFolge) {
     return !k || String(engFolge || '').includes(k);
   }
   const gedeckt = w.filter(x => einzeln.has(x)).length / w.length;
+  /* Gekürzt wird am Ende. Fehlt das letzte Wort einer Zeile, ist sie nicht
+     angekommen, sondern abgeschnitten — auch wenn ihr Anfang irgendwo steht.
+     „mks Messe- und Kongress-Service GmbH – Würselen“ kam so als „mks Messe-
+     und Kongress-Service GmbH – W“ durch und galt als vollständig. */
+  if (w.length >= 3 && !einzeln.has(w[w.length - 1])) return false;
   /* Bei einer langen Zeile reicht eine gefundene Wortfolge nicht: „…von
      KI-Projekten“ steht auch dann da, wenn der Rest des Satzes fehlt. Ein
      gekürzter Stichpunkt ist ein verlorener Stichpunkt. */

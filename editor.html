@@ -1713,9 +1713,25 @@ function einZug(links, rechts){
   if (Math.abs(neuGross - neuKlein) >= gross - klein) return false;   /* würde nicht besser */
 
   const ziel = linksLaenger ? rechts : links;
-  const platz = ziel.querySelector(':scope > .platz');
-  if (platz) ziel.insertBefore(zug.block, platz); else ziel.appendChild(zug.block);
+  einordnen(ziel, zug.block);
   return true;
+}
+
+/* Einen Abschnitt in eine Spalte legen — an seinen Platz, nicht ans Ende.
+   Die Reihenfolge des Dokuments ist eine Aussage über den Lebenslauf: Wer
+   die Ausbildung vor die Berufserfahrung gesetzt hat, hat das so gemeint.
+   Nur was keinen Platz mitbringt (von Hand angelegt), kommt hinten dazu. */
+function einordnen(spalte, block){
+  const platz = spalte.querySelector(':scope > .platz');
+  const meine = parseInt(block.dataset.reihe, 10);
+  if (isFinite(meine)) {
+    const dahinter = [...spalte.querySelectorAll(':scope > .blk')].find(b => {
+      const n = parseInt(b.dataset.reihe, 10);
+      return isFinite(n) && n > meine;
+    });
+    if (dahinter) { spalte.insertBefore(block, dahinter); return; }
+  }
+  if (platz) spalte.insertBefore(block, platz); else spalte.appendChild(block);
 }
 
 /* Ein Durchlauf nach jeder Änderung am Aufbau. Zwei Runden, weil das
@@ -3192,11 +3208,16 @@ function lebenslaufEinsetzen(daten){
      nach, und erst wenn das Band an seiner Höhe ist, zieht profilAuslagern
      es als eigenen Abschnitt nach unten. */
   const leiste = [], haupt = [];
-  abschnitte.forEach(a => {
+  abschnitte.forEach((a, i) => {
     const innen = abschnittInhalt(a);
     if (!innen) return;
     const block = blockBauen((a.titel || '').trim() || standardTitel(a.art, namen), innen);
     block.dataset.art = a.art || 'liste';
+    /* Der Platz im Dokument. Er wird gebraucht, wenn ein Abschnitt später die
+       Spalte wechselt: Angehängt gehört er nicht ans Ende, sondern dorthin,
+       wo er im Lebenslauf steht. Sonst stand die Ausbildung plötzlich hinter
+       der Berufserfahrung, obwohl sie im Original davor steht. */
+    block.dataset.reihe = String(i);
     (SPALTENWUNSCH[a.art] === 'side' ? leiste : haupt).push(block);
   });
 
