@@ -335,11 +335,13 @@ async function nachGliederung(text, umgebung, ueberschriften) {
      Kopfband und legt das Profil erst dann als eigenen Abschnitt an, wenn es
      wirklich nicht mehr passt. Eine Zeichenzahl hier wäre geraten.
      Nur was gar kein Kurzprofil mehr sein kann, bleibt ein Abschnitt. */
+  let ausgelagert = null;          /* Überschrift eines in den Kopf gewanderten Kurzprofils */
   const profil = abschnitte.find(a => a.art === 'profil');
   if (profil) {
     const ganz = profil.eintraege.join(' ').replace(/\s+/g, ' ').trim();
     if (ganz.length <= 1400) {
       kopf.profil = ganz;
+      ausgelagert = profil.titel || '';
       abschnitte.splice(abschnitte.indexOf(profil), 1);
     }
   }
@@ -349,7 +351,11 @@ async function nachGliederung(text, umgebung, ueberschriften) {
   /* Das letzte Netz: Was trotz allem nirgends angekommen ist, steht am Ende
      des Blattes statt nirgends. Die Überschriften selbst zählen nicht mit —
      sie stehen in keinem Eintrag, ohne dass etwas fehlt. */
-  const bekannt = abschnitte.map(a => a.titel).filter(Boolean);
+  /* Auch die Überschrift eines ausgelagerten Kurzprofils ist bekannt. Sie
+     steht nach dem Auslagern in keinem Abschnitt mehr, und die Zeile „PROFIL“
+     galt deshalb als nirgends angekommen — auf dem Blatt erschien ein
+     Abschnitt „Weitere Angaben“ mit genau einem Eintrag: PROFIL. */
+  const bekannt = abschnitte.map(a => a.titel).concat(ausgelagert || []).filter(Boolean);
   const offen = fehlendeZeilen(text, lebenslauf).filter(z => !bekannt.some(t => gleicheWorte(z, t)));
   if (offen.length) {
     abschnitte.push({ titel: RESTTITEL[lebenslauf.sprache] || RESTTITEL.de,

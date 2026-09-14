@@ -477,24 +477,58 @@ function zeichenketten(inhalt, schriften, anfang) {
     if (grad > zeileGrad) { zeileGrad = grad; zeileSchrift = schrift; }
   };
 
+  /* Wie viel Text seit der letzten Ortsangabe gesetzt wurde. Daraus lässt
+     sich schätzen, wo der Setzkasten gerade steht — und das entscheidet, ob
+     die nächste Ortsangabe ein Wortzwischenraum ist oder nur der nächste
+     Buchstabe. */
+  let posX = null, seitPos = 0;
+  const anhaengen = (stueck) => { zeile += stueck; seitPos += String(stueck).length; };
+
   const umbruch = () => {
     if (zeile.trim()) laeufe.push({ x: zeileX, y: zeileY, text: zeile.trim(),
                                     grad: zeileGrad, schrift: zeileSchrift });
-    zeile = ''; zeileGrad = 0; zeileSchrift = '';
+    zeile = ''; zeileGrad = 0; zeileSchrift = ''; posX = null; seitPos = 0;
   };
   /* Jeder Textlauf beginnt mit einer Matrix, die seine Höhe nennt. Gleiche
      Höhe heißt gleiche Zeile — dort gehört ein Leerzeichen dazwischen, etwa
      zwischen einer Position und ihrem Zeitraum am rechten Rand. */
+  /* Steht zwischen dem zuletzt Gesetzten und der neuen Stelle eine Lücke?
+   *
+   * Zwei Läufe auf gleicher Höhe können zweierlei sein: eine Position und
+   * ihr Zeitraum am rechten Rand — dazwischen gehört ein Leerzeichen — oder
+   * zwei Buchstaben desselben Wortes. LaTeX und ähnliche Erzeuger setzen
+   * jedes Zeichen einzeln und schieben den Ort dazwischen weiter; wer dort
+   * jedes Mal ein Leerzeichen einfügt, liest „A n n e l i e s e“ und hat den
+   * Lebenslauf zerstört, ohne dass ein Zeichen fehlt.
+   *
+   * Geschätzt wird, wo der Setzkasten stünde: Startpunkt plus gesetzte
+   * Zeichen mal halber Schriftgrad. Ein Viertelgrad Abstand darüber hinaus
+   * ist eine Lücke, alles darunter ist derselbe Zug. */
+  const lueckeDavor = (neuX) => {
+    if (!isFinite(neuX) || posX === null) return true;
+    /* Rückwärts gesetzt: Was links vom zuletzt Gesetzten beginnt, ist ein
+       eigenes Stück — etwa die zweite Spalte einer Seitenleiste, die auf
+       derselben Grundlinie weiter links wieder anfängt. Die Schätzung des
+       Setzkastens sagt darüber nichts, sie liefert nur eine große negative
+       Zahl. Ohne diesen Fall stand „C2Englisch“ auf dem Blatt. */
+    if (neuX < posX) return true;
+    /* Ein halber Schriftgrad je Zeichen: an einem echten Lebenslauf
+       nachgemessen liegt die Zeichenbreite im Mittel bei 0,52 Graden. */
+    const breite = (grad || 10) * 0.5;
+    return neuX - (posX + seitPos * breite) > (grad || 10) * 0.25;
+  };
+
   const hoehe = (wertX, wertY) => {
     const ort = verwandeln(parseFloat(wertX), parseFloat(wertY), flaeche);
     const neuX = ort[0], neuY = ort[1];
     if (!isFinite(neuY)) return;
     if (letzteHoehe === null || Math.abs(neuY - letzteHoehe) > 0.4) umbruch();
-    else if (zeile && !/\s$/.test(zeile)) zeile += ' ';
+    else if (zeile && !/\s$/.test(zeile) && lueckeDavor(neuX)) zeile += ' ';
     if (!zeile) { zeileX = isFinite(neuX) ? neuX : 0; zeileY = neuY; }
     x = isFinite(neuX) ? neuX : x;
     y = neuY;
     letzteHoehe = neuY;
+    if (isFinite(neuX)) { posX = neuX; seitPos = 0; }
   };
 
   let treffer;
@@ -509,14 +543,14 @@ function zeichenketten(inhalt, schriften, anfang) {
     } else if (treffer[3] !== undefined) {
       for (const stueck of treffer[3].matchAll(/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g)) {
         const s = stueck[0];
-        if (s[0] === '(') { nimmGrad(); zeile += entziffern(entklammern(s.slice(1, -1)), tabelle); }
-        else if (s[0] === '<') { nimmGrad(); zeile += hexZuText(s.slice(1, -1), tabelle); }
-        else if (parseFloat(s) < -180) zeile += ' ';      /* großer Vorschub = Leerzeichen */
+        if (s[0] === '(') { nimmGrad(); anhaengen(entziffern(entklammern(s.slice(1, -1)), tabelle)); }
+        else if (s[0] === '<') { nimmGrad(); anhaengen(hexZuText(s.slice(1, -1), tabelle)); }
+        else if (parseFloat(s) < -180) anhaengen(' ');    /* großer Vorschub = Leerzeichen */
       }
     } else if (treffer[4] !== undefined) {
-      nimmGrad(); zeile += entziffern(entklammern(treffer[4]), tabelle);
+      nimmGrad(); anhaengen(entziffern(entklammern(treffer[4]), tabelle));
     } else if (treffer[5] !== undefined) {
-      nimmGrad(); zeile += hexZuText(treffer[5], tabelle);
+      nimmGrad(); anhaengen(hexZuText(treffer[5], tabelle));
     } else if (treffer[7] !== undefined) {
       /* Td/TD ist hier der Vorschub von Zeichen zu Zeichen. Aus einem
          waagerechten Vorschub ein Leerzeichen zu machen wäre falsch: die
