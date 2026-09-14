@@ -44,7 +44,7 @@ Betrieb zählt nur das Secret oben.
 `assets/site-config.js`:
 
 ```js
-ki: { endpunkt: 'https://plainsheet-ki.<konto>.workers.dev/api', aktiv: true }
+ki: { endpunkt: 'https://plainsheet-ki.<konto>.workers.dev/api', anbieter: 'CometAPI' }
 ```
 
 Danach `python3 tools/build.py` laufen lassen und beides hochladen.

@@ -267,9 +267,12 @@ start together and then flow independently is the right trade.
   A slot is only drawn where it can actually be clicked: it may reach into
   the sheet's bottom margin (it never prints), it becomes shallower when
   space is tight, and on a column that is full to the edge it is left out
-  rather than drawn half off the page. Because a full column can therefore
-  have no slot, the panel carries both `+ Section` and `+ in sidebar`, so
-  every column stays reachable however full the page is.
+  rather than drawn half off the page. A full column is not a dead end: the
+  page it overflows onto carries the same two columns, each with its own
+  slot, so every column stays reachable however full the sheet is. The panel
+  used to carry `+ Section` and `+ in sidebar` buttons for that case; they
+  added a section somewhere and left the visitor to drag it, which is worse
+  than clicking the place it belongs.
 - Single-column layouts are the same grid with one track: the main column
   first, the sidebar's sections below it, and the contact block lifted to the
   front so the address is under the header rather than behind the job history.

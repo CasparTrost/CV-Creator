@@ -6,7 +6,7 @@
 window.PLAINSHEET = {
 
   /* Canonical origin, no trailing slash. Used by the consent notice and
-     by tools/set-domain.py, which stamps it into the HTML head of every
+     by tools/build.py, which stamps it into the HTML head of every
      page, robots.txt and sitemap.xml. */
   domain: 'https://YOUR-DOMAIN.example',
 
