@@ -21,34 +21,69 @@
 
   var cfg = (window.PLAINSHEET || {}).ads || {};
   var slotIds = cfg.slots || {};
+  /* The all-zeros ID is the documented placeholder. Google serves nothing
+     against it, so the slot would otherwise be an invisible gap. In that
+     one case the slot is outlined, which is how you check the geometry
+     before the real units arrive. */
+  var PREVIEW = 'ca-pub-0000000000000000';
+  var isPreview = cfg.client === PREVIEW;
   var scriptRequested = false;
   var housesShown = 0;
 
-  function depth() {
-    return /\/(templates|guides)\//.test(location.pathname) ? '../' : '';
+  /* Written into every page by tools/build.py, so the scripts never guess. */
+  function root() {
+    return document.documentElement.getAttribute('data-root') || '';
+  }
+
+  function lang() {
+    return (document.documentElement.lang || 'en').slice(0, 2) === 'de' ? 'de' : 'en';
   }
 
   /* ---- House promo ----------------------------------------------- */
-  var HOUSE = [
-    {
-      href: 'editor.html',
-      mark: 'PS',
-      title: 'Write your resume here, free',
-      text: 'Sixteen layouts, a live A4 page, and a PDF at the end. No account.'
-    },
-    {
-      href: 'templates.html',
-      mark: '16',
-      title: 'Sixteen layouts to start from',
-      text: 'Single column for employer portals, sidebar for a human reader.'
-    },
-    {
-      href: 'guides/index.html',
-      mark: '¶',
-      title: 'How to write the thing',
-      text: 'Plain guides to bullet points, skills, length and applicant tracking.'
-    }
-  ];
+  var HOUSE = {
+    en: [
+      {
+        href: 'editor.html',
+        mark: 'PS',
+        title: 'Write your resume here, free',
+        text: 'Sixteen layouts, a live A4 page, and a PDF at the end. No account.'
+      },
+      {
+        href: 'templates.html',
+        mark: '16',
+        title: 'Sixteen layouts to start from',
+        text: 'Single column for employer portals, sidebar for a human reader.'
+      },
+      {
+        href: 'guides/index.html',
+        mark: '¶',
+        title: 'How to write the thing',
+        text: 'Plain guides to bullet points, skills, length and applicant tracking.'
+      }
+    ],
+    de: [
+      {
+        href: 'editor.html?lang=de',
+        mark: 'PS',
+        title: 'Lebenslauf hier schreiben, kostenlos',
+        text: 'Sechzehn Layouts, eine echte A4-Seite, am Ende ein PDF. Ohne Konto.'
+      },
+      {
+        href: 'de/lebenslauf-vorlagen.html',
+        mark: '16',
+        title: 'Sechzehn Vorlagen zum Anfangen',
+        text: 'Tabellarisch mit Datumsspalte, einspaltig oder mit Seitenleiste.'
+      },
+      {
+        href: 'de/ratgeber/index.html',
+        mark: '¶',
+        title: 'Ratgeber zur Bewerbung',
+        text: 'Zu Lebenslauf, Anschreiben, Bewerbungsfoto und Arbeitszeugnis.'
+      }
+    ]
+  };
+
+  var LABEL = { en: 'advertisement', de: 'Anzeige' };
 
   function house(box, index) {
     /* One is a useful pointer; three on a page is begging. The rest of the
@@ -58,10 +93,11 @@
       return;
     }
     housesShown += 1;
-    var promo = HOUSE[index % HOUSE.length];
+    var list = HOUSE[lang()];
+    var promo = list[index % list.length];
     var a = document.createElement('a');
     a.className = 'ad-house';
-    a.href = depth() + promo.href;
+    a.href = root() + promo.href;
     a.innerHTML = '<span class="ic" aria-hidden="true">' + promo.mark + '</span>' +
                   '<span><strong>' + promo.title + '</strong>' +
                   '<span>' + promo.text + '</span></span>';
@@ -114,9 +150,16 @@
     box.textContent = '';
     if (canServe) {
       var label = document.createElement('small');
-      label.textContent = 'advertisement';
+      /* German law requires advertising to be labelled; "Anzeige" is the word. */
+      label.textContent = LABEL[lang()];
       box.appendChild(label);
       unit(box, name);
+      if (isPreview) {
+        box.setAttribute('data-state', 'preview');
+        var note = document.createElement('em');
+        note.textContent = name;
+        box.appendChild(note);
+      }
     } else if (cfg.enabled === false) {
       box.setAttribute('data-state', 'empty');
     } else {

@@ -6,9 +6,17 @@
 window.PLAINSHEET = {
 
   /* Canonical origin, no trailing slash. Used by the consent notice and
-     by tools/set-domain.py, which stamps it into the HTML head of every
+     by tools/build.py, which stamps it into the HTML head of every
      page, robots.txt and sitemap.xml. */
-  domain: 'https://YOUR-DOMAIN.example',
+  domain: 'https://caspartrost.github.io/CV-Creator',
+
+  /* Soll diese Fassung in Suchmaschinen auftauchen? Eine Probefassung unter
+     einer vorläufigen Adresse gehört nicht in den Index: Was Google dort
+     aufnimmt, konkurriert später mit der richtigen Domain, und weg ist es
+     nicht an einem Tag. Auf false setzt build.py auf jeder Seite
+     „noindex, follow“ und in robots.txt ein Disallow.
+     Auf true stellen, sobald die endgültige Adresse steht. */
+  indexierung: false,
 
   /* Who runs the site. Shown on the imprint and contact pages. */
   operator: {
@@ -21,9 +29,13 @@ window.PLAINSHEET = {
        which is what you want while AdSense is still reviewing you. */
     enabled: true,
 
-    /* Your AdSense publisher ID: 'ca-pub-0000000000000000'.
-       While this is empty no ad script is ever requested and the slots
-       show a house promo instead, so the layout is already final. */
+    /* Your AdSense publisher ID.
+       This is a placeholder so that the ad slots are visible in the
+       layout: they render as labelled, empty units exactly where real
+       ads will sit. Google serves nothing against it, and no cookie is
+       set until a visitor accepts. Replace it with your own ID once
+       AdSense has approved the site — or set it back to '' to hide the
+       slots and show a single house promo instead. */
     client: '',
 
     /* Ad unit IDs from AdSense, one per placement. A placement with an
@@ -34,6 +46,10 @@ window.PLAINSHEET = {
       'templates-foot': '',
       'template-mid': '',
       'guides-mid': '',
+      'examples-mid': '',
+      'example-top': '',
+      'example-mid': '',
+      'example-foot': '',
       'guide-top': '',
       'guide-mid': '',
       'guide-foot': ''
@@ -47,6 +63,16 @@ window.PLAINSHEET = {
     /* Slots fill when they come within this many pixels of the viewport.
        Keeps ads off screens nobody scrolls to, which lifts viewability. */
     lazyMargin: 500
+  },
+
+  /* Die beiden KI-Funktionen im Editor: einen vorhandenen Lebenslauf
+     einlesen und einen Lebenslauf auf eine Stellenanzeige zuschneiden.
+     Sie brauchen den Worker aus api/ — ohne Adresse bleiben die Knöpfe
+     weg, und der Editor ist wie zuvor eine Seite ohne Server.
+     Adresse eintragen, die wrangler deploy ausgegeben hat, mit /api am Ende. */
+  ki: {
+    endpunkt: '',
+    anbieter: 'CometAPI',      /* steht so im Hinweis vor dem ersten Senden */
   },
 
   analytics: {

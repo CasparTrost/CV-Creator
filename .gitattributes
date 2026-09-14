@@ -1,0 +1,4 @@
+# Windows-Stapeldateien brauchen CRLF. Mit LF stolpert cmd.exe ueber
+# Sprungmarken, und der Fehler sieht aus wie ein Fehler im Skript.
+*.cmd text eol=crlf
+*.bat text eol=crlf

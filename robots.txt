@@ -1,5 +1,3 @@
+# indexierung: false in assets/site-config.js
 User-agent: *
-Allow: /
-
-# Nothing here is private; the editor holds no data to crawl.
-Sitemap: https://YOUR-DOMAIN.example/sitemap.xml
+Disallow: /
