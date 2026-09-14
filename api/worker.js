@@ -112,6 +112,14 @@ function fehler(text, status) {
   const e = new Error(text); e.freundlich = text; e.status = status || 502; return e;
 }
 
+/* Ein Fehler, der sich nicht aussitzen lässt. Wird der Schlüssel abgelehnt
+   oder ist das Kontingent erschöpft, scheitert auch jeder weitere Abschnitt
+   — dann ist Weiterarbeiten kein Durchhalten, sondern Verschleiern. Genau
+   das ist passiert: Der Dienst wusste „Der Schlüssel wird nicht angenommen“,
+   hat es ins Protokoll geschrieben und dem Benutzer „Das hat nicht geklappt“
+   gezeigt. */
+function endgueltig(e) { e.endgueltig = true; return e; }
+
 /* Eine grobe Bremse pro IP und Tag, damit eine fremde Schleife nicht das
    Guthaben leerräumt. Ohne KV-Bindung läuft der Worker ungebremst — das steht
    so in /status und in der README. */
@@ -149,8 +157,14 @@ async function fragen(umgebung, system, inhalt, temperatur) {
   if (!antwortModell.ok) {
     const text = (await antwortModell.text()).slice(0, 400);
     console.log('Anbieter', antwortModell.status, text);
-    if (antwortModell.status === 401) throw fehler('Der Schlüssel wird nicht angenommen.', 502);
-    if (antwortModell.status === 429) throw fehler('Der Dienst ist gerade ausgelastet. Bitte kurz warten.', 429);
+    if (antwortModell.status === 401)
+      throw endgueltig(fehler('Der Schlüssel wird nicht angenommen.', 502));
+    if (antwortModell.status === 403)
+      throw endgueltig(fehler('Der Schlüssel darf dieses Modell nicht benutzen.', 502));
+    if (antwortModell.status === 402)
+      throw endgueltig(fehler('Das Guthaben des Dienstes ist aufgebraucht.', 502));
+    if (antwortModell.status === 429)
+      throw endgueltig(fehler('Der Dienst ist gerade ausgelastet. Bitte kurz warten.', 429));
     throw fehler('Der Dienst antwortet nicht wie erwartet.', 502);
   }
   const daten = await antwortModell.json();
@@ -245,6 +259,7 @@ async function nachGliederung(text, umgebung, ueberschriften) {
       zeilen.map((z, i) => (i + 1) + ': ' + z).join('\n'), 0);
   } catch (e) {
     console.log('Gliederung fehlgeschlagen:', e && e.message);
+    if (e && e.endgueltig) throw e;
   }
   if (plan && plan.fehler) throw fehler('Das sieht nicht nach einem Lebenslauf aus.', 422);
 
@@ -260,8 +275,8 @@ async function nachGliederung(text, umgebung, ueberschriften) {
   if (!bereiche.length) return await amStueck(text, umgebung);
 
   const kopf = {
-    name: sauberText(plan.kopf && plan.kopf.name, 120),
-    rolle: sauberText(plan.kopf && plan.kopf.rolle, 200),
+    name: sauberText(plan && plan.kopf && plan.kopf.name, 120),
+    rolle: sauberText(plan && plan.kopf && plan.kopf.rolle, 200),
     profil: '',
   };
 
@@ -733,6 +748,7 @@ async function abschnittLesen(bereich, umgebung) {
     eintraege = Array.isArray(antwort.eintraege) ? antwort.eintraege : [];
   } catch (e) {
     console.log('Abschnitt „' + bereich.titel + '“:', e && e.message);
+    if (e && e.endgueltig) throw e;
   }
   eintraege = eintraegeSaeubern(bereich.art, eintraege);
 
