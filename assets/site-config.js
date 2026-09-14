@@ -71,7 +71,7 @@ window.PLAINSHEET = {
      weg, und der Editor ist wie zuvor eine Seite ohne Server.
      Adresse eintragen, die wrangler deploy ausgegeben hat, mit /api am Ende. */
   ki: {
-    endpunkt: '',
+    endpunkt: 'https://plainsheet-ki.plainsheet.workers.dev/api',
     anbieter: 'CometAPI',      /* steht so im Hinweis vor dem ersten Senden */
   },
 

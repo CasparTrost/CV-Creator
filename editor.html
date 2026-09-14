@@ -2644,19 +2644,26 @@ const KI_ZUSTIMMUNG = 'ps.ki.ok';
    erfundenen Antworten. Ist kein Endpunkt eingetragen und die Seite kommt von
    localhost, wird genau der benutzt — dann muss zum Ausprobieren nichts
    umgestellt werden, und in der veröffentlichten Fassung ändert sich nichts. */
-let KI_TESTBETRIEB = !KI.endpunkt &&
-  /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const KI_DAHEIM = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+let KI_TESTBETRIEB = !KI.endpunkt && KI_DAHEIM;
 if (KI_TESTBETRIEB) KI.endpunkt = location.origin + '/api';
 
 /* Läuft daneben ein echter Worker („npx wrangler dev“ horcht auf 8787),
    gewinnt der gegen den Testbetrieb — ohne dass jemand etwas einträgt.
    Gefragt wird nur von einem Rechner aus, der ohnehin lokal arbeitet. */
 async function kiWorkerSuchen(){
-  if (!KI_TESTBETRIEB) return;
+  if (!KI_DAHEIM) return;
   /* „localhost“ und „127.0.0.1“ sind derselbe Rechner, aber nicht dieselbe
      Adresse: Windows löst localhost zuerst nach ::1 auf, wrangler horcht auf
      127.0.0.1 — und dann findet die Suche nichts, obwohl der Dienst läuft. */
-  for (const wo of ['http://localhost:8787', 'http://127.0.0.1:8787']){
+  const wege = ['http://localhost:8787', 'http://127.0.0.1:8787'];
+  /* Steht ein veröffentlichter Dienst in der Konfiguration, gewinnt auf dem
+     eigenen Rechner trotzdem der lokale: erst wrangler dev, dann der
+     Testbetrieb aus tools/serve.py, und nur wenn keiner antwortet, der
+     eingetragene. Wer hier klickt, entwickelt — das darf kein Guthaben
+     kosten, und die eingebaute Attrappe wäre sonst nie wieder erreichbar. */
+  if (!KI_TESTBETRIEB) wege.push(location.origin);
+  for (const wo of wege){
     try {
       const antwort = await fetch(wo + '/api/status', { signal: AbortSignal.timeout(900) });
       const stand = await antwort.json();
