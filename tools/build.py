@@ -52,8 +52,15 @@ def read_config():
         hit = re.search(pattern, src_part)
         return hit.group(1) if hit else ''
 
+    def flag(name, standard=True):
+        """Ein Ja/Nein aus der Konfiguration. `field` kann das nicht: es liest
+        Zeichenketten in Anführungszeichen, und true/false hat keine."""
+        hit = re.search(r"%s\s*:\s*(true|false)" % name, src)
+        return standard if not hit else hit.group(1) == 'true'
+
     return {
         'domain': field('domain').rstrip('/'),
+        'indexierung': flag('indexierung'),
         'operator': field('name', 'operator'),
         'email': field('email', 'operator'),
         'adsense': field('client', 'ads'),
@@ -64,6 +71,7 @@ def read_config():
 
 CFG = read_config()
 DOMAIN = CFG['domain']
+INDEX = CFG['indexierung']
 BRAND = 'PlainSheet'
 TEMPLATES = json.loads(lies(os.path.join(ROOT, 'tools', 'data', 'templates.json')))
 BY_ID = {t['tid']: t for t in TEMPLATES}
@@ -127,7 +135,7 @@ def head(title, description, path, depth, extra_ld=None, image='assets/og.png',
                          % (code, DOMAIN, pairs[code]))
         parts.append('<link rel="alternate" hreflang="x-default" href="%s/%s">'
                      % (DOMAIN, pairs.get('en', path)))
-    if noindex:
+    if noindex or not INDEX:
         parts.append('<meta name="robots" content="noindex, follow">')
     parts += [
         '<meta name="theme-color" content="#1F5F5B">',
@@ -2036,6 +2044,10 @@ def sitemap(paths):
 
 
 def robots():
+    if not INDEX:
+        return ('# indexierung: false in assets/site-config.js\n'
+                'User-agent: *\n'
+                'Disallow: /\n')
     return ('User-agent: *\n'
             'Allow: /\n'
             '\n'
@@ -2134,6 +2146,11 @@ def patch_editor():
                    r'\g<1>%s/editor.html\g<2>' % DOMAIN, fixed)
     fixed = re.sub(r'(<meta property="og:url" content=")[^"]*(">)',
                    r'\g<1>%s/editor.html\g<2>' % DOMAIN, fixed)
+    # Der Editor trägt keine Robots-Angabe; bei indexierung:false bekommt er eine.
+    fixed = re.sub(r'\n<meta name="robots"[^>]*>', '', fixed)
+    if not INDEX:
+        fixed = fixed.replace('<link rel="canonical"',
+                              '<meta name="robots" content="noindex, follow">\n<link rel="canonical"', 1)
     if fixed != src:
         io.open(path, 'w', encoding='utf-8', newline='\n').write(fixed)
     return 'editor.html'
@@ -2192,6 +2209,8 @@ def main():
           % (len(written) + 1, len(indexable), DOMAIN))
     if 'YOUR-DOMAIN' in DOMAIN:
         print('note: assets/site-config.js still has the placeholder domain')
+    if not INDEX:
+        print('note: indexierung:false — every page carries noindex and robots.txt disallows')
 
 
 if __name__ == '__main__':

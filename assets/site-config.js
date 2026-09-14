@@ -8,7 +8,15 @@ window.PLAINSHEET = {
   /* Canonical origin, no trailing slash. Used by the consent notice and
      by tools/build.py, which stamps it into the HTML head of every
      page, robots.txt and sitemap.xml. */
-  domain: 'https://YOUR-DOMAIN.example',
+  domain: 'https://caspartrost.github.io/CV-Creator',
+
+  /* Soll diese Fassung in Suchmaschinen auftauchen? Eine Probefassung unter
+     einer vorläufigen Adresse gehört nicht in den Index: Was Google dort
+     aufnimmt, konkurriert später mit der richtigen Domain, und weg ist es
+     nicht an einem Tag. Auf false setzt build.py auf jeder Seite
+     „noindex, follow“ und in robots.txt ein Disallow.
+     Auf true stellen, sobald die endgültige Adresse steht. */
+  indexierung: false,
 
   /* Who runs the site. Shown on the imprint and contact pages. */
   operator: {
@@ -28,7 +36,7 @@ window.PLAINSHEET = {
        set until a visitor accepts. Replace it with your own ID once
        AdSense has approved the site — or set it back to '' to hide the
        slots and show a single house promo instead. */
-    client: 'ca-pub-0000000000000000',
+    client: '',
 
     /* Ad unit IDs from AdSense, one per placement. A placement with an
        empty ID falls back to the house promo. If you use Auto ads you
