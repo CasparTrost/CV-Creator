@@ -445,6 +445,9 @@ function zeichenketten(inhalt, schriften, anfang) {
      der laufenden Zeile vorkam: Eine Überschrift ist größer gesetzt als ihr
      Abschnitt, und das steht hier so im Dokument. */
   let schrift = '', grad = 0, zeileGrad = 0, zeileSchrift = '';
+  /* Der Grad, wie Tf ihn nennt, und der Maßstab der Textmatrix — die Größe
+     auf dem Blatt ist das Produkt aus beidem (mal der Fläche). */
+  let tfGrad = 0, tmMassstab = 1;
   /* Die Fläche, in die gerade gezeichnet wird. Ein Erzeuger setzt jeden Block
      mit einer eigenen Matrix — wer sie übergeht, vergleicht Koordinaten aus
      verschiedenen Welten und findet keine Spalte mehr. */
@@ -499,7 +502,8 @@ function zeichenketten(inhalt, schriften, anfang) {
       /* Der Schriftgrad ist das, woran man eine Überschrift erkennt — und er
          steht hier, im Textstrom, eine Anweisung vor dem Text selbst. */
       schrift = treffer[1];
-      grad = parseFloat(treffer[2]) * skalierung(flaeche);
+      tfGrad = parseFloat(treffer[2]);
+      grad = tfGrad * tmMassstab * skalierung(flaeche);
     } else if (treffer[3] !== undefined) {
       for (const stueck of treffer[3].matchAll(/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g)) {
         const s = stueck[0];
@@ -518,9 +522,27 @@ function zeichenketten(inhalt, schriften, anfang) {
          Sprung in der Höhe ist eine neue Zeile. */
       if (Math.abs(parseFloat(treffer[7])) > 0.4) umbruch();
     } else if (treffer[9] !== undefined) {
+      /* Die Textmatrix trägt nicht nur den Ort, sondern auch den Maßstab.
+         Viele Erzeuger schreiben „/F1 1 Tf“ und setzen die Größe erst hier:
+         „14 0 0 14 x y Tm“. Wer nur Tf liest, misst dann für jede Zeile
+         denselben Grad — und die Abschnittserkennung, die genau vom
+         Größenunterschied lebt, fällt ersatzlos aus. Der Text kam dabei
+         vollständig an, es fehlte nur die Gliederung, und das sieht man
+         einer Datei nicht an.
+         Gelesen wird aus dem Treffer selbst, nicht über weitere Gruppen:
+         Eine zusätzliche Klammer verschiebt die Nummern jeder späteren
+         Anweisung, und genau daran ist hier schon einmal alles gerissen. */
+      const m = treffer[0].trim().split(/\s+/).slice(0, 6).map(parseFloat);
+      const massstab = skalierung(m);
+      if (isFinite(massstab) && massstab > 0) {
+        tmMassstab = massstab;
+        grad = tfGrad * tmMassstab * skalierung(flaeche);
+      }
       hoehe(treffer[8], treffer[9]);
     } else if (treffer[10] !== undefined) {
       if (treffer[10] === 'T*') umbruch();
+      /* BT setzt die Textmatrix auf die Einheitsmatrix zurück. */
+      if (treffer[10] === 'BT') { tmMassstab = 1; grad = tfGrad * skalierung(flaeche); }
     } else if (treffer[11] !== undefined) {
       const neu = [11, 12, 13, 14, 15, 16].map(i => parseFloat(treffer[i]));
       if (neu.every(isFinite)) flaeche = malnehmen(neu, flaeche);
