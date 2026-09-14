@@ -1085,7 +1085,12 @@ function istDrin(zeile, folge, einzeln, engFolge) {
     const k = knapp(zeile);
     return !k || String(engFolge || '').includes(k);
   }
-  const gedeckt = w.filter(x => einzeln.has(x)).length / w.length;
+  /* Jedes Wort zählt einmal. Doppelte blähen die Deckung auf: In
+     „English – native · German – C1 · Swahili – native“ steht „native“
+     zweimal, und schon galten vier von fünf Wörtern als gefunden, obwohl
+     Swahili nirgends mehr stand. Verschieden gezählt sind es drei von vier. */
+  const eigen = [...new Set(w)];
+  const gedeckt = eigen.filter(x => einzeln.has(x)).length / eigen.length;
   /* Gekürzt wird am Ende. Fehlt das letzte Wort einer Zeile, ist sie nicht
      angekommen, sondern abgeschnitten — auch wenn ihr Anfang irgendwo steht.
      „mks Messe- und Kongress-Service GmbH – Würselen“ kam so als „mks Messe-
@@ -1095,9 +1100,15 @@ function istDrin(zeile, folge, einzeln, engFolge) {
      KI-Projekten“ steht auch dann da, wenn der Rest des Satzes fehlt. Ein
      gekürzter Stichpunkt ist ein verlorener Stichpunkt. */
   if (w.length >= 6) return gedeckt >= 0.8;
+  /* Eine wiedergefundene Wortfolge ist ein Hinweis, kein Beweis. Fehlt
+     daneben ein Drittel der Zeile, ist sie nicht angekommen, sondern
+     angeschnitten — „English – native · German – C1 · Swahili – native“ galt
+     als vollständig, weil „english native german“ irgendwo stand, während
+     Swahili und C1 nirgends mehr auftauchten. Die Regel darüber fängt das
+     erst ab sechs Wörtern; eine Sprachzeile hat oft fünf. */
   const n = Math.min(3, w.length);
   for (let i = 0; i + n <= w.length; i++) {
-    if (folge.includes(' ' + w.slice(i, i + n).join(' ') + ' ')) return true;
+    if (folge.includes(' ' + w.slice(i, i + n).join(' ') + ' ')) return gedeckt >= 0.8;
   }
   return gedeckt >= 0.9;
 }
