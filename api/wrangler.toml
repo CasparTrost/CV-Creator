@@ -11,14 +11,15 @@ compatibility_date = "2026-01-01"
 MODELL = "gpt-4.1-nano-2025-04-14"
 BASIS = "https://api.cometapi.com/v1"
 # Von welchen Adressen der Browser den Worker rufen darf, mit Komma getrennt.
-HERKUNFT = "https://YOUR-DOMAIN.example"
+HERKUNFT = "https://caspartrost.github.io"
 
 # Der Schlüssel gehört NICHT hierher, sondern in ein Secret:
 #   npx wrangler secret put COMETAPI_KEY
 
 # Ohne diese Bindung läuft der Worker ungebremst. Mit ihr gilt eine
 # Obergrenze pro IP und Tag — das ist der Unterschied zwischen einer
-# Rechnung und einer Überraschung.
-# [[kv_namespaces]]
-# binding = "LIMITS"
-# id = "hier die ID aus: npx wrangler kv namespace create LIMITS"
+# Rechnung und einer Überraschung. Wie hoch sie liegt, steht in GRENZEN
+# in worker.js; GET /api/status sagt, ob sie greift.
+[[kv_namespaces]]
+binding = "LIMITS"
+id = "ca8c092a2c7245fd93db1de08de31ad6"
