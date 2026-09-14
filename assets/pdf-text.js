@@ -569,10 +569,26 @@ function seiteTeile(roheLaeufe, vorgabe) {
   const rechts = laeufe.filter(l => l.x >= graben);
   if (links.length < 4 || rechts.length < 4) return einteilig(zeilenAus(laeufe));
 
-  /* Höhen, auf denen beide Seiten Text haben. */
-  const band = (l) => Math.round(l.y / 6);
-  const rechteBaender = new Set(rechts.map(band));
-  const gemeinsam = links.filter(l => rechteBaender.has(band(l))).map(l => l.y);
+  /* Höhen, auf denen beide Seiten Text haben.
+     Verglichen wird mit Spielraum, nicht in festen Fächern: Zwei Spalten
+     haben selten dieselbe Grundlinie — eine andere Zeilenhöhe verschiebt
+     sie um ein paar Punkte. In Sechser-Fächern landen sie dann nebenan,
+     die Zeile gilt nicht als gemeinsam, und der zweispaltige Bereich
+     beginnt erst darunter. Die Zeile darüber wird über den Graben hinweg
+     gelesen: „BERUFSERFAHRUNG SCHEINE“ — zwei Überschriften, eine Zeile. */
+  const abstaende = [];
+  const sortiertY = laeufe.map(l => l.y).sort((a, b) => a - b);
+  for (let i = 1; i < sortiertY.length; i++) {
+    const d = sortiertY[i] - sortiertY[i - 1];
+    if (d > 1 && d < 60) abstaende.push(d);
+  }
+  const zeilenhoehe = abstaende.length
+    ? abstaende.sort((a, b) => a - b)[Math.floor(abstaende.length / 2)] : 12;
+  const spielraum = Math.max(6, zeilenhoehe * 0.8);
+  const rechteY = rechts.map(l => l.y);
+  const gemeinsam = links
+    .filter(l => rechteY.some(y => Math.abs(y - l.y) <= spielraum))
+    .map(l => l.y);
   if (gemeinsam.length < 3) return einteilig(zeilenAus(laeufe));
 
   /* Ab der ersten gemeinsamen Höhe ist die Seite zweispaltig — bis unten.
@@ -664,14 +680,20 @@ function grabenFinden(laeufe) {
   let stelle = null, bandVon = null, letzteFrei = false;
   const pruefen = (bis) => {
     if (bandVon === null) return;
-    /* Getrennt wird am rechten Rand der freien Bahn, nicht in ihrer Mitte:
-       Die Bahn ist oft breiter als der Zwischenraum — links von ihr endet
-       die Leiste schon früher, rechts von ihr beginnt die Spalte sofort. */
-    const mitte = bis - (bis - bandVon) * 0.15;
+    /* Getrennt wird dort, wo die rechte Spalte wirklich beginnt: am
+       kleinsten x rechts vom Anfang der freien Bahn.
+       Vorher stand hier eine Quote — 85 % der Bahnbreite —, weil die Bahn
+       meist breiter ist als der Zwischenraum. Die Quote trifft aber nicht,
+       sobald die Spalte eine eingerückte Aufzählung enthält: Dann bildet
+       deren Rand die Bahn, die Überschrift darüber steht vierzehn Einheiten
+       weiter links, und die Trennstelle schneidet sie ab. „SCHEINE“ fiel so
+       in die linke Spalte und stand hinter „BERUFSERFAHRUNG“ in derselben
+       Zeile. Der kleinste x-Wert ist keine Schätzung, sondern der Rand. */
+    const mitte = spaltenRand(laeufe, spannen, bandVon, bis);
     if (bis - bandVon >= mindestens
         && mitte > links + breite * 0.15 && mitte < links + breite * 0.85) {
-      const anteil = laeufe.filter(l => l.x >= mitte).length / laeufe.length;
-      if (anteil >= 0.25 && anteil <= 0.8) stelle = mitte;
+      if (spalteTraegt(laeufe.filter(l => l.x < mitte), laeufe)
+          && spalteTraegt(laeufe.filter(l => l.x >= mitte), laeufe)) stelle = mitte;
     }
     bandVon = null;
   };
@@ -683,6 +705,55 @@ function grabenFinden(laeufe) {
   }
   pruefen(rechts);
   return stelle;
+}
+
+/* Wo beginnt die Spalte rechts der freien Bahn?
+ *
+ * Nicht bei einer festen Quote der Bahnbreite: Enthält die Spalte eine
+ * eingerückte Aufzählung, bildet deren Rand die Bahn, die Überschrift
+ * darüber steht weiter links, und die Trennstelle schneidet sie ab — so
+ * stand „SCHEINE“ hinter „BERUFSERFAHRUNG“ in einer Zeile.
+ *
+ * Aber auch nicht beim kleinsten x rechts der Bahn: Das greift jeden
+ * Ausreißer, der zufällig ein Stück weiter links beginnt, und zieht die
+ * Trennstelle über den halben Zwischenraum. Bei einem echten Lebenslauf
+ * wanderte damit eine ganze Rubrik in die falsche Spalte.
+ *
+ * Ein Spaltenrand ist die Stelle, an der VIELE Zeilen anfangen. Gesucht
+ * wird deshalb der kleinste x-Wert, den mindestens drei Läufe teilen. */
+function spaltenRand(laeufe, spannen, bandVon, bis) {
+  const kandidaten = [];
+  for (let i = 0; i < laeufe.length; i++) {
+    /* Beginnt in der Bahn und endet rechts von ihr: gehört nach rechts.
+       Beginnt in der Bahn und endet darin: ein Ausreißer der linken Spalte,
+       und genau so einer hat die Trennstelle einmal über den halben
+       Zwischenraum gezogen. */
+    if (laeufe[i].x > bandVon && spannen[i][1] > bis) kandidaten.push(laeufe[i].x);
+  }
+  return kandidaten.length ? Math.min(...kandidaten) - 1
+                           : bis - (bis - bandVon) * 0.15;
+}
+
+/* Trägt diese Seite des Grabens eine eigene Spalte?
+ *
+ * Vorher wurde gefragt, welcher Anteil des Textes rechts vom Graben steht,
+ * und alles unter einem Viertel verworfen. Das trifft den falschen Fall:
+ * Eine schmale Leiste mit zwei kurzen Listen — Scheine, Sprachen — kommt
+ * nie auf ein Viertel, obwohl der Graben sauber ist. Die Seite wurde dann
+ * zeilenweise über ihn hinweg gelesen, und aus zwei Überschriften wurde
+ * „BERUFSERFAHRUNG SCHEINE“.
+ *
+ * Gefragt wird stattdessen nach dem, was eine Spalte ausmacht: mehrere
+ * Zeilen, die sich über einen nennenswerten Teil der Texthöhe verteilen.
+ * Das unterscheidet eine echte Leiste von einer Seitenzahl in der Ecke,
+ * und genau dafür war die Anteilsgrenze gedacht. */
+function spalteTraegt(teil, alle) {
+  if (teil.length < 4) return false;
+  const spanne = (l) => Math.max(...l.map(x => x.y)) - Math.min(...l.map(x => x.y));
+  const ganz = spanne(alle);
+  if (ganz <= 0) return false;
+  const reihen = new Set(teil.map(l => Math.round(l.y / 6))).size;
+  return reihen >= 3 && spanne(teil) >= ganz * 0.25;
 }
 
 function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
