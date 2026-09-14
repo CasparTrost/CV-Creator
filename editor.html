@@ -2866,11 +2866,15 @@ async function dateiInhalt(datei){
        und „Text, aber unlesbar“ sind für den, der die Datei ausgesucht
        hat, zwei verschiedene Nachrichten. */
     let grund = 'scan';
-    if (window.pdfText){
+    if (window.pdfLesen){
       const roh = new Uint8Array(await datei.arrayBuffer());
       try {
-        const text = await window.pdfText(roh);
-        if (textBrauchbar(text)) return { text, quelle: 'pdf-lokal', bild: await pdfFoto(roh) };
+        /* Mitgeschickt wird nicht nur der Text, sondern auch, welche Zeilen
+           im Dokument als Überschrift gesetzt sind — größer als der Rest.
+           Das steht in der Datei und muss nicht geraten werden. */
+        const { text, ueberschriften } = await window.pdfLesen(roh);
+        if (textBrauchbar(text))
+          return { text, ueberschriften, quelle: 'pdf-lokal', bild: await pdfFoto(roh) };
         if (text && text.replace(/\s/g, '').length > 80) grund = 'wirr';
       } catch (e){ grund = 'wirr'; }
     }

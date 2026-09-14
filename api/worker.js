@@ -864,7 +864,13 @@ function eintraegeSaeubern(art, eintraege) {
       }
     });
     if (art === 'kontakt' && KONTAKTARTEN.indexOf(aus.art) < 0) aus.art = 'sonst';
-    const inhalt = felder.some(f => f !== 'punkte' && aus[f]) || (aus.punkte || []).length;
+    /* „art“ ist eine Einordnung, kein Inhalt. Ein Kontakteintrag mit
+       {art:'datum', wert:''} galt trotzdem als gefüllt: Auf dem Blatt stand
+       dann ein Aufzählungspunkt ohne alles, und weil der Eintrag da war,
+       hielt die Vollständigkeitsprüfung das Geburtsdatum für angekommen.
+       Es fehlte einfach. */
+    const inhalt = felder.some(f => f !== 'punkte' && f !== 'art' && aus[f])
+                || (aus.punkte || []).length;
     return inhalt ? aus : null;
   }).filter(Boolean);
 }
