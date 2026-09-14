@@ -445,6 +445,9 @@ function zeichenketten(inhalt, schriften, anfang) {
      der laufenden Zeile vorkam: Eine Überschrift ist größer gesetzt als ihr
      Abschnitt, und das steht hier so im Dokument. */
   let schrift = '', grad = 0, zeileGrad = 0, zeileSchrift = '';
+  /* Der Grad, wie Tf ihn nennt, und der Maßstab der Textmatrix — die Größe
+     auf dem Blatt ist das Produkt aus beidem (mal der Fläche). */
+  let tfGrad = 0, tmMassstab = 1;
   /* Die Fläche, in die gerade gezeichnet wird. Ein Erzeuger setzt jeden Block
      mit einer eigenen Matrix — wer sie übergeht, vergleicht Koordinaten aus
      verschiedenen Welten und findet keine Spalte mehr. */
@@ -472,24 +475,58 @@ function zeichenketten(inhalt, schriften, anfang) {
     if (grad > zeileGrad) { zeileGrad = grad; zeileSchrift = schrift; }
   };
 
+  /* Wie viel Text seit der letzten Ortsangabe gesetzt wurde. Daraus lässt
+     sich schätzen, wo der Setzkasten gerade steht — und das entscheidet, ob
+     die nächste Ortsangabe ein Wortzwischenraum ist oder nur der nächste
+     Buchstabe. */
+  let posX = null, seitPos = 0;
+  const anhaengen = (stueck) => { zeile += stueck; seitPos += String(stueck).length; };
+
   const umbruch = () => {
     if (zeile.trim()) laeufe.push({ x: zeileX, y: zeileY, text: zeile.trim(),
                                     grad: zeileGrad, schrift: zeileSchrift });
-    zeile = ''; zeileGrad = 0; zeileSchrift = '';
+    zeile = ''; zeileGrad = 0; zeileSchrift = ''; posX = null; seitPos = 0;
   };
   /* Jeder Textlauf beginnt mit einer Matrix, die seine Höhe nennt. Gleiche
      Höhe heißt gleiche Zeile — dort gehört ein Leerzeichen dazwischen, etwa
      zwischen einer Position und ihrem Zeitraum am rechten Rand. */
+  /* Steht zwischen dem zuletzt Gesetzten und der neuen Stelle eine Lücke?
+   *
+   * Zwei Läufe auf gleicher Höhe können zweierlei sein: eine Position und
+   * ihr Zeitraum am rechten Rand — dazwischen gehört ein Leerzeichen — oder
+   * zwei Buchstaben desselben Wortes. LaTeX und ähnliche Erzeuger setzen
+   * jedes Zeichen einzeln und schieben den Ort dazwischen weiter; wer dort
+   * jedes Mal ein Leerzeichen einfügt, liest „A n n e l i e s e“ und hat den
+   * Lebenslauf zerstört, ohne dass ein Zeichen fehlt.
+   *
+   * Geschätzt wird, wo der Setzkasten stünde: Startpunkt plus gesetzte
+   * Zeichen mal halber Schriftgrad. Ein Viertelgrad Abstand darüber hinaus
+   * ist eine Lücke, alles darunter ist derselbe Zug. */
+  const lueckeDavor = (neuX) => {
+    if (!isFinite(neuX) || posX === null) return true;
+    /* Rückwärts gesetzt: Was links vom zuletzt Gesetzten beginnt, ist ein
+       eigenes Stück — etwa die zweite Spalte einer Seitenleiste, die auf
+       derselben Grundlinie weiter links wieder anfängt. Die Schätzung des
+       Setzkastens sagt darüber nichts, sie liefert nur eine große negative
+       Zahl. Ohne diesen Fall stand „C2Englisch“ auf dem Blatt. */
+    if (neuX < posX) return true;
+    /* Ein halber Schriftgrad je Zeichen: an einem echten Lebenslauf
+       nachgemessen liegt die Zeichenbreite im Mittel bei 0,52 Graden. */
+    const breite = (grad || 10) * 0.5;
+    return neuX - (posX + seitPos * breite) > (grad || 10) * 0.25;
+  };
+
   const hoehe = (wertX, wertY) => {
     const ort = verwandeln(parseFloat(wertX), parseFloat(wertY), flaeche);
     const neuX = ort[0], neuY = ort[1];
     if (!isFinite(neuY)) return;
     if (letzteHoehe === null || Math.abs(neuY - letzteHoehe) > 0.4) umbruch();
-    else if (zeile && !/\s$/.test(zeile)) zeile += ' ';
+    else if (zeile && !/\s$/.test(zeile) && lueckeDavor(neuX)) zeile += ' ';
     if (!zeile) { zeileX = isFinite(neuX) ? neuX : 0; zeileY = neuY; }
     x = isFinite(neuX) ? neuX : x;
     y = neuY;
     letzteHoehe = neuY;
+    if (isFinite(neuX)) { posX = neuX; seitPos = 0; }
   };
 
   let treffer;
@@ -499,18 +536,19 @@ function zeichenketten(inhalt, schriften, anfang) {
       /* Der Schriftgrad ist das, woran man eine Überschrift erkennt — und er
          steht hier, im Textstrom, eine Anweisung vor dem Text selbst. */
       schrift = treffer[1];
-      grad = parseFloat(treffer[2]) * skalierung(flaeche);
+      tfGrad = parseFloat(treffer[2]);
+      grad = tfGrad * tmMassstab * skalierung(flaeche);
     } else if (treffer[3] !== undefined) {
       for (const stueck of treffer[3].matchAll(/\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]*>|-?[\d.]+/g)) {
         const s = stueck[0];
-        if (s[0] === '(') { nimmGrad(); zeile += entziffern(entklammern(s.slice(1, -1)), tabelle); }
-        else if (s[0] === '<') { nimmGrad(); zeile += hexZuText(s.slice(1, -1), tabelle); }
-        else if (parseFloat(s) < -180) zeile += ' ';      /* großer Vorschub = Leerzeichen */
+        if (s[0] === '(') { nimmGrad(); anhaengen(entziffern(entklammern(s.slice(1, -1)), tabelle)); }
+        else if (s[0] === '<') { nimmGrad(); anhaengen(hexZuText(s.slice(1, -1), tabelle)); }
+        else if (parseFloat(s) < -180) anhaengen(' ');    /* großer Vorschub = Leerzeichen */
       }
     } else if (treffer[4] !== undefined) {
-      nimmGrad(); zeile += entziffern(entklammern(treffer[4]), tabelle);
+      nimmGrad(); anhaengen(entziffern(entklammern(treffer[4]), tabelle));
     } else if (treffer[5] !== undefined) {
-      nimmGrad(); zeile += hexZuText(treffer[5], tabelle);
+      nimmGrad(); anhaengen(hexZuText(treffer[5], tabelle));
     } else if (treffer[7] !== undefined) {
       /* Td/TD ist hier der Vorschub von Zeichen zu Zeichen. Aus einem
          waagerechten Vorschub ein Leerzeichen zu machen wäre falsch: die
@@ -518,9 +556,27 @@ function zeichenketten(inhalt, schriften, anfang) {
          Sprung in der Höhe ist eine neue Zeile. */
       if (Math.abs(parseFloat(treffer[7])) > 0.4) umbruch();
     } else if (treffer[9] !== undefined) {
+      /* Die Textmatrix trägt nicht nur den Ort, sondern auch den Maßstab.
+         Viele Erzeuger schreiben „/F1 1 Tf“ und setzen die Größe erst hier:
+         „14 0 0 14 x y Tm“. Wer nur Tf liest, misst dann für jede Zeile
+         denselben Grad — und die Abschnittserkennung, die genau vom
+         Größenunterschied lebt, fällt ersatzlos aus. Der Text kam dabei
+         vollständig an, es fehlte nur die Gliederung, und das sieht man
+         einer Datei nicht an.
+         Gelesen wird aus dem Treffer selbst, nicht über weitere Gruppen:
+         Eine zusätzliche Klammer verschiebt die Nummern jeder späteren
+         Anweisung, und genau daran ist hier schon einmal alles gerissen. */
+      const m = treffer[0].trim().split(/\s+/).slice(0, 6).map(parseFloat);
+      const massstab = skalierung(m);
+      if (isFinite(massstab) && massstab > 0) {
+        tmMassstab = massstab;
+        grad = tfGrad * tmMassstab * skalierung(flaeche);
+      }
       hoehe(treffer[8], treffer[9]);
     } else if (treffer[10] !== undefined) {
       if (treffer[10] === 'T*') umbruch();
+      /* BT setzt die Textmatrix auf die Einheitsmatrix zurück. */
+      if (treffer[10] === 'BT') { tmMassstab = 1; grad = tfGrad * skalierung(flaeche); }
     } else if (treffer[11] !== undefined) {
       const neu = [11, 12, 13, 14, 15, 16].map(i => parseFloat(treffer[i]));
       if (neu.every(isFinite)) flaeche = malnehmen(neu, flaeche);
@@ -567,10 +623,26 @@ function seiteTeile(roheLaeufe, vorgabe) {
   const rechts = laeufe.filter(l => l.x >= graben);
   if (links.length < 4 || rechts.length < 4) return einteilig(zeilenAus(laeufe));
 
-  /* Höhen, auf denen beide Seiten Text haben. */
-  const band = (l) => Math.round(l.y / 6);
-  const rechteBaender = new Set(rechts.map(band));
-  const gemeinsam = links.filter(l => rechteBaender.has(band(l))).map(l => l.y);
+  /* Höhen, auf denen beide Seiten Text haben.
+     Verglichen wird mit Spielraum, nicht in festen Fächern: Zwei Spalten
+     haben selten dieselbe Grundlinie — eine andere Zeilenhöhe verschiebt
+     sie um ein paar Punkte. In Sechser-Fächern landen sie dann nebenan,
+     die Zeile gilt nicht als gemeinsam, und der zweispaltige Bereich
+     beginnt erst darunter. Die Zeile darüber wird über den Graben hinweg
+     gelesen: „BERUFSERFAHRUNG SCHEINE“ — zwei Überschriften, eine Zeile. */
+  const abstaende = [];
+  const sortiertY = laeufe.map(l => l.y).sort((a, b) => a - b);
+  for (let i = 1; i < sortiertY.length; i++) {
+    const d = sortiertY[i] - sortiertY[i - 1];
+    if (d > 1 && d < 60) abstaende.push(d);
+  }
+  const zeilenhoehe = abstaende.length
+    ? abstaende.sort((a, b) => a - b)[Math.floor(abstaende.length / 2)] : 12;
+  const spielraum = Math.max(6, zeilenhoehe * 0.8);
+  const rechteY = rechts.map(l => l.y);
+  const gemeinsam = links
+    .filter(l => rechteY.some(y => Math.abs(y - l.y) <= spielraum))
+    .map(l => l.y);
   if (gemeinsam.length < 3) return einteilig(zeilenAus(laeufe));
 
   /* Ab der ersten gemeinsamen Höhe ist die Seite zweispaltig — bis unten.
@@ -662,14 +734,20 @@ function grabenFinden(laeufe) {
   let stelle = null, bandVon = null, letzteFrei = false;
   const pruefen = (bis) => {
     if (bandVon === null) return;
-    /* Getrennt wird am rechten Rand der freien Bahn, nicht in ihrer Mitte:
-       Die Bahn ist oft breiter als der Zwischenraum — links von ihr endet
-       die Leiste schon früher, rechts von ihr beginnt die Spalte sofort. */
-    const mitte = bis - (bis - bandVon) * 0.15;
+    /* Getrennt wird dort, wo die rechte Spalte wirklich beginnt: am
+       kleinsten x rechts vom Anfang der freien Bahn.
+       Vorher stand hier eine Quote — 85 % der Bahnbreite —, weil die Bahn
+       meist breiter ist als der Zwischenraum. Die Quote trifft aber nicht,
+       sobald die Spalte eine eingerückte Aufzählung enthält: Dann bildet
+       deren Rand die Bahn, die Überschrift darüber steht vierzehn Einheiten
+       weiter links, und die Trennstelle schneidet sie ab. „SCHEINE“ fiel so
+       in die linke Spalte und stand hinter „BERUFSERFAHRUNG“ in derselben
+       Zeile. Der kleinste x-Wert ist keine Schätzung, sondern der Rand. */
+    const mitte = spaltenRand(laeufe, spannen, bandVon, bis);
     if (bis - bandVon >= mindestens
         && mitte > links + breite * 0.15 && mitte < links + breite * 0.85) {
-      const anteil = laeufe.filter(l => l.x >= mitte).length / laeufe.length;
-      if (anteil >= 0.25 && anteil <= 0.8) stelle = mitte;
+      if (spalteTraegt(laeufe.filter(l => l.x < mitte), laeufe)
+          && spalteTraegt(laeufe.filter(l => l.x >= mitte), laeufe)) stelle = mitte;
     }
     bandVon = null;
   };
@@ -681,6 +759,55 @@ function grabenFinden(laeufe) {
   }
   pruefen(rechts);
   return stelle;
+}
+
+/* Wo beginnt die Spalte rechts der freien Bahn?
+ *
+ * Nicht bei einer festen Quote der Bahnbreite: Enthält die Spalte eine
+ * eingerückte Aufzählung, bildet deren Rand die Bahn, die Überschrift
+ * darüber steht weiter links, und die Trennstelle schneidet sie ab — so
+ * stand „SCHEINE“ hinter „BERUFSERFAHRUNG“ in einer Zeile.
+ *
+ * Aber auch nicht beim kleinsten x rechts der Bahn: Das greift jeden
+ * Ausreißer, der zufällig ein Stück weiter links beginnt, und zieht die
+ * Trennstelle über den halben Zwischenraum. Bei einem echten Lebenslauf
+ * wanderte damit eine ganze Rubrik in die falsche Spalte.
+ *
+ * Ein Spaltenrand ist die Stelle, an der VIELE Zeilen anfangen. Gesucht
+ * wird deshalb der kleinste x-Wert, den mindestens drei Läufe teilen. */
+function spaltenRand(laeufe, spannen, bandVon, bis) {
+  const kandidaten = [];
+  for (let i = 0; i < laeufe.length; i++) {
+    /* Beginnt in der Bahn und endet rechts von ihr: gehört nach rechts.
+       Beginnt in der Bahn und endet darin: ein Ausreißer der linken Spalte,
+       und genau so einer hat die Trennstelle einmal über den halben
+       Zwischenraum gezogen. */
+    if (laeufe[i].x > bandVon && spannen[i][1] > bis) kandidaten.push(laeufe[i].x);
+  }
+  return kandidaten.length ? Math.min(...kandidaten) - 1
+                           : bis - (bis - bandVon) * 0.15;
+}
+
+/* Trägt diese Seite des Grabens eine eigene Spalte?
+ *
+ * Vorher wurde gefragt, welcher Anteil des Textes rechts vom Graben steht,
+ * und alles unter einem Viertel verworfen. Das trifft den falschen Fall:
+ * Eine schmale Leiste mit zwei kurzen Listen — Scheine, Sprachen — kommt
+ * nie auf ein Viertel, obwohl der Graben sauber ist. Die Seite wurde dann
+ * zeilenweise über ihn hinweg gelesen, und aus zwei Überschriften wurde
+ * „BERUFSERFAHRUNG SCHEINE“.
+ *
+ * Gefragt wird stattdessen nach dem, was eine Spalte ausmacht: mehrere
+ * Zeilen, die sich über einen nennenswerten Teil der Texthöhe verteilen.
+ * Das unterscheidet eine echte Leiste von einer Seitenzahl in der Ecke,
+ * und genau dafür war die Anteilsgrenze gedacht. */
+function spalteTraegt(teil, alle) {
+  if (teil.length < 4) return false;
+  const spanne = (l) => Math.max(...l.map(x => x.y)) - Math.min(...l.map(x => x.y));
+  const ganz = spanne(alle);
+  if (ganz <= 0) return false;
+  const reihen = new Set(teil.map(l => Math.round(l.y / 6))).size;
+  return reihen >= 3 && spanne(teil) >= ganz * 0.25;
 }
 
 function nachOrt(a, b) { return a.y - b.y || a.x - b.x; }
