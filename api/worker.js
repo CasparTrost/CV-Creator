@@ -285,8 +285,18 @@ async function nachGliederung(text, umgebung, ueberschriften) {
      als eigener Abschnitt darunter, mit unsichtbarer Naht. Also zurück in den
      Text damit. */
   const rolleRoh = kopf.rolle;          /* für den Vergleich weiter unten */
-  const ausRolle = [];
+  const ausRolle = [], ausRolleDaten = [];
   if (istFliesstext(kopf.rolle)) { ausRolle.push(kopf.rolle); kopf.rolle = ''; }
+  /* Eine Anschrift, eine Mail oder eine Telefonnummer ist keine
+     Berufsbezeichnung. Das trifft jeden, der Name und Anschrift im Briefkopf
+     untereinander stehen hat: Die Zeile unter dem Namen ist dann eben nicht
+     die Stelle, und sie stand groß unter dem Namen auf dem Blatt. Geprüft
+     wird nur gegen die eindeutigen Muster — Mail, Telefon, Postleitzahl,
+     Netzadresse —, denn „Senior Graphic Designer“ ist kurz und trotzdem eine
+     Berufsbezeichnung. */
+  else if (kopf.rolle && KONTAKTMUSTER.some(m => m.test(kopf.rolle.trim()))) {
+    ausRolleDaten.push(kopf.rolle); kopf.rolle = '';
+  }
 
   /* Was über dem ersten Abschnitt steht und weder Name noch Rolle ist, darf
      nicht zwischen Kopf und erstem Abschnitt verschwinden. Kontaktzeilen
@@ -297,7 +307,7 @@ async function nachGliederung(text, umgebung, ueberschriften) {
   const vorspann = uebrigerVorspann(zeilen.slice(0, bereiche[0].anfang - 1),
                                     { name: kopf.name, rolle: rolleRoh });
   const vorText = ohneDoppel(ausRolle.concat(vorspann.filter(z => !istKontaktZeile(z))));
-  const vorDaten = vorspann.filter(istKontaktZeile);
+  const vorDaten = ohneDoppel(ausRolleDaten.concat(vorspann.filter(istKontaktZeile)));
   if (vorDaten.length) stapel.unshift({ titel: '', art: 'kontakt', zeilen: vorDaten });
   if (vorText.length) stapel.unshift({ titel: '', art: 'profil', zeilen: vorText });
 
@@ -713,6 +723,12 @@ function ohneDoppel(zeilen) {
 function uebrigerVorspann(zeilen, kopf) {
   const bekannt = new Set(worte(kopf.name + ' ' + kopf.rolle));
   return zeilen.filter(z => {
+    /* Eine Mail, eine Netzadresse, eine Telefonnummer ist nie eine
+       Wiederholung des Namens — auch dann nicht, wenn sie aus ihm gebaut ist.
+       „maja@muster.de“ besteht aus genau den Wörtern von „Maja Muster“ und
+       fiel deshalb still weg. Wer seine Mail aus dem eigenen Namen bildet —
+       und das sind die meisten —, stand ohne Mail auf dem Blatt. */
+    if (KONTAKTMUSTER.some(m => m.test(String(z).trim()))) return true;
     const w = worte(z);
     if (!w.length) return false;
     return w.filter(x => bekannt.has(x)).length / w.length < 0.6;
