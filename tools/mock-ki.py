@@ -50,6 +50,13 @@ FIRMA = re.compile(r'\b(GmbH|AG|KG|mbH|e\.?\s?V\.?|SE|Ltd|Inc|Klinikum|Institut|
                    r'university)\b', re.I)
 
 
+# Mail, Telefon, Postleitzahl, Netzadresse — dasselbe, was der Worker als
+# Kontaktzeile erkennt. Kurz und ohne diese Muster heißt: eine Stelle.
+KONTAKTZEILE = re.compile(
+    r'@[\w.-]+\.\w{2,}|^\+?[\d\s()/.-]{7,}$|\b\d{5}\b'
+    r'|https?://|www\.|linkedin|xing|github', re.I)
+
+
 def rubrik_von(zeile):
     """Ist diese Zeile eine Überschrift?
 
@@ -133,8 +140,14 @@ def lebenslauf_aus(text, ueberschriften=None):
             break            # ab der ersten Überschrift ist der Kopf vorbei
         if not aus['kopf']['name'] and re.match(r"^[^\d@]{4,45}$", z) and 1 <= z.count(' ') <= 3:
             aus['kopf']['name'] = z
-            if i + 1 < len(zeilen) and not ist_rubrik(i + 1, zeilen[i + 1]):
-                aus['kopf']['rolle'] = zeilen[i + 1][:70]
+            # Die Zeile unter dem Namen ist nicht immer die Stelle: In
+            # Word-Vorlagen mit Briefkopf steht dort die Anschrift. Der
+            # Worker wehrt das ab; der Testbetrieb muss dasselbe Bild
+            # zeigen, sonst prüft man hier etwas anderes als draußen läuft.
+            naechste = zeilen[i + 1] if i + 1 < len(zeilen) else ''
+            if naechste and not ist_rubrik(i + 1, naechste) \
+               and not KONTAKTZEILE.search(naechste):
+                aus['kopf']['rolle'] = naechste[:70]
             break
 
     rubrik = None
@@ -348,7 +361,9 @@ def fehlende_zeilen(text, lebenslauf, ueberschriften=None):
     import re as _re
     def worte(s):
         return [w for w in _re.split(r'[^0-9A-Za-zÀ-ÿ]+', s.lower()) if len(w) >= 4]
-    da = set(worte(json.dumps(lebenslauf, ensure_ascii=False)))
+    alle = worte(json.dumps(lebenslauf, ensure_ascii=False))
+    da = set(alle)
+    folge = ' ' + ' '.join(alle) + ' '
     kopfzeilen = {' '.join(worte(u)) for u in (ueberschriften or [])}
     fehlt = []
     for zeile in text.split('\n'):
@@ -358,9 +373,31 @@ def fehlende_zeilen(text, lebenslauf, ueberschriften=None):
         w = worte(roh)
         if not w or ' '.join(w) in kopfzeilen:
             continue
-        if sum(1 for x in w if x in da) / len(w) < 0.6:
+        if not _ist_drin(w, folge, da):
             fehlt.append(roh)
-    return fehlt[:30]
+    return fehlt
+
+
+def _ist_drin(w, folge, da):
+    """Dieselbe Rechnung wie istDrin() im Worker.
+
+    Die alte Regel - sechs von zehn Woertern stehen irgendwo - liess zu viel
+    durch: „Visual Design“ galt als vorhanden, weil „visual“ in
+    „Visual Communication“ stand und „design“ in „Media Design“. Die
+    Zeile selbst war weg, und der Testbetrieb meldete nichts.
+    """
+    eigen = list(dict.fromkeys(w))
+    gedeckt = sum(1 for x in eigen if x in da) / len(eigen)
+    # Gekuerzt wird am Ende: Fehlt das letzte Wort, ist die Zeile abgeschnitten.
+    if len(w) >= 3 and w[-1] not in da:
+        return False
+    if len(w) >= 6:
+        return gedeckt >= 0.8
+    n = min(3, len(w))
+    for i in range(len(w) - n + 1):
+        if ' ' + ' '.join(w[i:i + n]) + ' ' in folge:
+            return gedeckt >= 0.8
+    return gedeckt >= 0.9
 
 
 def antwort_fuer(weg, daten):
@@ -381,10 +418,15 @@ def antwort_fuer(weg, daten):
         bekannt = list((flach.get('ueberschriften') or {}).values())
         bekannt += [a['titel'] for a in lebenslauf['abschnitte']]
         fehlt = fehlende_zeilen(text, lebenslauf, bekannt)
-        if fehlt:
+        # Nachgetragen wird bis zu einer Obergrenze - was darueber liegt, wird
+        # gemeldet, nicht verschwiegen. „offen: 0“ stand hier fest im Code
+        # und behauptete auch dann Vollstaendigkeit, wenn Zeilen fehlten.
+        nachtrag, offen = fehlt[:30], fehlt[30:]
+        if nachtrag:
             lebenslauf['abschnitte'].append(
-                {'titel': 'Weitere Angaben', 'art': 'liste', 'eintraege': fehlt})
-        return 200, {'lebenslauf': lebenslauf, 'nachgetragen': len(fehlt), 'offen': 0}
+                {'titel': 'Weitere Angaben', 'art': 'liste', 'eintraege': nachtrag})
+        return 200, {'lebenslauf': lebenslauf,
+                     'nachgetragen': len(nachtrag), 'offen': len(offen)}
 
     if weg == '/tailor':
         alt = daten.get('lebenslauf') or {}
