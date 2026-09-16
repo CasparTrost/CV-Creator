@@ -1944,12 +1944,49 @@ function groesse(r){
    Geprüft wird trotzdem, DASS der Cursor im Blatt steht. Sonst schriebe der
    Befehl in irgendein Feld der Leiste, und auf dem Blatt geschähe nichts —
    ein Knopf, der stumm nichts tut, sieht kaputt aus. */
+/* Eine Flex-Zeile richtet sich nicht nach text-align.
+   Die Kontaktzeilen sind welche: Symbol und Text stehen nebeneinander, und
+   wo sie stehen, entscheidet justify-content. „Zentriert“ setzte dort brav
+   text-align und es bewegte sich nichts — ein Knopf, der stumm nichts tut.
+   Für den Blocksatz gibt es in einer solchen Zeile nichts zu dehnen; sie
+   rückt dann nach links wie bei linksbündig. */
+const FLEXWEISE = { Left: 'flex-start', Center: 'center', Right: 'flex-end', Full: 'flex-start' };
+
+/* Die Absätze, die von der Auswahl berührt werden: die untersten Blöcke im
+   editierbaren Bereich, nicht deren Eltern. Wer eine Zeile markiert, meint
+   die Zeile — nicht den ganzen Abschnitt.
+   Eine Flex- oder Rasterzeile ist dabei selbst der unterste Block. Ihre
+   Kinder werden von der Anordnung zu Blöcken gemacht, ohne Absätze zu sein:
+   Bei einer Kontaktzeile sind das das Symbol und der Text nebeneinander.
+   Wer dort hinabsteigt, richtet zwei Hälften einzeln aus statt der Zeile —
+   und sichtbar geschieht gar nichts. */
+function absaetzeIn(raum, bereich){
+  const art = el => getComputedStyle(el).display;
+  const istBlock = el => { const d = art(el); return d !== 'inline' && d !== 'contents'; };
+  const istReihe = el => /flex|grid/.test(art(el));
+  const aus = [];
+  (function gehen(el){
+    for (const kind of el.children) {
+      if (!istBlock(kind)) continue;
+      if (istReihe(kind) || ![...kind.children].some(istBlock)) {
+        if (bereich.intersectsNode(kind)) aus.push(kind);
+      } else gehen(kind);
+    }
+  })(raum);
+  return aus.length ? aus : [raum];
+}
+
 function ausrichten(wie){
   const wahl = window.getSelection();
   const drin = wahl.rangeCount && wahl.getRangeAt(0).startContainer;
   const knoten = drin && (drin.nodeType === 1 ? drin : drin.parentElement);
-  if (!knoten || !knoten.closest('.inhalt, .bandtext')) { melde(T('erstKlicken')); return; }
+  const raum = knoten && knoten.closest('.inhalt, .bandtext');
+  if (!raum) { melde(T('erstKlicken')); return; }
+  /* Vor dem Befehl merken: Danach kann der Bereich nicht mehr gelten. */
+  const flexZeilen = absaetzeIn(raum, wahl.getRangeAt(0))
+    .filter(el => /flex/.test(getComputedStyle(el).display));
   cmd('justify' + wie);
+  flexZeilen.forEach(el => { el.style.justifyContent = FLEXWEISE[wie]; });
   /* Blocksatz ändert den Umbruch — also nachrechnen, ob noch alles passt. */
   clearTimeout(window._t); window._t = setTimeout(checkFit, 300);
 }
