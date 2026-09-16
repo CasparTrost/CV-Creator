@@ -177,13 +177,30 @@ your situation. `ads.js` works with either: it only ever asks
 | `guides/*.html` | `guide-top`, `guide-mid`, `guide-foot` |
 | `examples/index.html` | `examples-mid` |
 | `examples/*.html` | `example-top`, `example-mid`, `example-foot` |
-| `editor.html` | none, deliberately |
+| `editor.html` | `editor-arbeit`, in the interstitial only |
 
-The editor carries no advertising. A visitor spends twenty minutes there and
-produces a single page view, so ads would earn almost nothing while making the
-tool worse. The guides and the examples are what earn: several page views per
-visit, search traffic that arrives with intent, and the subject matter
-advertisers pay for.
+The editor carries no advertising in its margins. A visitor spends twenty
+minutes there and produces a single page view, so a banner beside the sheet
+would earn almost nothing while making the tool worse. The guides and the
+examples are what earn steadily: several page views per visit, search traffic
+that arrives with intent, and the subject matter advertisers pay for.
+
+The one exception is the interstitial. Four things in the editor cost real
+money to run — reading an uploaded CV, placing it into the layout, tailoring
+it to a job advert, and the PDF. Each of those opens a window that says what
+is happening and shows one ad beside it. Two rules hold there:
+
+- **It closes at any time.** An ad that cannot be dismissed breaks the rules
+  of every ad network and costs the account. The close button is live from
+  the first moment.
+- **Closing it means no result.** That is written in the window before anyone
+  clicks — a condition you only learn about afterwards is an ambush. The work
+  is done or discarded, never half-delivered.
+
+The wait is the same for a visitor who refused advertising; they see the house
+promo instead of an ad. Punishing a refusal with a longer wait would turn
+consent into a fee. `ads.zwischenspiel` in `assets/site-config.js` switches
+the whole thing off or changes the wait.
 
 ## Privacy decisions baked in
 

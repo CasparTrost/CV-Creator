@@ -234,6 +234,21 @@
     }
   }
 
+  /* Ein Weg von außen, einen Platz zu füllen, wenn er zu sehen ist.
+     Das Fenster im Editor steht erst da, wenn jemand etwas anstößt; ein
+     Platz, der beim Laden der Seite gefüllt wird und nie zu sehen ist, ist
+     eine ungesehene Einblendung — und die zieht die Sichtbarkeitsquote
+     nach unten, an der die Preise hängen. */
+  window.Ads = {
+    fuellen: function (wurzel) {
+      var boxes = (wurzel || document).querySelectorAll('.ad[data-slot]');
+      Array.prototype.forEach.call(boxes, function (box, i) {
+        if (box.getAttribute('data-state')) return;   /* schon gefüllt */
+        fill(box, i);
+      });
+    }
+  };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
   } else {
