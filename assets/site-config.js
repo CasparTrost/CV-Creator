@@ -52,7 +52,9 @@ window.PLAINSHEET = {
       'example-foot': '',
       'guide-top': '',
       'guide-mid': '',
-      'guide-foot': ''
+      'guide-foot': '',
+      /* Die Fläche im Editor-Fenster. */
+      'editor-arbeit': ''
     },
 
     /* Ads are requested only once a visitor accepts them. Leave this
@@ -62,7 +64,35 @@ window.PLAINSHEET = {
 
     /* Slots fill when they come within this many pixels of the viewport.
        Keeps ads off screens nobody scrolls to, which lifts viewability. */
-    lazyMargin: 500
+    lazyMargin: 500,
+
+    /* Das Fenster im Editor: Es zeigt, dass gearbeitet wird, und daneben
+       steht eine Anzeige. Es schließt sich von selbst, sobald die Arbeit
+       fertig und die Mindestzeit um ist.
+
+       Wer es wegklickt, bekommt das Ergebnis nicht — kein eingesetzter
+       Lebenslauf, kein Zuschnitt, kein PDF. Das steht auch im Fenster, bevor
+       jemand klickt; eine Bedingung, die man erst hinterher erfährt, ist ein
+       Hinterhalt.
+
+       Schließen geht jederzeit. Das ist kein Zugeständnis, sondern die
+       Bedingung: AdSense untersagt Anzeigen, die sich nicht sofort schließen
+       lassen. Gesperrt ist die Funktion, nie die Anzeige.
+
+       `wartezeit` sind die Sekunden, die das Fenster mindestens steht, auch
+       wenn die Arbeit früher fertig ist. Sie gilt für alle gleich — auch für
+       den, der Werbung abgelehnt hat. Wer Ablehnung mit Wartezeit bestraft,
+       macht aus der Einwilligung eine Gebühr, und das hält vor keinem
+       deutschen Gericht.
+
+       Auch bei eingeschalteter Werbung gilt: Ist der Editor der einzige Ort,
+       den jemand besucht, hat er noch keine Einwilligung gegeben. Dann steht
+       im Fenster der Eigenhinweis statt einer Anzeige — nie Werbecode ohne
+       Zustimmung. */
+    zwischenspiel: {
+      aktiv: true,
+      wartezeit: 5,
+    }
   },
 
   /* Die beiden KI-Funktionen im Editor: einen vorhandenen Lebenslauf
