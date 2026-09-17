@@ -81,10 +81,10 @@
     en: {
       label: 'Cookie choices',
       title: 'Advertising cookies',
-      intro: 'The editor needs none: your resume never leaves your browser. The rest of the ' +
-             'site is paid for by advertising, and our ad partner would like to store a ' +
-             'cookie to measure and personalise what you see. Your call, changeable later ' +
-             'on any page.',
+      intro: 'Your resume never leaves your browser, with or without cookies. The site is ' +
+             'paid for by advertising, and our ad partner would like to store a cookie to ' +
+             'measure and personalise what you see. Say no and the ads simply do not load. ' +
+             'Your call, changeable later on any page.',
       manage: 'Choose individually',
       reject: 'Reject',
       accept: 'Accept',
@@ -104,10 +104,11 @@
     de: {
       label: 'Cookie-Auswahl',
       title: 'Cookies für Werbung',
-      intro: 'Der Editor braucht keine: Ihr Lebenslauf verlässt Ihren Browser nicht. Die ' +
-             'übrige Seite finanziert sich über Werbung, und unser Werbepartner möchte ' +
-             'dafür ein Cookie setzen, um Werbung zu messen und zu personalisieren. Das ' +
-             'entscheiden Sie — auf jeder Seite auch später wieder.',
+      intro: 'Ihr Lebenslauf verlässt Ihren Browser nicht, mit oder ohne Cookies. Die ' +
+             'Seite finanziert sich über Werbung, und unser Werbepartner möchte dafür ein ' +
+             'Cookie setzen, um Werbung zu messen und zu personalisieren. Lehnen Sie ab, ' +
+             'wird einfach keine Werbung geladen. Das entscheiden Sie — auf jeder Seite ' +
+             'auch später wieder.',
       manage: 'Einzeln auswählen',
       reject: 'Ablehnen',
       accept: 'Zustimmen',
