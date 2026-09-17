@@ -1648,9 +1648,15 @@ def ki_abschnitt(lang):
             'Art. 6 Abs. 1 lit. a DSGVO, die Sie mit dem Bestätigen des Hinweises erteilen. '
             'Sie können sie jederzeit widerrufen, indem Sie die Funktionen nicht mehr '
             'benutzen; die Zustimmung selbst liegt als Merkposten im <em>local storage</em> '
-            'Ihres Browsers und verschwindet mit Ihren Browserdaten. Eine Übermittlung in '
-            'die USA und gegebenenfalls weitere Drittländer findet dabei statt; sie stützt '
-            'sich auf Ihre ausdrückliche Einwilligung nach Art. 49 Abs. 1 lit. a DSGVO.</p>',
+            'Ihres Browsers und verschwindet mit Ihren Browserdaten.</p>',
+            '    <p>Der Text wird dabei in ein Drittland übermittelt: Der '
+            'Vermittlungsdienst läuft in den USA, und von dort geht der Text an den '
+            'Modellanbieter, der seinen Sitz in einem weiteren Land außerhalb der EU haben '
+            'kann. Dort ist das europäische Datenschutzniveau nicht garantiert — Behörden '
+            'können unter Umständen auf die Daten zugreifen, und Ihre Rechte sind schwerer '
+            'durchzusetzen. Auf genau diesen Umstand weist der Hinweis im Editor hin, den '
+            'Sie vor dem ersten Senden bestätigen; Rechtsgrundlage der Übermittlung ist '
+            'diese ausdrückliche Einwilligung nach Art. 49 Abs. 1 lit. a DSGVO.</p>',
             '    <p>Bitte laden Sie nichts hoch, was nicht in eine Bewerbung gehört. Ein '
             'Lebenslauf enthält personenbezogene Daten; besondere Kategorien nach Art. 9 '
             'DSGVO — etwa Gesundheitsdaten oder die Religionszugehörigkeit — gehören weder in '
@@ -1680,9 +1686,14 @@ def ki_abschnitt(lang):
         '    <p>The legal basis for sending the text is your consent under Art. 6(1)(a) GDPR, '
         'given when you confirm the notice. You can withdraw it at any time by not using the '
         'features; the consent itself is a marker in your browser\'s local storage and '
-        'disappears with your browser data. The text is transferred to the United States and '
-        'possibly onward to other third countries; that transfer rests on your explicit '
-        'consent under Art. 49(1)(a) GDPR.</p>',
+        'disappears with your browser data.</p>',
+        '    <p>The text is transferred to a third country in the process: the relay runs in '
+        'the United States, and from there the text goes to the model provider, which may be '
+        'based in a further country outside the EU. The European level of data protection is '
+        'not guaranteed there — authorities may be able to access the data, and your rights '
+        'are harder to enforce. That is exactly what the notice in the editor tells you '
+        'before you send anything for the first time; the legal basis for the transfer is '
+        'that explicit consent, under Art. 49(1)(a) GDPR.</p>',
         '    <p>Please do not upload anything that does not belong in a job application. A CV '
         'contains personal data; special categories under Art. 9 GDPR — health data or '
         'religious affiliation, say — belong neither in an application nor in a language '
