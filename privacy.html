@@ -63,17 +63,23 @@
   <div class="wrap prose">
     <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Privacy and cookies</h1>
     <p class="lead">The short version: your resume never leaves your device unless you use one of the three AI features, which ask first, the site sets no cookie until you say yes, and declining costs you nothing but the ads.</p>
-    <div class="callout warn"><strong>Before you publish this site</strong>
-    <p>This is a working draft written for the site as it is built, not legal advice. Have it checked, and replace the bracketed details — your hosting provider and the contact address in the imprint.</p></div>
+
+    <h2>Who is responsible</h2>
+    <p>The controller under the GDPR is:</p>
+    <p>Caspar Trost &amp; Tim Josse GbR – Brozilla<br>c/o Autorenglück #73812<br>Albert-Einstein-Straße 47<br>02977 Hoyerswerda<br>Germany</p>
+    <p>Email: <a href="mailto:info@brozillattv.de">info@brozillattv.de</a> · further details on the <a href="imprint.html">imprint page</a></p>
+    <p>No data protection officer has been appointed; the thresholds of § 38 of the German Federal Data Protection Act are not met.</p>
 
     <h2>The editor</h2>
     <p>The resume editor runs entirely in your browser. The text you type, the photo you choose and the design you pick are never transmitted to us: there is no account, no database, and no copy of your resume on any server.</p>
-    <p>The editor does keep a working draft in your browser's local storage, so that closing the tab by accident does not destroy an hour of work. That draft sits on your own device, is readable only by this site in this browser, and is never sent anywhere. Clearing your browser data, or using the Clear button in the editor, removes it.</p>
+    <p>The editor does keep a working draft in your browser's local storage, so that closing the tab by accident does not destroy an hour of work. That draft sits on your own device, is readable only by this site in this browser, and is never sent anywhere. Clearing your browser data, or choosing “Start over” in the editor, removes it.</p>
 
     <h2>The three AI features</h2>
     <p>The editor offers three features where text leaves your device: reading in an existing CV, tailoring a CV to a job advert, and having a CV reviewed. All three run only when you click them, and the first time you are asked beforehand. If you never use them, the editor stays a page without a server.</p>
     <p><strong>What is sent:</strong> the text of your CV (or the file you upload) and, when tailoring or reviewing, the text of the job advert if you give one. <strong>Where to:</strong> our own relay, and from there to CometAPI, who run the language model. <strong>For how long:</strong> we store none of it; the request is answered and that is the end of it. The model provider's own retention terms are in their privacy notice.</p>
-    <p>The legal basis is your consent under Art. 6(1)(a) GDPR, given when you confirm the notice. You can withdraw it at any time by not using the features; the consent itself is a marker in your browser's local storage and disappears with your browser data. A transfer outside the EEA is not ruled out — check that for the provider you choose.</p>
+    <p>The relay is our own service, running at Cloudflare, Inc. (101 Townsend St, San Francisco, CA 94107, USA) as our processor. It takes your request, passes it to CometAPI and hands the answer back; none of the content is stored.</p>
+    <p><strong>One exception, and it concerns an IP address:</strong> so that nobody can drain the service at our expense, the relay counts how many requests come from one IP address in a day. A counter is stored under the date and your IP address — no content, just a number — and is deleted automatically after 30 hours. Legal basis: our legitimate interest in protecting the service from abuse and keeping its cost bounded, Art. 6(1)(f) GDPR.</p>
+    <p>The legal basis for sending the text is your consent under Art. 6(1)(a) GDPR, given when you confirm the notice. You can withdraw it at any time by not using the features; the consent itself is a marker in your browser's local storage and disappears with your browser data. The text is transferred to the United States and possibly onward to other third countries; that transfer rests on your explicit consent under Art. 49(1)(a) GDPR.</p>
     <p>Please do not upload anything that does not belong in a job application. A CV contains personal data; special categories under Art. 9 GDPR — health data or religious affiliation, say — belong neither in an application nor in a language model.</p>
 
     <h2>Cookies and local storage on the rest of the site</h2>
@@ -86,13 +92,15 @@
     <p>Nothing in the first two rows identifies you, is shared, or leaves your device.</p>
 
     <h2>Advertising</h2>
-    <p>Pages other than the editor carry advertising, which is what pays for the site. Our ad partner is Google (AdSense). Before you answer the consent question, no advertising script is loaded and no advertising cookie exists.</p>
+    <p>Advertising is what pays for the site. It appears in two places: on the pages other than the editor, and inside the editor in the window that comes up while an uploaded CV is read, placed into the layout or tailored to a job advert, and when you save a PDF. Our ad partner is Google Ireland Limited (Google AdSense). Before you answer the consent question, no advertising script is loaded and no advertising cookie exists — the window then shows a pointer to our own tool instead.</p>
+    <p><strong>No advertising is running yet:</strong> no publisher ID is configured, so no ad script is requested at all, not even if you accept. This section describes what happens once one is.</p>
     <p><strong>If you accept:</strong> Google's ad script loads, may set cookies and similar identifiers, and receives your IP address, browser and the page you are on. It uses that to select ads, to measure them, and to limit how often you see the same one. Google may combine it with data it holds from other sites. Data may be processed in the United States under the EU&nbsp;–&nbsp;US Data Privacy Framework. What Google does with it is set out in the <a href="https://policies.google.com/technologies/partner-sites" rel="nofollow noopener">Google privacy and terms</a>.</p>
     <p><strong>If you decline:</strong> nothing loads. No ad script is requested, no identifier is set, and the pages show a link to our own editor in the space instead. Declining does not limit any part of the site.</p>
     <p>Legal basis: your consent, under Art. 6(1)(a) GDPR and the corresponding national implementation of the ePrivacy rules (in Germany, § 25 TDDDG). You may withdraw it at any time through the <button type="button" class="lnk" data-consent-settings style="background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer">cookie settings</button> link, which appears in the footer of every page. Withdrawal takes effect immediately and does not affect what was lawful before.</p>
 
     <h2>Hosting and server logs</h2>
-    <p>This site is served by [hosting provider], which records standard server log data: IP address, time of request, the page requested, and the browser identification your device sends. Those logs exist to keep the site running and to investigate abuse. [Provider] processes them on our behalf under a data processing agreement. Legal basis: our legitimate interest in operating the site securely, Art. 6(1)(f) GDPR.</p>
+    <p>This site is served through GitHub Pages, operated by GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. Standard server log data arises there: IP address, time of request, the page requested, and the browser identification your device sends. Those logs exist to keep the site running and to investigate abuse; we have no access to them ourselves. Legal basis: our legitimate interest in operating the site securely, Art. 6(1)(f) GDPR.</p>
+    <p>The provider is based in the United States, so the data is transferred to a third country. That transfer is covered by the provider's data processing agreement including the European Commission's standard contractual clauses.</p>
 
     <h2>Fonts and other third parties</h2>
     <p>The typefaces are served from this domain, not from Google Fonts, so no request for a font reaches a third party and no IP address is passed on to one. Apart from the advertising described above, this site loads nothing from anywhere else: no analytics by default, no social widgets, no trackers, no content delivery network.</p>
@@ -143,7 +151,7 @@
         </ul>
       </div>
     </div>
-    <p class="fine">© 2026 PlainSheet. Operated by [Your name or company]. This site is paid for by advertising; the editor itself carries none.</p>
+    <p class="fine">© 2026 PlainSheet. Operated by Caspar Trost &amp; Tim Josse GbR – Brozilla. This site is paid for by advertising; the editor carries none beside the sheet.</p>
   </div>
 </footer>
 </body>

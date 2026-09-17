@@ -63,6 +63,19 @@ def read_config():
         'indexierung': flag('indexierung'),
         'operator': field('name', 'operator'),
         'email': field('email', 'operator'),
+        'vertreter': field('vertreter', 'operator'),
+        'verantwortlich': field('verantwortlich', 'operator'),
+        'zusatz': field('zusatz', 'operator'),
+        'strasse': field('strasse', 'operator'),
+        'ort': field('ort', 'operator'),
+        'land': field('land', 'operator'),
+        'land_en': field('landEn', 'operator') or field('land', 'operator'),
+        'ustid': field('ustid', 'operator'),
+        'register': field('register', 'operator'),
+        'telefon': field('telefon', 'operator'),
+        'hoster': field('name', 'hoster'),
+        'hoster_dienst': field('dienst', 'hoster'),
+        'hoster_anschrift': field('anschrift', 'hoster'),
         'adsense': field('client', 'ads'),
         'ki': field('endpunkt', 'ki'),
         'ki_anbieter': field('anbieter', 'ki') or 'an einen KI-Dienst',
@@ -234,7 +247,7 @@ LANGS = {
                        'type is uploaded, stored or sold. The PDF export is free and '
                        'always will be.'),
         'foot_legal': ('© %s %s. Operated by %s. This site is paid for by advertising; '
-                       'the editor itself carries none.'),
+                       'the editor carries none beside the sheet.'),
         'date_fmt': '%d %B %Y',
         'cta_head': 'Now put it on a page',
         'cta_text': (('The editor opens with a filled-in example. Replace the text, pick a '
@@ -294,7 +307,7 @@ LANGS = {
                        'was Sie eintippen, wird hochgeladen, gespeichert oder verkauft. '
                        'Der PDF-Export ist kostenlos und bleibt es.'),
         'foot_legal': ('© %s %s. Betrieben von %s. Diese Seite finanziert sich über '
-                       'Werbung; der Editor selbst enthält keine.'),
+                       'Werbung; neben dem Blatt steht keine.'),
         'date_fmt': '%d. %B %Y',
         'cta_head': 'Jetzt auf die Seite bringen',
         'cta_text': (('Der Editor startet mit einem ausgefüllten Beispiel. Text ersetzen, '
@@ -1001,10 +1014,15 @@ def page_about():
         'type stays in the tab you typed it into.</p>',
         '',
         '    <h2>How it is paid for</h2>',
-        '    <p>Advertising, on the pages around the editor — the home page, the template '
-        'gallery and the guides. The editor itself carries no advertising and will not. '
-        'Someone spends twenty minutes in there and produces a single page view, so ads in '
-        'the editor would earn almost nothing while making the tool worse to use.</p>',
+        '    <p>Advertising. On the pages around the editor — the home page, the template '
+        'gallery and the guides — and in the editor in one place only: the window that comes '
+        'up while an uploaded CV is being read, placed into the layout or tailored, and when '
+        'you save a PDF. Those four are the ones that cost us real money to run.</p>',
+        '    <p>Beside the sheet there is no advertising, and there will not be. Someone '
+        'spends twenty minutes in there and produces a single page view, so a banner next to '
+        'the page would earn almost nothing while making the tool worse to use. The window '
+        'can be closed at any moment; closing it means you do not get that one result, and '
+        'that is written in the window before you click.</p>',
         '    <p>Ads load only if you agree to them. If you decline, no advertising script is '
         'requested at all, and the site works exactly as it does otherwise. You can change '
         'that decision from the <button type="button" class="lnk" data-consent-settings '
@@ -1037,6 +1055,15 @@ def page_about():
     ])
 
 
+def anschrift(lang='de', trenner='<br>'):
+    """Die Anschrift des Betreibers, wie sie im Impressum und in der
+    Datenschutzerklärung steht. Eine Adresse an zwei Stellen von Hand zu
+    pflegen heißt, dass eines Tages zwei verschiedene dastehen."""
+    zeilen = [CFG['operator'], CFG['zusatz'], CFG['strasse'], CFG['ort'],
+              CFG['land_en'] if lang == 'en' else CFG['land']]
+    return trenner.join(esc(z) for z in zeilen if z)
+
+
 def page_imprint():
     depth = 0
     return '\n'.join([
@@ -1049,35 +1076,40 @@ def page_imprint():
         '<section class="band">',
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Imprint and contact</h1>',
-        '    <div class="callout warn"><strong>Fill this in before you publish</strong>',
-        '    <p>Germany, Austria and Switzerland require an imprint with a name, a postal '
-        'address and a way to contact the operator directly. An email address alone is not '
-        'enough, and the requirement applies to a hobby site carrying advertising. The '
-        'placeholders below mark what has to be replaced; the operator name and email come '
-        'from <code>assets/site-config.js</code>.</p></div>',
         '',
-        '    <h2>Responsible for this site</h2>',
-        '    <p>%s<br>[Street and number]<br>[Postcode and town]<br>[Country]</p>'
-        % esc(CFG['operator'] or '[Name]'),
+        '    <h2>Operator (§ 5 German Digital Services Act)</h2>',
+        '    <p>%s</p>' % anschrift('en'),
+        ] + (['    <p>Represented by: %s</p>' % esc(CFG['vertreter'])]
+             if CFG['vertreter'] else []) + [
         '',
         '    <h2>Contact</h2>',
-        '    <p>Email: %s<br>Telephone: [number]</p>' % esc(CFG['email'] or '[you@example.com]'),
-        '    <p>We read everything sent to that address. Corrections to a guide are welcome '
-        'and get made.</p>',
+        '    <p>Email: <a href="mailto:%s">%s</a></p>'
+        % (esc(CFG['email']), esc(CFG['email'])),
+        ] + (['    <p>Telephone: %s</p>' % esc(CFG['telefon'])] if CFG['telefon'] else []) + [
+        '    <p>We read everything sent to that address and reply to it. Corrections to a '
+        'guide are welcome and get made.</p>',
+        ] + ([
         '',
-        '    <h2>VAT and registration</h2>',
-        '    <p>[VAT identification number, if you have one]<br>'
-        '[Commercial register and number, if the operator is a company]</p>',
+        '    <h2>VAT identification number</h2>',
+        '    <p>%s</p>' % esc(CFG['ustid']),
+        ] if CFG['ustid'] else []) + ([
         '',
-        '    <h2>Responsible for the content</h2>',
-        '    <p>[Name and address of the person responsible for editorial content, where your '
-        'jurisdiction requires it separately]</p>',
+        '    <h2>Register</h2>',
+        '    <p>%s</p>' % esc(CFG['register']),
+        ] if CFG['register'] else []) + [
+        '',
+        '    <h2>Responsible for editorial content (§ 18(2) German Interstate Media Treaty)'
+        '</h2>',
+        '    <p>%s<br>Address as above</p>'
+        % esc(CFG['verantwortlich'] or CFG['operator']),
         '',
         '    <h2>Dispute resolution</h2>',
-        '    <p>The European Commission provides a platform for online dispute resolution at '
-        '<a href="https://ec.europa.eu/consumers/odr" rel="nofollow noopener">'
-        'ec.europa.eu/consumers/odr</a>. We are neither obliged nor willing to take part in '
-        'dispute resolution proceedings before a consumer arbitration board.</p>',
+        # Die Online-Streitbeilegungsplattform der EU wurde am 20. Juli 2025
+        # abgeschaltet. Ein Impressum, das dorthin verweist, schickt
+        # Verbraucher auf eine tote Seite.
+
+        '    <p>We are neither obliged nor willing to take part in dispute resolution '
+        'proceedings before a consumer arbitration board.</p>',
         '',
         '    <h2>Liability for links</h2>',
         '    <p>This site links to external sites over whose content we have no control. '
@@ -1598,12 +1630,27 @@ def ki_abschnitt(lang):
             'speichern nichts davon; die Anfrage wird beantwortet und ist damit erledigt. '
             'Welche Speicherfristen beim Modellanbieter gelten, steht in dessen '
             'Datenschutzhinweisen.</p>' % dienst,
-            '    <p>Rechtsgrundlage ist Ihre Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO, '
-            'die Sie mit dem Bestätigen des Hinweises erteilen. Sie können sie jederzeit '
-            'widerrufen, indem Sie die Funktionen nicht mehr benutzen; die Zustimmung selbst '
-            'liegt als Merkposten im <em>local storage</em> Ihres Browsers und verschwindet '
-            'mit Ihren Browserdaten. Eine Übermittlung in Drittländer ist dabei nicht '
-            'ausgeschlossen — prüfen Sie das für den von Ihnen gewählten Anbieter.</p>',
+            '    <p>Der Vermittlungsdienst ist ein eigener Dienst von uns, der bei '
+            'Cloudflare, Inc. (101 Townsend St, San Francisco, CA 94107, USA) als '
+            'Auftragsverarbeiter läuft. Er nimmt Ihre Anfrage an, gibt sie an %s weiter und '
+            'liefert die Antwort zurück; gespeichert wird dabei nichts vom Inhalt.</p>'
+            % dienst,
+            # Die Bremse legt einen Zaehler je IP und Tag ab. Das ist eine
+            # Verarbeitung personenbezogener Daten, und sie stand nirgends.
+            '    <p><strong>Eine Ausnahme, und sie betrifft eine IP-Adresse:</strong> Damit '
+            'niemand den Dienst auf unsere Kosten leerläuft, zählt der Vermittlungsdienst, '
+            'wie viele Anfragen von einer IP-Adresse an einem Tag kommen. Dazu wird ein '
+            'Zähler unter dem Datum und Ihrer IP-Adresse abgelegt — kein Inhalt, nur eine '
+            'Zahl — und nach 30 Stunden automatisch gelöscht. Rechtsgrundlage ist unser '
+            'berechtigtes Interesse daran, den Dienst vor Missbrauch zu schützen und die '
+            'Kosten begrenzt zu halten, Art. 6 Abs. 1 lit. f DSGVO.</p>',
+            '    <p>Rechtsgrundlage für das Senden des Textes ist Ihre Einwilligung nach '
+            'Art. 6 Abs. 1 lit. a DSGVO, die Sie mit dem Bestätigen des Hinweises erteilen. '
+            'Sie können sie jederzeit widerrufen, indem Sie die Funktionen nicht mehr '
+            'benutzen; die Zustimmung selbst liegt als Merkposten im <em>local storage</em> '
+            'Ihres Browsers und verschwindet mit Ihren Browserdaten. Eine Übermittlung in '
+            'die USA und gegebenenfalls weitere Drittländer findet dabei statt; sie stützt '
+            'sich auf Ihre ausdrückliche Einwilligung nach Art. 49 Abs. 1 lit. a DSGVO.</p>',
             '    <p>Bitte laden Sie nichts hoch, was nicht in eine Bewerbung gehört. Ein '
             'Lebenslauf enthält personenbezogene Daten; besondere Kategorien nach Art. 9 '
             'DSGVO — etwa Gesundheitsdaten oder die Religionszugehörigkeit — gehören weder in '
@@ -1621,11 +1668,21 @@ def ki_abschnitt(lang):
         'relay, and from there to %s, who run the language model. <strong>For how long:</strong> '
         'we store none of it; the request is answered and that is the end of it. The model '
         'provider\'s own retention terms are in their privacy notice.</p>' % dienst,
-        '    <p>The legal basis is your consent under Art. 6(1)(a) GDPR, given when you confirm '
-        'the notice. You can withdraw it at any time by not using the features; the consent '
-        'itself is a marker in your browser\'s local storage and disappears with your browser '
-        'data. A transfer outside the EEA is not ruled out — check that for the provider you '
-        'choose.</p>',
+        '    <p>The relay is our own service, running at Cloudflare, Inc. (101 Townsend St, '
+        'San Francisco, CA 94107, USA) as our processor. It takes your request, passes it to '
+        '%s and hands the answer back; none of the content is stored.</p>' % dienst,
+        '    <p><strong>One exception, and it concerns an IP address:</strong> so that nobody '
+        'can drain the service at our expense, the relay counts how many requests come from '
+        'one IP address in a day. A counter is stored under the date and your IP address — no '
+        'content, just a number — and is deleted automatically after 30 hours. Legal basis: '
+        'our legitimate interest in protecting the service from abuse and keeping its cost '
+        'bounded, Art. 6(1)(f) GDPR.</p>',
+        '    <p>The legal basis for sending the text is your consent under Art. 6(1)(a) GDPR, '
+        'given when you confirm the notice. You can withdraw it at any time by not using the '
+        'features; the consent itself is a marker in your browser\'s local storage and '
+        'disappears with your browser data. The text is transferred to the United States and '
+        'possibly onward to other third countries; that transfer rests on your explicit '
+        'consent under Art. 49(1)(a) GDPR.</p>',
         '    <p>Please do not upload anything that does not belong in a job application. A CV '
         'contains personal data; special categories under Art. 9 GDPR — health data or '
         'religious affiliation, say — belong neither in an application nor in a language '
@@ -1650,10 +1707,15 @@ def page_privacy():
         + (' unless you use one of the three AI features, which ask first' if CFG['ki'] else '')
         + ', the site sets no cookie until you say yes, and declining costs you nothing but '
         'the ads.</p>',
-        '    <div class="callout warn"><strong>Before you publish this site</strong>',
-        '    <p>This is a working draft written for the site as it is built, not legal advice. '
-        'Have it checked, and replace the bracketed details — your hosting provider and the '
-        'contact address in the imprint.</p></div>',
+        '',
+        '    <h2>Who is responsible</h2>',
+        '    <p>The controller under the GDPR is:</p>',
+        '    <p>%s</p>' % anschrift('en'),
+        '    <p>Email: <a href="mailto:%s">%s</a> · further details on the '
+        '<a href="imprint.html">imprint page</a></p>'
+        % (esc(CFG['email']), esc(CFG['email'])),
+        '    <p>No data protection officer has been appointed; the thresholds of § 38 of the '
+        'German Federal Data Protection Act are not met.</p>',
         '',
         '    <h2>The editor</h2>',
         '    <p>The resume editor runs entirely in your browser. The text you type, the photo '
@@ -1662,7 +1724,7 @@ def page_privacy():
         '    <p>The editor does keep a working draft in your browser\'s local storage, so that '
         'closing the tab by accident does not destroy an hour of work. That draft sits on your '
         'own device, is readable only by this site in this browser, and is never sent anywhere. '
-        'Clearing your browser data, or using the Clear button in the editor, removes it.</p>',
+        'Clearing your browser data, or choosing “Start over” in the editor, removes it.</p>',
         ] + ki_abschnitt('en') + [
         '',
         '    <h2>Cookies and local storage on the rest of the site</h2>',
@@ -1681,9 +1743,17 @@ def page_privacy():
         'device.</p>',
         '',
         '    <h2>Advertising</h2>',
-        '    <p>Pages other than the editor carry advertising, which is what pays for the site. '
-        'Our ad partner is Google (AdSense). Before you answer the consent question, no '
-        'advertising script is loaded and no advertising cookie exists.</p>',
+        '    <p>Advertising is what pays for the site. It appears in two places: on the pages '
+        'other than the editor, and inside the editor in the window that comes up while an '
+        'uploaded CV is read, placed into the layout or tailored to a job advert, and when '
+        'you save a PDF. Our ad partner is Google Ireland Limited (Google AdSense). Before '
+        'you answer the consent question, no advertising script is loaded and no advertising '
+        'cookie exists — the window then shows a pointer to our own tool instead.</p>',
+        ] + ([
+        '    <p><strong>No advertising is running yet:</strong> no publisher ID is '
+        'configured, so no ad script is requested at all, not even if you accept. This '
+        'section describes what happens once one is.</p>',
+        ] if not CFG['adsense'] else []) + [
         '    <p><strong>If you accept:</strong> Google\'s ad script loads, may set cookies and '
         'similar identifiers, and receives your IP address, browser and the page you are on. It '
         'uses that to select ads, to measure them, and to limit how often you see the same one. '
@@ -1704,11 +1774,15 @@ def page_privacy():
         'before.</p>',
         '',
         '    <h2>Hosting and server logs</h2>',
-        '    <p>This site is served by [hosting provider], which records standard server log '
-        'data: IP address, time of request, the page requested, and the browser identification '
-        'your device sends. Those logs exist to keep the site running and to investigate abuse. '
-        '[Provider] processes them on our behalf under a data processing agreement. Legal '
-        'basis: our legitimate interest in operating the site securely, Art. 6(1)(f) GDPR.</p>',
+        '    <p>This site is served through %s, operated by %s, %s. Standard server log '
+        'data arises there: IP address, time of request, the page requested, and the browser '
+        'identification your device sends. Those logs exist to keep the site running and to '
+        'investigate abuse; we have no access to them ourselves. Legal basis: our legitimate '
+        'interest in operating the site securely, Art. 6(1)(f) GDPR.</p>'
+        % (esc(CFG['hoster_dienst']), esc(CFG['hoster']), esc(CFG['hoster_anschrift'])),
+        '    <p>The provider is based in the United States, so the data is transferred to a '
+        'third country. That transfer is covered by the provider\'s data processing agreement '
+        'including the European Commission\'s standard contractual clauses.</p>',
         '',
         '    <h2>Fonts and other third parties</h2>',
         '    <p>The typefaces are served from this domain, not from Google Fonts, so no request '
@@ -1775,10 +1849,16 @@ def page_about_de():
         'Sie es eingetippt haben.</p>',
         '',
         '    <h2>Wie die Seite finanziert wird</h2>',
-        '    <p>Über Werbung auf den Seiten um den Editor herum — Startseite, Vorlagen, '
-        'Muster, Ratgeber. Der Editor selbst enthält keine Werbung und wird keine enthalten. '
-        'Wer dort zwanzig Minuten verbringt, erzeugt einen einzigen Seitenaufruf; Werbung im '
-        'Editor würde also fast nichts einbringen und das Werkzeug schlechter machen.</p>',
+        '    <p>Über Werbung. Auf den Seiten um den Editor herum — Startseite, Vorlagen, '
+        'Muster, Ratgeber — und im Editor an genau einer Stelle: in dem Fenster, das '
+        'erscheint, während ein hochgeladener Lebenslauf gelesen, aufs Layout gesetzt oder '
+        'zugeschnitten wird, und beim Speichern als PDF. Das sind die vier Stellen, die uns '
+        'wirklich Geld kosten.</p>',
+        '    <p>Neben dem Blatt steht keine Werbung, und da wird auch keine stehen. Wer dort '
+        'zwanzig Minuten verbringt, erzeugt einen einzigen Seitenaufruf; ein Banner neben '
+        'der Seite würde fast nichts einbringen und das Werkzeug schlechter machen. Das '
+        'Fenster lässt sich jederzeit schließen — dann bekommen Sie dieses eine Ergebnis '
+        'nicht, und das steht darin, bevor Sie klicken.</p>',
         '    <p>Werbung wird nur geladen, wenn Sie zustimmen. Lehnen Sie ab, wird kein '
         'Werbeskript angefordert, und die Seite funktioniert genauso wie sonst. Ihre '
         'Entscheidung ändern Sie über den Link '
@@ -1829,28 +1909,31 @@ def page_imprint_de():
         '<section class="band">',
         '  <div class="wrap prose">',
         '    <h1 style="font-size:clamp(2rem,4vw,2.8rem)">Impressum</h1>',
-        '    <div class="callout warn"><strong>Vor der Veröffentlichung ausfüllen</strong>',
-        '    <p>§ 5 Digitale-Dienste-Gesetz verlangt Name, Anschrift und eine unmittelbare '
-        'Kontaktmöglichkeit. Eine E-Mail-Adresse allein genügt nicht, ein Postfach genügt '
-        'nicht, und die Pflicht gilt auch für eine private Seite, sobald sie Werbung trägt — '
-        'fehlendes Impressum ist ein häufiger Abmahngrund. Die Angaben in eckigen Klammern '
-        'sind zu ersetzen; Name und E-Mail kommen aus '
-        '<code>assets/site-config.js</code>.</p></div>',
         '',
         '    <h2>Angaben gemäß § 5 DDG</h2>',
-        '    <p>%s<br>[Straße und Hausnummer]<br>[PLZ und Ort]<br>[Land]</p>'
-        % esc(CFG['operator'] or '[Name]'),
+        '    <p>%s</p>' % anschrift('de'),
+        ] + (['    <p>Vertreten durch: %s</p>' % esc(CFG['vertreter'])]
+             if CFG['vertreter'] else []) + [
         '',
         '    <h2>Kontakt</h2>',
-        '    <p>Telefon: [Nummer]<br>E-Mail: %s</p>'
-        % esc(CFG['email'] or '[ihre@adresse.de]'),
+        '    <p>E-Mail: <a href="mailto:%s">%s</a></p>'
+        % (esc(CFG['email']), esc(CFG['email'])),
+        ] + (['    <p>Telefon: %s</p>' % esc(CFG['telefon'])] if CFG['telefon'] else []) + [
+        '    <p>Wir lesen alles, was an diese Adresse geht, und antworten darauf. '
+        'Korrekturen an einem Ratgeber sind willkommen und werden gemacht.</p>',
+        ] + ([
         '',
         '    <h2>Umsatzsteuer-Identifikationsnummer</h2>',
-        '    <p>[USt-IdNr. gemäß § 27 a UStG, sofern vorhanden]<br>'
-        '[Registergericht und Registernummer, sofern es eine Gesellschaft ist]</p>',
+        '    <p>%s</p>' % esc(CFG['ustid']),
+        ] if CFG['ustid'] else []) + ([
+        '',
+        '    <h2>Register</h2>',
+        '    <p>%s</p>' % esc(CFG['register']),
+        ] if CFG['register'] else []) + [
         '',
         '    <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>',
-        '    <p>[Name]<br>[Anschrift, falls von der obigen abweichend]</p>',
+        '    <p>%s<br>Anschrift wie oben</p>'
+        % esc(CFG['verantwortlich'] or CFG['operator']),
         '',
         '    <h2>Verbraucherstreitbeilegung</h2>',
         '    <p>Wir sind nicht verpflichtet und nicht bereit, an '
@@ -1898,16 +1981,18 @@ def page_privacy_de():
         + (' – außer Sie benutzen eine der drei KI-Funktionen, die vorher fragen' if CFG['ki'] else '')
         + ', die Seite setzt kein Cookie, bevor Sie zustimmen, und eine Ablehnung kostet Sie '
         'nichts außer der Werbung.</p>',
-        '    <div class="callout warn"><strong>Vor der Veröffentlichung</strong>',
-        '    <p>Dies ist ein Arbeitsentwurf für die Seite, wie sie gebaut ist, und keine '
-        'Rechtsberatung. Lassen Sie ihn prüfen und ersetzen Sie die Angaben in eckigen '
-        'Klammern — Ihren Hoster und die Anschrift im Impressum.</p></div>',
         '',
         '    <h2>1. Verantwortlicher</h2>',
-        '    <p>Verantwortlich im Sinne der DSGVO ist die im '
-        '<a href="impressum.html">Impressum</a> genannte Person. Eine '
-        'Datenschutzbeauftragte ist nicht bestellt, da die Voraussetzungen des § 38 BDSG '
-        'nicht vorliegen.</p>',
+        # Art. 13 Abs. 1 lit. a DSGVO verlangt Identität und Kontaktdaten des
+        # Verantwortlichen. Ein Verweis auf das Impressum ist verbreitet, aber
+        # schwächer als die Angabe selbst — also steht sie hier.
+        '    <p>Verantwortlich im Sinne der DSGVO ist:</p>',
+        '    <p>%s</p>' % anschrift('de'),
+        '    <p>E-Mail: <a href="mailto:%s">%s</a> · weitere Angaben im '
+        '<a href="impressum.html">Impressum</a></p>'
+        % (esc(CFG['email']), esc(CFG['email'])),
+        '    <p>Eine Datenschutzbeauftragte ist nicht bestellt, da die Voraussetzungen des '
+        '§ 38 BDSG nicht vorliegen.</p>',
         '',
         '    <h2>2. Der Editor</h2>',
         '    <p>Der Lebenslauf-Editor läuft vollständig in Ihrem Browser. Der Text, den Sie '
@@ -1942,10 +2027,19 @@ def page_privacy_de():
         'unbedingt erforderlich ist.</p>',
         '',
         '    <h2>4. Werbung</h2>',
-        '    <p>Die Seiten außerhalb des Editors enthalten Werbung; sie bezahlt den Betrieb. '
-        'Werbepartner ist Google Ireland Limited (Google AdSense). Bevor Sie die '
-        'Einwilligungsfrage beantworten, wird kein Werbeskript geladen und kein Werbe-Cookie '
-        'gesetzt.</p>',
+        '    <p>Die Seite finanziert sich über Werbung. Sie steht an zwei Stellen: auf den '
+        'Seiten außerhalb des Editors, und im Editor in dem Fenster, das erscheint, während '
+        'ein hochgeladener Lebenslauf gelesen, aufs Layout gesetzt oder auf eine Anzeige '
+        'zugeschnitten wird und beim Speichern als PDF. Werbepartner ist Google Ireland '
+        'Limited (Google AdSense). Bevor Sie die Einwilligungsfrage beantworten, wird kein '
+        'Werbeskript geladen und kein Werbe-Cookie gesetzt — dann steht in dem Fenster ein '
+        'Hinweis auf unser eigenes Angebot.</p>',
+        ] + ([
+        '    <p><strong>Derzeit ist noch keine Werbung geschaltet:</strong> Es ist keine '
+        'Verlagskennung eingetragen, also wird gar kein Werbeskript angefordert, auch nicht '
+        'bei Ihrer Zustimmung. Dieser Abschnitt beschreibt, was geschieht, sobald sie '
+        'eingetragen ist.</p>',
+        ] if not CFG['adsense'] else []) + [
         '    <p><strong>Wenn Sie zustimmen:</strong> Das Skript von Google wird geladen, kann '
         'Cookies und ähnliche Kennungen setzen und erhält Ihre IP-Adresse, Angaben zu Ihrem '
         'Browser und die aufgerufene Seite. Google verwendet das zur Auswahl und Messung von '
@@ -1967,12 +2061,16 @@ def page_privacy_de():
         'bis dahin erfolgten Verarbeitung unberührt.</p>',
         '',
         '    <h2>5. Hosting und Server-Logfiles</h2>',
-        '    <p>Diese Seite wird von [Hoster] bereitgestellt. Dabei werden übliche '
-        'Server-Logfiles erhoben: IP-Adresse, Zeitpunkt der Anfrage, aufgerufene Seite und '
-        'die Browserkennung, die Ihr Gerät übermittelt. Diese Daten dienen dem sicheren '
-        'Betrieb und der Aufklärung von Missbrauch. [Hoster] verarbeitet sie für uns als '
-        'Auftragsverarbeiter nach Art. 28 DSGVO. Rechtsgrundlage ist unser berechtigtes '
-        'Interesse am sicheren Betrieb, Art. 6 Abs. 1 lit. f DSGVO.</p>',
+        '    <p>Diese Seite wird über %s bereitgestellt, betrieben von %s, %s. Dabei '
+        'fallen übliche Server-Logfiles an: IP-Adresse, Zeitpunkt der Anfrage, aufgerufene '
+        'Seite und die Browserkennung, die Ihr Gerät übermittelt. Diese Daten dienen dem '
+        'sicheren Betrieb und der Aufklärung von Missbrauch; wir selbst haben auf diese '
+        'Logfiles keinen Zugriff. Rechtsgrundlage ist unser berechtigtes Interesse am '
+        'sicheren Betrieb, Art. 6 Abs. 1 lit. f DSGVO.</p>'
+        % (esc(CFG['hoster_dienst']), esc(CFG['hoster']), esc(CFG['hoster_anschrift'])),
+        '    <p>Der Anbieter sitzt in den USA, die Übermittlung erfolgt also in ein '
+        'Drittland. Sie ist durch die Auftragsverarbeitungsvereinbarung des Anbieters samt '
+        'der Standardvertragsklauseln der EU-Kommission abgesichert.</p>',
         '',
         '    <h2>6. Schriftarten und weitere Dritte</h2>',
         '    <p>Die Schriftarten werden von dieser Domain ausgeliefert, nicht von Google '

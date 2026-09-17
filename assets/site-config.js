@@ -18,10 +18,43 @@ window.PLAINSHEET = {
      Auf true stellen, sobald die endgültige Adresse steht. */
   indexierung: false,
 
-  /* Who runs the site. Shown on the imprint and contact pages. */
+  /* Wer die Seite betreibt. Steht im Impressum, in der
+     Datenschutzerklärung und im Fuß jeder Seite — hier einmal, dort
+     überall. § 5 DDG verlangt Name, Anschrift und eine Möglichkeit zur
+     unmittelbaren Kontaktaufnahme; bei einer Personengesellschaft dazu
+     die Vertretungsberechtigten.
+
+     `zusatz` ist die Zeile zwischen Name und Straße (c/o, Postfachnummer
+     eines Dienstleisters). `verantwortlich` ist die natürliche Person nach
+     § 18 Abs. 2 MStV: Ratgebertexte sind journalistisch-redaktionelle
+     Inhalte, und die verlangen einen Menschen mit Namen, keine Firma.
+
+     Eine Telefonnummer ist nicht eingetragen und auch nicht verlangt — der
+     EuGH hat entschieden, dass eine E-Mail-Adresse genügt, solange sie
+     wirklich gelesen wird (C-298/07). Eine USt-IdNr. steht nur da, wenn es
+     eine gibt; sonst bleibt das Feld leer und der Abschnitt fällt weg. */
   operator: {
-    name: '[Your name or company]',
-    email: '[you@example.com]'
+    name: 'Caspar Trost & Tim Josse GbR – Brozilla',
+    vertreter: 'Caspar Trost, Tim Josse',
+    verantwortlich: 'Caspar Trost',
+    zusatz: 'c/o Autorenglück #73812',
+    strasse: 'Albert-Einstein-Straße 47',
+    ort: '02977 Hoyerswerda',
+    land: 'Deutschland',
+    landEn: 'Germany',
+    ustid: '',
+    register: '',
+    telefon: '',
+    email: 'info@brozillattv.de'
+  },
+
+  /* Wer die Seiten ausliefert. Steht in der Datenschutzerklärung beim
+     Abschnitt über Server-Logfiles und muss mitwandern, wenn die Seite
+     einmal woanders liegt. */
+  hoster: {
+    name: 'GitHub, Inc.',
+    dienst: 'GitHub Pages',
+    anschrift: '88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA'
   },
 
   ads: {
