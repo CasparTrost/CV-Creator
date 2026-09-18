@@ -2410,6 +2410,22 @@ let fotoBasis = null;
 
 function foto(){ return document.querySelector('#blaetter .photo'); }
 
+/* Das Bild, mit dem das Blatt startet: die graue Silhouette aus dem Markup.
+   Sie ist der Zustand, auf den „kein Foto“ zurückfällt. Einmal gemerkt,
+   bevor irgendetwas sie überschreiben kann. */
+const FOTO_LEER = (function(){ const f = foto(); return f ? f.getAttribute('src') : ''; })();
+
+/* Das Foto gehört zum Blatt. Wird das Blatt ersetzt und bringt die neue
+   Datei keines mit, muss auch das alte weg — sonst steht nach dem zweiten
+   Hochladen noch das Gesicht aus dem ersten da. */
+function fotoLeeren(){
+  const f = foto();
+  if (!f || !FOTO_LEER) return;
+  f.setAttribute('src', FOTO_LEER);
+  f.style.display = '';
+  fotoZuruecksetzen(true);
+}
+
 /* Ein Foto aus der hochgeladenen Datei kommt an dieselbe Stelle wie eines,
    das von Hand gewählt wurde — das Layout bestimmt, wohin, nicht die
    Herkunft. */
@@ -3513,7 +3529,7 @@ function kiVorschau(fenst, lebenslauf, antwort, bild){
        spiel.erledigt();
        if (!await spiel.fertig){ melde(T('zwAbgebrochen'), 5000); return; }
        lebenslaufEinsetzen(lebenslauf);
-       if (bild) fotoSetzen(bild);
+       if (bild) fotoSetzen(bild); else fotoLeeren();
        f.remove();
      } }]
   .forEach(k => {
