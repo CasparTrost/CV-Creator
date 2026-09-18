@@ -1,3 +1,5 @@
-# indexierung: false in assets/site-config.js
 User-agent: *
-Disallow: /
+Allow: /
+
+# Nothing here is private; the editor holds no data to crawl.
+Sitemap: https://caspartrost.github.io/CV-Creator/sitemap.xml
