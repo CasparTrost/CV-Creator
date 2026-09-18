@@ -16,7 +16,7 @@ window.PLAINSHEET = {
      nicht an einem Tag. Auf false setzt build.py auf jeder Seite
      „noindex, follow“ und in robots.txt ein Disallow.
      Auf true stellen, sobald die endgültige Adresse steht. */
-  indexierung: false,
+  indexierung: true,
 
   /* Wer die Seite betreibt. Steht im Impressum, in der
      Datenschutzerklärung und im Fuß jeder Seite — hier einmal, dort
